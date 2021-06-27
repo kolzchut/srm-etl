@@ -1,6 +1,9 @@
 import dataflows as DF
 import logging
 
+
+
+
 def operator(name, params, pipeline):
     logging.info('STARTING Guidestar Scraping')
 
