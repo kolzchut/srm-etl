@@ -35,3 +35,5 @@ The ETL System we use is based on the DGP-APP Platform
 - `GUIDESTAR_PASSWORD` - password for logging into Guidestar api
 
 - `DATAFLOWS_AIRTABLE_APIKEY` - API key for an airtable user allowed to access AirTable bases
+
+- `DATAFLOWS_CKAN_SERVER` - URL for the CKAN instance we'll use (e.g. `https://url.of.ckan.org:8080/`)
