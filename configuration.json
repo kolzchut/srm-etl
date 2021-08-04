@@ -18,6 +18,12 @@
             "display": "Geocoding",
             "dgp": false,
             "admin": true
+        },
+        {
+            "name": "mapbox_upload",
+            "display": "Mapbox Uploader",
+            "dgp": false,
+            "admin": true
         }
     ],
     "theme": {
