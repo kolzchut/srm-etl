@@ -14,7 +14,7 @@
             "admin": true
         },
         {
-            "name": "geocoder",
+            "name": "geocode",
             "display": "Geocoding",
             "dgp": false,
             "admin": true
