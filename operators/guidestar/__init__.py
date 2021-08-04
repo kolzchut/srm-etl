@@ -4,7 +4,7 @@ from dataflows.base.resource_wrapper import ResourceWrapper
 
 from datapackage import resource
 
-from guidestar_api import GuidestarAPI
+from .guidestar_api import GuidestarAPI
 from dataflows_airtable import dump_to_airtable, load_from_airtable
 from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
