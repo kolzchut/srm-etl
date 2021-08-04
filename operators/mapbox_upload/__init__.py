@@ -1,15 +1,12 @@
 import os
 from dataflows_airtable import load_from_airtable
-import rasterio
-import pathlib
 import requests
-import numpy as np
 import boto3
 import time
-import math
 import dataflows as DF
-import subprocess
-import logging
+
+from srm_tools.logger import logger
+
 
 AUTH = dict(access_token=os.environ['MAPBOX_ACCESS_TOKEN'])
 
