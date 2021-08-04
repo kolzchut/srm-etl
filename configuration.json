@@ -6,6 +6,18 @@
             "display": "Scrape Guidestar",
             "dgp": false,
             "admin": true
+        },
+        {
+            "name": "click",
+            "display": "Scrape Click-LeRevaha",
+            "dgp": false,
+            "admin": true
+        },
+        {
+            "name": "geocoder",
+            "display": "Geocoding",
+            "dgp": false,
+            "admin": true
         }
     ],
     "theme": {
