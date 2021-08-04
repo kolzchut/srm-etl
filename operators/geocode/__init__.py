@@ -8,7 +8,9 @@ from dataflows_airtable import dump_to_airtable, load_from_airtable
 
 from pyproj import Transformer
 import geocoder
-        
+
+from srm_tools.logger import logger
+
 
 def geocode(session):
     transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
@@ -18,7 +20,7 @@ def geocode(session):
             keyword=key, type=0,
         )
         resp = session.post('https://ags.govmap.gov.il/Api/Controllers/GovmapApi/Geocode', json=geocode_req).json()
-        print(key, row, any((not row.get(f)) for f in ('resolved_lat', 'resolved_lon')), resp)
+        # print(key, row, any((not row.get(f)) for f in ('resolved_lat', 'resolved_lon')), resp)
         row['status'] = 'VALID'
         if resp['status'] == 0 and resp['errorCode'] == 0:
             assert 'data' in resp and len(resp['data']) > 0, str(resp)

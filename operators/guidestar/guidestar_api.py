@@ -25,7 +25,7 @@ class GuidestarAPI():
         done = False
         count = 0
         while not done:
-            print('minRegNum', minRegNum)
+            # print('minRegNum', minRegNum)
             params = dict(
                 includingInactiveMalkars='false',
                 isDesc='false',
@@ -33,7 +33,7 @@ class GuidestarAPI():
                 filter=f'branchCount>0;regNum>{minRegNum}'
             )
             resp = requests.get(f'{self.BASE}/organizations', params=params, headers=self.headers())
-            print(resp.url)
+            # print(resp.url)
             resp = resp.json()
             for row in resp:
                 count += 1

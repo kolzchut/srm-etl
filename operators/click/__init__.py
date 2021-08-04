@@ -8,6 +8,9 @@ import dataflows as DF
 from dataflows_airtable import dump_to_airtable, load_from_airtable
 from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
+from srm_tools.logger import logger
+
+
 KEEP_FIELDS = ['cat', 'Name']
 DT_SUFFIXES = dict((k, i) for i, k in enumerate(['', 'i', 'ss', 't', 's', 'base64', 'f', 'is']))
 SELECT_FIELDS = {
@@ -62,14 +65,13 @@ DEDUCTIBLE_TYPE = {
 
 
 def scrape_click():
-    print('hi')
     try:
         docs = json.load(open('click-cache.json'))
     except:
         docs = requests.get('https://clickrevaha-sys.molsa.gov.il/api/solr?rows=1000').json().get('response').get('docs')
         json.dump(docs, open('click-cache.json', 'w'))
 
-    print(len(docs))
+    # print(len(docs))
     all_keys = set()
     for doc in docs:
         all_keys.update(k for k, v in doc.items() if v)
@@ -82,7 +84,6 @@ def scrape_click():
             if suffix in DT_SUFFIXES:
                 prefix = k[:-len(suffix)-1]
                 config.setdefault(prefix, []).append((prefix, k, suffix))
-    print(config['type'])
     concat_fields = dict()
     for k, suffixes in config.items():
         prefix, k, _ = sorted(suffixes, key=lambda s: DT_SUFFIXES[s[2]])[0]
@@ -134,8 +135,8 @@ def keep_prominent():
                     counts[k]['total'] += 1
             yield row
         counts = dict((k, (len(v['values']), v['total'], sorted(v['values'])[:1])) for k, v in counts.items() if len(v['values']) > 0)
-        for x in sorted(counts.items(), key=lambda x: -x[1][1]):
-            print(x)
+        # for x in sorted(counts.items(), key=lambda x: -x[1][1]):
+        #     print(x)
     return func
 
 def filter_results():
@@ -146,14 +147,14 @@ def filter_results():
         for r in rows:
             t = r['type']
             if t not in found:
-                print('???', t)
+                # print('???', t)
                 found.add(t)
             for sf in SELECT_FIELDS:
                 if sf not in ('page_url', AIRTABLE_ID_FIELD):
                     assert sf in r, '{} not in {}'.format(sf, r.keys())
             yield r
             i += 1
-        print('###', i)
+        # print('###', i)
 
     return DF.Flow(
         count,

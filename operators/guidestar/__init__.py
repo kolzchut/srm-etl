@@ -1,5 +1,4 @@
 import dataflows as DF
-import logging
 from dataflows.base.resource_wrapper import ResourceWrapper
 
 from datapackage import resource
@@ -7,6 +6,8 @@ from datapackage import resource
 from .guidestar_api import GuidestarAPI
 from dataflows_airtable import dump_to_airtable, load_from_airtable
 from dataflows_airtable.consts import AIRTABLE_ID_FIELD
+
+from srm_tools.logger import logger
 
 
 def unwind_branches(ga):
@@ -17,14 +18,10 @@ def unwind_branches(ga):
             for i, row in enumerate(rows):
                 regNum = row['regNum']
                 branches = ga.branches(regNum)
-                if len(branches) > 10:
-                    print(len(branches), regNum)
                 for branch in branches:
                     ret = dict()
                     ret.update(row)
                     ret.update(branch)
-                    if ret['services']:
-                        print('SVCS', ret)
                     yield ret
     return DF.Flow(
         DF.add_field('branchId', 'string', resources='guidestar'),
@@ -67,7 +64,7 @@ def calc_location_key(row):
     
 
 def operator(name, params, pipeline):
-    logging.info('STARTING Guidestar Scraping')
+    logger.info('STARTING Guidestar Scraping')
     ga = GuidestarAPI()
 
     print('FETCHING ALL ORGANIZATIONS')
