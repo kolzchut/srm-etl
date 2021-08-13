@@ -37,7 +37,10 @@ class GuidestarAPI():
             resp = resp.json()
             for row in resp:
                 count += 1
-                yield row
+                regNum = row['regNum']
+                row = requests.get(f'{self.BASE}/organizations/{regNum}', headers=self.headers()).json()
+                # print(row)
+                yield dict(id=regNum, data=row)
                 if limit and count == limit:
                     done = True
                     break
