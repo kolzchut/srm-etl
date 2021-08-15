@@ -3,8 +3,9 @@ import requests
 from requests.api import head
 
 class GuidestarAPI():
+from conf import settings
 
-    BASE = 'https://www.guidestar.org.il/services/apexrest/api'
+    BASE = settings.GUIDESTAR_API
     _headers = None
 
     def login(self, username, password):
@@ -17,7 +18,9 @@ class GuidestarAPI():
 
     def headers(self):
         if self._headers is None:
-            self._headers = self.login(os.environ['GUIDESTAR_USERNAME'], os.environ['GUIDESTAR_PASSWORD'])
+            self._headers = self.login(
+                settings.GUIDESTAR_USERNAME, settings.GUIDESTAR_PASSWORD
+            )
         return self._headers
 
     def organizations(self, limit=None):

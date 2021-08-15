@@ -11,6 +11,8 @@ import geocoder
 
 from srm_tools.logger import logger
 
+from conf import settings
+
 
 def geocode(session):
     transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
@@ -19,7 +21,9 @@ def geocode(session):
         geocode_req = dict(
             keyword=key, type=0,
         )
-        resp = session.post('https://ags.govmap.gov.il/Api/Controllers/GovmapApi/Geocode', json=geocode_req).json()
+        resp = session.post(
+            settings.GOVMAP_GEOCODE_API_ENTRYPOINT, json=geocode_req
+        ).json()
         # print(key, row, any((not row.get(f)) for f in ('resolved_lat', 'resolved_lon')), resp)
         row['status'] = 'VALID'
         if resp['status'] == 0 and resp['errorCode'] == 0:
@@ -44,25 +48,27 @@ def geocode(session):
     return func
 
 def get_session():
-    token = os.environ.get('GOVMAP_API_KEY')
+    token = settings.GOVMAP_API_KEY
     auth_data = dict(
-        api_token=token, user_token='', domain='https://www.kolzchut.org.il', token=''
+        api_token=token, user_token="", domain=settings.API_REQUEST_ORIGIN, token=""
     )
     headers = dict(
         auth_data=json.dumps(auth_data),
-        Origin='https://www.kolzchut.org.il',
-        Referer='https://www.kolzchut.org.il',
+        Origin=settings.API_REQUEST_ORIGIN,
+        Referer=settings.API_REQUEST_ORIGIN,
     )
 
-    resp = requests.post('https://ags.govmap.gov.il/Api/Controllers/GovmapApi/Auth',
-                    json=dict(),
-                    headers=headers)
+    resp = requests.post(
+        settings.GOVMAP_GEOCODE_AUTH_ENTRYPOINT,
+        json=dict(),
+        headers=headers,
+    )
     # print(resp.status_code)
     # print(resp.content)
     headers = dict(
         auth_data=json.dumps(resp.json()),
-        Origin='https://www.kolzchut.org.il',
-        Referer='https://www.kolzchut.org.il',
+        Origin=settings.API_REQUEST_ORIGIN,
+        Referer=settings.API_REQUEST_ORIGIN,
     )
 
     session = requests.Session()
@@ -72,21 +78,33 @@ def get_session():
 
 def operator(*_):
     DF.Flow(
-        load_from_airtable('appF3FyNsyk4zObNa', 'Locations', 'Grid view'),
-        DF.update_resource(-1, **{'name': 'locations'}),
-        DF.filter_rows(lambda r: any((not r.get(f)) for f in ('resolved_lat', 'resolved_lon'))),
-        DF.filter_rows(lambda r: r['status'] not in ('NOT_FOUND', )),
-        DF.set_type('resolved_l.+', type='number', transform=lambda v: float(v) if v is not None else None),
+        load_from_airtable(
+            settings.AIRTABLE_BASE,
+            settings.AIRTABLE_LOCATION_TABLE,
+            settings.AIRTABLE_VIEW,
+        ),
+        DF.update_resource(-1, **{"name": "locations"}),
+        DF.filter_rows(
+            lambda r: any((not r.get(f)) for f in ("resolved_lat", "resolved_lon"))
+        ),
+        DF.filter_rows(lambda r: r["status"] not in ("NOT_FOUND",)),
+        DF.set_type(
+            "resolved_l.+",
+            type="number",
+            transform=lambda v: float(v) if v is not None else None,
+        ),
         geocode(get_session()),
-        DF.dump_to_path('geocode'),
-        dump_to_airtable({
-            ('appF3FyNsyk4zObNa', 'Locations'): {
-                'resource-name': 'locations',
-                'typecast': True
+        DF.dump_to_path("geocode"),
+        dump_to_airtable(
+            {
+                (settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE): {
+                    "resource-name": "locations",
+                    "typecast": True,
+                }
             }
-        }),
+        ),
     ).process()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     operator()
