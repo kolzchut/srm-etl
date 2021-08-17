@@ -7,23 +7,18 @@ import dataflows as DF
 
 from srm_tools.logger import logger
 
+from conf import settings
 
-AUTH = dict(access_token=os.environ['MAPBOX_ACCESS_TOKEN'])
 
-
-class URLS:
-    LIST_TILESETS = 'https://api.mapbox.com/tilesets/v1/srm-kolzchut'
-    UPLOAD_CREDENTIALS = 'https://api.mapbox.com/uploads/v1/srm-kolzchut/credentials'
-    CREATE_UPLOAD = 'https://api.mapbox.com/uploads/v1/srm-kolzchut'
-    UPLOAD_STATUS = 'https://api.mapbox.com/uploads/v1/srm-kolzchut/'
+AUTH = dict(access_token=settings.MAPBOX_ACCESS_TOKEN)
 
 
 def fetch_tilesets():
-    return requests.get(URLS.LIST_TILESETS, params=AUTH).json()
+    return requests.get(settings.MAPBOX_LIST_TILESETS, params=AUTH).json()
 
 
 def upload_tileset(filename, tileset, name):
-    creds = requests.get(URLS.UPLOAD_CREDENTIALS, params=AUTH).json()
+    creds = requests.get(settings.MAPBOX_UPLOAD_CREDENTIALS, params=AUTH).json()
     print(creds, AUTH)
     s3_client = boto3.client(
         's3',
@@ -40,11 +35,11 @@ def upload_tileset(filename, tileset, name):
         url=creds['url'],
         name=name
     )
-    upload = requests.post(URLS.CREATE_UPLOAD, params=AUTH, json=data).json()
+    upload = requests.post(settings.MAPBOX_CREATE_UPLOAD, params=AUTH, json=data).json()
     print(upload)
     assert not upload.get('error')
     while True:
-        status = requests.get(URLS.UPLOAD_STATUS + upload['id'], params=AUTH).json()
+        status = requests.get(settings.MAPBOX_UPLOAD_STATUS + upload['id'], params=AUTH).json()
         assert not status.get('error')
         print('{complete} / {progress}'.format(**status))
         if status['complete']:
@@ -65,7 +60,7 @@ def upload_locations():
     print('PREPARING ALL Locations')
 
     DF.Flow(
-        load_from_airtable('appF3FyNsyk4zObNa', 'Locations', 'Grid view'),
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW),
         DF.update_resource(-1, **{'name': 'locations', 'path': 'all-points.csv'}),
         DF.filter_rows(lambda r: any(
             all(r.get(f) for f in fields)
