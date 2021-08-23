@@ -16,6 +16,8 @@ def geocode(session):
     transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
     def func(row):
         key = row.get('key')
+        if not key:
+            return
         geocode_req = dict(
             keyword=key, type=0,
         )
