@@ -19,7 +19,12 @@ def geocode(session):
         geocode_req = dict(
             keyword=key, type=0,
         )
-        resp = session.post('https://ags.govmap.gov.il/Api/Controllers/GovmapApi/Geocode', json=geocode_req).json()
+        resp = session.post('https://ags.govmap.gov.il/Api/Controllers/GovmapApi/Geocode', json=geocode_req)
+        if resp.status_code != 200:
+            logger.error(f'{geocode_req}')
+            logger.error(f'{resp.status_code}: {resp.content}')
+            assert False
+        resp = resp.json()
         # print(key, row, any((not row.get(f)) for f in ('resolved_lat', 'resolved_lon')), resp)
         row['status'] = 'VALID'
         if resp['status'] == 0 and resp['errorCode'] == 0:
