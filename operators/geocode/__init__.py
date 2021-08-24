@@ -17,9 +17,9 @@ from conf import settings
 def geocode(session):
     transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
     def func(row):
-        key = row.get('key')
+        keyword = row.get('key')
         geocode_req = dict(
-            keyword=key, type=0,
+            keyword=keyword, type=0,
         )
         resp = session.post(settings.GOVMAP_GEOCODE_API, json=geocode_req).json()
         # print(key, row, any((not row.get(f)) for f in ('resolved_lat', 'resolved_lon')), resp)
@@ -34,7 +34,7 @@ def geocode(session):
             row['resolved_address'] = resp['ResultLable']
             row['resolved_lon'], row['resolved_lat'] = transformer.transform(resp['X'], resp['Y'])
         else:
-            resp = geocoder.google(key, language='he')
+            resp = geocoder.google(keyword, language='he', key=settings.GOOGLE_MAPS_API_KEY)
             if resp.ok:
                 row['accuracy'] = resp.accuracy
                 row['provider'] = 'google'
