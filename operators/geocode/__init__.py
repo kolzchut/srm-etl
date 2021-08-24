@@ -18,10 +18,19 @@ def geocode(session):
     transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
     def func(row):
         keyword = row.get('key')
+        if not keyword:
+            return
+
         geocode_req = dict(
             keyword=keyword, type=0,
         )
         resp = session.post(settings.GOVMAP_GEOCODE_API, json=geocode_req).json()
+        if resp.status_code != 200:
+            logger.error(f'{geocode_req}')
+            logger.error(f'{resp.status_code}: {resp.content}')
+            assert False
+        resp = resp.json()
+
         # print(key, row, any((not row.get(f)) for f in ('resolved_lat', 'resolved_lon')), resp)
         row['status'] = 'VALID'
         if resp['status'] == 0 and resp['errorCode'] == 0:
