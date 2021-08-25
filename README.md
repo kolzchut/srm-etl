@@ -31,9 +31,4 @@ The ETL System we use is based on the DGP-APP Platform
 
 **Scraper Specific**:
 
-- `GUIDESTAR_USERNAME` - username for logging into Guidestar api
-- `GUIDESTAR_PASSWORD` - password for logging into Guidestar api
-
-- `DATAFLOWS_AIRTABLE_APIKEY` - API key for an airtable user allowed to access AirTable bases
-
-- `DATAFLOWS_CKAN_SERVER` - URL for the CKAN instance we'll use (e.g. `https://url.of.ckan.org:8080/`)
+See `.env.example` for a full list of scraper-specific environment variables.
