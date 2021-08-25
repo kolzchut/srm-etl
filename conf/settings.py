@@ -5,28 +5,28 @@ from .utils import get_env, EnvVarStrategy as s
 load_dotenv()
 
 
-CLICK_API = get_env('ETL_CLICK_API')
+CLICK_API = "https://clickrevaha-sys.molsa.gov.il/api/solr?rows=1000"
 
 GUIDESTAR_USERNAME = get_env('ETL_GUIDESTAR_USERNAME')
 GUIDESTAR_PASSWORD = get_env('ETL_GUIDESTAR_PASSWORD')
-GUIDESTAR_API = get_env('ETL_GUIDESTAR_API')
+GUIDESTAR_API = "https://www.guidestar.org.il/services/apexrest/api"
 
 GOVMAP_API_KEY = get_env('ETL_GOVMAP_API_KEY')
-GOVMAP_AUTH = get_env('ETL_GOVMAP_GEOCODE_AUTH')
-GOVMAP_REQUEST_ORIGIN = get_env('ETL_API_REQUEST_ORIGIN')
-GOVMAP_GEOCODE_API = get_env('ETL_GOVMAP_GEOCODE_API')
+GOVMAP_AUTH = "https://ags.govmap.gov.il/Api/Controllers/GovmapApi/Auth"
+GOVMAP_REQUEST_ORIGIN = "https://www.kolzchut.org.il"
+GOVMAP_GEOCODE_API = "https://ags.govmap.gov.il/Api/Controllers/GovmapApi/Geocode"
 
 AIRTABLE_BASE = get_env('ETL_AIRTABLE_BASE')
-AIRTABLE_VIEW = get_env('ETL_AIRTABLE_VIEW')
-AIRTABLE_LOCATION_TABLE = get_env('ETL_AIRTABLE_LOCATION_TABLE')
-AIRTABLE_ORGANIZATION_TABLE = get_env('ETL_AIRTABLE_ORGANIZATION_TABLE')
-AIRTABLE_BRANCH_TABLE = get_env('ETL_AIRTABLE_BRANCH_TABLE')
-AIRTABLE_SITUATION_TABLE = get_env('ETL_AIRTABLE_SITUATION_TABLE')
+AIRTABLE_VIEW = "Grid view"
+AIRTABLE_LOCATION_TABLE = "Locations"
+AIRTABLE_ORGANIZATION_TABLE = "Organizations"
+AIRTABLE_BRANCH_TABLE = "Branches"
+AIRTABLE_SITUATION_TABLE = "Situations"
 
 MAPBOX_ACCESS_TOKEN = get_env('ETL_MAPBOX_ACCESS_TOKEN')
-MAPBOX_LIST_TILESETS = get_env('ETL_MAPBOX_LIST_TILESETS')
-MAPBOX_UPLOAD_CREDENTIALS = get_env('ETL_MAPBOX_UPLOAD_CREDENTIALS')
-MAPBOX_CREATE_UPLOAD = get_env('ETL_MAPBOX_CREATE_UPLOAD')
-MAPBOX_UPLOAD_STATUS = get_env('ETL_MAPBOX_UPLOAD_STATUS')
+MAPBOX_LIST_TILESETS = "https://api.mapbox.com/tilesets/v1/srm-kolzchut"
+MAPBOX_UPLOAD_CREDENTIALS = "https://api.mapbox.com/uploads/v1/srm-kolzchut/credentials"
+MAPBOX_CREATE_UPLOAD = "https://api.mapbox.com/uploads/v1/srm-kolzchut"
+MAPBOX_UPLOAD_STATUS = "https://api.mapbox.com/uploads/v1/srm-kolzchut/"
 
 GOOGLE_MAPS_API_KEY = get_env("ETL_GOOGLE_MAPS_API_KEY")
