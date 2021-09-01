@@ -13,6 +13,7 @@ from srm_tools.logger import logger
 from srm_tools.update_table import airflow_table_updater
 from srm_tools.situations import Situations
 
+from conf import settings
 
 KEEP_FIELDS = ['cat', 'Name']
 DT_SUFFIXES = dict((k, i) for i, k in enumerate(['', 'i', 'ss', 't', 's', 'base64', 'f', 'is']))
@@ -90,7 +91,7 @@ def scrape_click():
     try:
         docs = json.load(open('click-cache.json'))
     except:
-        docs = requests.get('https://clickrevaha-sys.molsa.gov.il/api/solr?rows=1000').json().get('response').get('docs')
+        docs = requests.get(settings.CLICK_API).json().get('response').get('docs')
         json.dump(docs, open('click-cache.json', 'w'))
 
     # print(len(docs))

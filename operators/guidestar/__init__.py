@@ -13,6 +13,9 @@ from srm_tools.logger import logger
 from srm_tools.update_table import airflow_table_update_flow, airflow_table_updater
 from srm_tools.situations import Situations
 
+from conf import settings
+
+
 situations = Situations()
 
 
@@ -36,7 +39,7 @@ def updateOrgFromSourceData():
 
 def fetchOrgData(ga):
     print('FETCHING ALL ORGANIZATIONS')
-    airflow_table_updater('Organizations', 'guidestar', 
+    airflow_table_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'guidestar',
         ['name', 'kind', 'urls', 'description', 'purpose'],
         ga.organizations(),
         updateOrgFromSourceData()
@@ -115,7 +118,7 @@ def updateBranchFromSourceData():
 def fetchBranchData(ga):
     print('FETCHING ALL ORGANIZATION BRANCHES')
     DF.Flow(
-        load_from_airtable('appF3FyNsyk4zObNa', 'Locations', 'Grid view'),
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW),
         DF.update_resource(-1, name='locations'),
         DF.rename_fields({
             AIRTABLE_ID_FIELD: 'location',
@@ -125,7 +128,7 @@ def fetchBranchData(ga):
         airflow_table_update_flow('Branches', 'guidestar',
             ['name', 'organization', 'address', 'address_details', 'description', 'phone_numbers', 'urls', 'situations'],
             DF.Flow(
-                load_from_airtable('appF3FyNsyk4zObNa', 'Organizations', 'Grid view'),
+                load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
                 DF.update_resource(-1, name='orgs'),
                 DF.filter_rows(lambda r: r['source'] == 'guidestar', resources='orgs'),
                 DF.rename_fields({
@@ -148,10 +151,10 @@ def fetchBranchData(ga):
 def updateLocations():
     print('UPDATING LOCATION TABLE WITH NEW LOCATIONS')
     DF.Flow(
-        load_from_airtable('appF3FyNsyk4zObNa', 'Locations', 'Grid view'),
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW),
         DF.update_resource(-1, name='locations'),
 
-        load_from_airtable('appF3FyNsyk4zObNa', 'Branches', 'Grid view'),
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_VIEW),
         DF.update_resource(-1, name='guidestar'),
         DF.filter_rows(lambda r: r['source'] == 'guidestar', resources='guidestar'),
 
@@ -169,7 +172,7 @@ def updateLocations():
         }),
 
         dump_to_airtable({
-            ('appF3FyNsyk4zObNa', 'Locations'): {
+            (settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE): {
                 'resource-name': 'guidestar',
                 'typecast': True
             }

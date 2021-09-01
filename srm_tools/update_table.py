@@ -3,6 +3,8 @@ import dataflows as DF
 from dataflows_airtable import dump_to_airtable, load_from_airtable
 from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
+from conf import settings
+
 
 def airflow_table_updater(table, source_id, table_fields, fetch_data_flow, update_data_flow):
     """
@@ -31,7 +33,7 @@ def airflow_table_update_flow(table, source_id, table_fields, fetch_data_flow, u
     :param update_data_flow: Flow to use to map the 'data' field into the table standard fields.
     """
     return DF.Flow(
-        load_from_airtable('appF3FyNsyk4zObNa', table, 'Grid view'),
+        load_from_airtable(settings.AIRTABLE_BASE, table, settings.AIRTABLE_VIEW),
         DF.update_resource(-1, name='current'),
         DF.filter_rows(lambda r: r['source'] == source_id, resources='current'),
 
@@ -52,7 +54,7 @@ def airflow_table_update_flow(table, source_id, table_fields, fetch_data_flow, u
         DF.select_fields(['id', 'source', 'status', *table_fields, AIRTABLE_ID_FIELD], resources='fetched'),
 
         dump_to_airtable({
-            ('appF3FyNsyk4zObNa', table): {
+            (settings.AIRTABLE_BASE, table): {
                 'resource-name': 'fetched',
                 'typecast': True
             }

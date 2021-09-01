@@ -3,6 +3,8 @@ import dataflows as DF
 from dataflows_airtable import load_from_airtable
 from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
+from conf import settings
+
 
 class Situations():
 
@@ -14,7 +16,7 @@ class Situations():
     def situations(self):
         if self._situations is None:
             self._situations = DF.Flow(
-                load_from_airtable('appF3FyNsyk4zObNa', 'Situations', 'Grid view')
+                load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_SITUATION_TABLE, settings.AIRTABLE_VIEW)
             ).results()[0][0]
         return self._situations
 
