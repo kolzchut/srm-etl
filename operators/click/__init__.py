@@ -1,4 +1,5 @@
 import json
+from srm_tools.budgetkey import fetch_from_budgetkey
 from dataflows.base.flow import Flow
 from datapackage import resource
 
@@ -87,6 +88,25 @@ def filter_results():
     )
 
 
+def fetch_organizations():
+    def func(rows):
+        results = fetch_from_budgetkey('''
+            select catalog_number, jsonb_array_elements(suppliers) as supplier from activities
+                where suppliers is not null and suppliers::text != 'null'
+        ''')
+        results = list(results)
+        print('GOT {} SUPPLIERS'.format(len(results)))
+        suppliers = dict()
+        for rec in results:
+            suppliers.setdefault(rec['catalog_number'], []).append(rec['supplier']['entity_id'])
+
+        for row in rows:
+            catalog_number = row.get('catalog_number')
+            row['organizations'] = sorted(set(suppliers.get(catalog_number, [])), reverse=True)
+            yield row
+    return func
+
+
 def scrape_click():
     try:
         docs = json.load(open('click-cache.json'))
@@ -122,11 +142,14 @@ def scrape_click():
     records = DF.Flow(
         docs,
         DF.concatenate(concat_fields),
+        DF.update_resource(-1, name='click'),
         remove_nbsp(),
         filter_results(),
         DF.add_field('page_url', 'string', lambda r: 'https://clickrevaha.molsa.gov.il/{Name}/product-page/{product_id}'.format(**r)),
         DF.select_fields(list(SELECT_FIELDS.keys())),
         DF.rename_fields(SELECT_FIELDS),
+        DF.add_field('organizations', 'array', []),
+        fetch_organizations(),
         DF.set_type('tags', type='array', transform=lambda v: v.split('|') if v else []),
         DF.set_type('delivery_channels', type='array', transform=lambda v: v.split('|') if v else []),
         DF.set_type('deductible', type='string', transform=lambda v: DEDUCTIBLE_TYPE.get(v)),
@@ -149,6 +172,7 @@ def updateServiceFromSourceData():
         row['payment_required'] = data['deductible']
         row['payment_details'] = data['deductible_details']
         row['urls'] = data['page_url'] + '#דף השירות בקליק לרווחה'
+        row['organizations'] = data['organizations']
         row['situations'] = situations.situations_for_age_range(data['age_min'], data['age_max'])
         row['situations'].extend(situations.situations_for_clr_target_population(data.get('target_populations_level_1') or []))
         row['situations'].extend(situations.situations_for_clr_target_population(data.get('target_populations_level_2') or []))
@@ -158,7 +182,7 @@ def updateServiceFromSourceData():
 def operator(*_):
     airflow_table_updater(
         'Services', 'click-lerevaha',
-        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations'],
+        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'organizations'],
         scrape_click(),
         updateServiceFromSourceData()
     )

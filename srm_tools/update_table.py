@@ -35,7 +35,7 @@ def airflow_table_update_flow(table, source_id, table_fields, fetch_data_flow, u
     return DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, table, settings.AIRTABLE_VIEW),
         DF.update_resource(-1, name='current'),
-        DF.filter_rows(lambda r: r['source'] == source_id, resources='current'),
+        DF.filter_rows(lambda r: r['source'] in (source_id, 'dummy'), resources='current'),
 
         fetch_data_flow,
         DF.update_resource(-1, name='fetched'),

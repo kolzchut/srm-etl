@@ -24,7 +24,7 @@ class Situations():
     def rid_map(self):
         if self._rid_map is None:
             self._rid_map = dict(
-                (r['name'], r[AIRTABLE_ID_FIELD])
+                (r['id'], r[AIRTABLE_ID_FIELD])
                 for r in self.situations
             )
         return self._rid_map
@@ -58,7 +58,7 @@ class Situations():
             ret.append('seniors')
         if len(ret) == 6:
             ret = []
-        return ['age_group/{}'.format(s) for s in ret]
+        return ['human_situations:age_group:{}'.format(s) for s in ret]
 
 
     def situations_for_clr_target_population(self, target_population):
@@ -66,5 +66,5 @@ class Situations():
         for t in target_population:
             for s in self.situations:
                 if s['click_lerevacha_target_populations'] and t in s['click_lerevacha_target_populations']:
-                    ret.append(s['name'])
+                    ret.append(s['id'])
         return ret

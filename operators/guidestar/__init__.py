@@ -1,3 +1,4 @@
+from srm_tools.budgetkey import fetch_from_budgetkey
 import dataflows as DF
 from dataflows.base.resource_wrapper import ResourceWrapper
 
@@ -39,9 +40,19 @@ def updateOrgFromSourceData():
 
 def fetchOrgData(ga):
     print('FETCHING ALL ORGANIZATIONS')
+    query = '''
+        with suppliers as (select jsonb_array_elements(suppliers) as supplier from activities where suppliers is not null and suppliers::text != 'null' and catalog_number is not null)
+        select supplier->>'entity_id' as entity_id, supplier->>'entity_kind' as entity_kind from suppliers
+    '''
+    social_service_entity_ids = fetch_from_budgetkey(query)
+    regNums = sorted(set(
+        row['entity_id'] for row in social_service_entity_ids
+        if row['entity_kind'] == 'association'
+    ))
+    print('COLLECTED {} relevant organizations'.format(len(regNums)))
     airflow_table_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'guidestar',
         ['name', 'kind', 'urls', 'description', 'purpose'],
-        ga.organizations(),
+        ga.organizations(regNums=regNums),
         updateOrgFromSourceData()
     )
 
@@ -97,6 +108,7 @@ def updateBranchFromSourceData():
         # print('row', row)
         row['name'] = data['name']
         row['address'] = calc_location_key(data)
+        row['location'] = [row['address']]
         row['address_details'] = data.get('drivingInstructions')
         row['description'] = None
         row['urls'] = None
@@ -109,7 +121,7 @@ def updateBranchFromSourceData():
             row['organization'] = [row['organization_id']]
         if data.get('language'):
             row['situations'] = situations.convert_situation_list([
-                'language/{}'.format(l.lower().strip()) for l in data['language'].split(';')
+                'human_situations:language:{}_speaking'.format(l.lower().strip()) for l in data['language'].split(';')
             ])
 
     return func
@@ -126,7 +138,7 @@ def fetchBranchData(ga):
         DF.set_type('location', type='array', transform=lambda x: [x], resources='locations'),
 
         airflow_table_update_flow('Branches', 'guidestar',
-            ['name', 'organization', 'address', 'address_details', 'description', 'phone_numbers', 'urls', 'situations'],
+            ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
             DF.Flow(
                 load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
                 DF.update_resource(-1, name='orgs'),
@@ -147,47 +159,12 @@ def fetchBranchData(ga):
     ).process()
 
 
-## LOCATIONS
-def updateLocations():
-    print('UPDATING LOCATION TABLE WITH NEW LOCATIONS')
-    DF.Flow(
-        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW),
-        DF.update_resource(-1, name='locations'),
-
-        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_VIEW),
-        DF.update_resource(-1, name='guidestar'),
-        DF.filter_rows(lambda r: r['source'] == 'guidestar', resources='guidestar'),
-
-        DF.select_fields(['address'], resources='guidestar'),
-        DF.rename_fields({
-            'address': 'key',
-        }, resources='guidestar'),
-
-        DF.join('locations', ['key'], 'guidestar', ['key'], {
-            AIRTABLE_ID_FIELD: None
-        }),
-        DF.filter_rows(lambda r: r[AIRTABLE_ID_FIELD] is None),
-        DF.join_with_self('guidestar', ['key'], {
-            'key': None, AIRTABLE_ID_FIELD: None
-        }),
-
-        dump_to_airtable({
-            (settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE): {
-                'resource-name': 'guidestar',
-                'typecast': True
-            }
-        })
-    ).process()
-
-
 def operator(name, params, pipeline):
     logger.info('STARTING Guidestar Scraping')
     ga = GuidestarAPI()
 
-    # fetchOrgData(ga)
+    fetchOrgData(ga)
     fetchBranchData(ga)
-
-    updateLocations()  # TODO: Move to centralized place
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 import requests
 import os
 import json
@@ -24,7 +25,7 @@ def geocode(session):
         geocode_req = dict(
             keyword=keyword, type=0,
         )
-        resp = session.post(settings.GOVMAP_GEOCODE_API, json=geocode_req).json()
+        resp = session.post(settings.GOVMAP_GEOCODE_API, json=geocode_req)
         if resp.status_code != 200:
             logger.error(f'{geocode_req}')
             logger.error(f'{resp.status_code}: {resp.content}')
@@ -82,6 +83,8 @@ def get_session():
 
 
 def operator(*_):
+    updateLocationsFromBranches()
+
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW),
         DF.update_resource(-1, **{'name': 'locations'}),

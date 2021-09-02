@@ -8,6 +8,12 @@
             "admin": true
         },
         {
+            "name": "entities",
+            "display": "Scrape Entities from BudgetKey",
+            "dgp": false,
+            "admin": true
+        },
+        {
             "name": "click",
             "display": "Scrape Click-LeRevaha",
             "dgp": false,
@@ -22,6 +28,12 @@
         {
             "name": "mapbox_upload",
             "display": "Mapbox Uploader",
+            "dgp": false,
+            "admin": true
+        },
+        {
+            "name": "taxonomy",
+            "display": "Taxonomy Fetcher",
             "dgp": false,
             "admin": true
         }
