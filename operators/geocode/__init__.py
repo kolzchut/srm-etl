@@ -83,8 +83,6 @@ def get_session():
 
 
 def operator(*_):
-    updateLocationsFromBranches()
-
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW),
         DF.update_resource(-1, **{'name': 'locations'}),
