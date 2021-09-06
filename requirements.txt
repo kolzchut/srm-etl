@@ -1,3 +1,5 @@
 dataflows-airtable>=0.0.4
 boto3
 dataflows>=0.2.18
+pyproj
+geocoder
