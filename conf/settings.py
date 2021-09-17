@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
-from .utils import get_env, EnvVarStrategy as s
 
+from .utils import EnvVarStrategy as s
+from .utils import get_env
 
 load_dotenv()
 
@@ -33,7 +34,9 @@ MAPBOX_UPLOAD_STATUS = 'https://api.mapbox.com/uploads/v1/srm-kolzchut/'
 
 GOOGLE_MAPS_API_KEY = get_env('ETL_GOOGLE_MAPS_API_KEY')
 
-OPENELIGIBILITY_YAML_URL = 'https://raw.githubusercontent.com/hasadna/openeligibility/main/taxonomy.tx.yaml'
+OPENELIGIBILITY_YAML_URL = (
+    'https://raw.githubusercontent.com/hasadna/openeligibility/main/taxonomy.tx.yaml'
+)
 
 BUDGETKEY_DATABASE_URL = 'postgresql://readonly:readonly@data-next.obudget.org/budgetkey'
 

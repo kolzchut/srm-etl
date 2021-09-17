@@ -3,3 +3,5 @@ boto3
 dataflows>=0.2.18
 pyproj
 geocoder
+git+https://github.com/frictionlessdata/tableschema-elasticsearch-py.git@feature/geopoint#egg=tableschema_elasticsearch
+git+https://github.com/pwalsh/dataflows-elasticsearch.git@feature/normalize-iterable#egg=dataflows_elasticsearch
