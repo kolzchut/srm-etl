@@ -1,11 +1,14 @@
 from dotenv import load_dotenv
-from .utils import get_env, EnvVarStrategy as s
 
+from .utils import EnvVarStrategy as s
+from .utils import get_env
 
 load_dotenv()
 
 
 CLICK_API = 'https://clickrevaha-sys.molsa.gov.il/api/solr?rows=1000'
+
+SHIL_API = 'https://www.gov.il/he/api/BureausApi/Index?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca'
 
 GUIDESTAR_USERNAME = get_env('ETL_GUIDESTAR_USERNAME')
 GUIDESTAR_PASSWORD = get_env('ETL_GUIDESTAR_PASSWORD')
@@ -32,8 +35,12 @@ MAPBOX_UPLOAD_STATUS = 'https://api.mapbox.com/uploads/v1/srm-kolzchut/'
 
 GOOGLE_MAPS_API_KEY = get_env('ETL_GOOGLE_MAPS_API_KEY')
 
-OPENELIGIBILITY_YAML_URL = 'https://raw.githubusercontent.com/hasadna/openeligibility/main/taxonomy.tx.yaml'
+OPENELIGIBILITY_YAML_URL = (
+    'https://raw.githubusercontent.com/hasadna/openeligibility/main/taxonomy.tx.yaml'
+)
 
-BUDGETKEY_DATABASE_URL = 'postgresql://readonly:readonly@data-next.obudget.org/budgetkey'
+BUDGETKEY_DATABASE_URL = (
+    'postgresql://readonly:readonly@data-next.obudget.org/budgetkey'
+)
 
 DATA_DUMP_DIR = 'data'
