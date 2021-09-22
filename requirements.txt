@@ -3,3 +3,4 @@ boto3
 dataflows>=0.2.18
 pyproj
 geocoder
+bleach
