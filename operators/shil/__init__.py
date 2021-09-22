@@ -1,10 +1,10 @@
 import bleach
 import dataflows as DF
 import requests
-from dataflows_airtable import dump_to_airtable
 
 from conf import settings
-from srm_tools import logger
+from srm_tools.logger import logger
+from srm_tools.update_table import airflow_table_updater
 
 ITEM_URL_BASE = 'https://www.gov.il/he/departments/bureaus'
 
@@ -12,24 +12,28 @@ DATA_SOURCE_ID = 'shil'
 
 ORGANIZATION = {
     'id': '7cbc48b1-bf90-4136-8c16-749e77d1ecca',
-    'name': 'תחנות שירות ייעוץ לאזרח (שי"ל)',
-    'source': DATA_SOURCE_ID,
-    'kind': 'משרד ממשלתי',
-    'urls': 'https://www.gov.il/he/departments/bureaus/?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca#תחנות שירות ייעוץ לאזרח',
-    'description': '',
-    'purpose': '',
-    'status': 'ACTIVE',
+    'data': {
+        'name': 'תחנות שירות ייעוץ לאזרח (שי"ל)',
+        'source': DATA_SOURCE_ID,
+        'kind': 'משרד ממשלתי',
+        'urls': 'https://www.gov.il/he/departments/bureaus/?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca#תחנות שירות ייעוץ לאזרח',
+        'description': '',
+        'purpose': '',
+        'status': 'ACTIVE',
+    },
 }
 
 SERVICE = {
     'id': 'shil-1',
-    'name': 'שירות ייעוץ לאזרח',
-    'source': DATA_SOURCE_ID,
-    'description': '',
-    'payment_required': 'no',
-    'urls': 'https://www.gov.il/he/departments/bureaus/?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca#שירות ייעוץ לאזרח',
-    'status': 'ACTIVE',
-    'organizations': ['7cbc48b1-bf90-4136-8c16-749e77d1ecca'],
+    'data': {
+        'name': 'שירות ייעוץ לאזרח',
+        'source': DATA_SOURCE_ID,
+        'description': '',
+        'payment_required': 'no',
+        'urls': 'https://www.gov.il/he/departments/bureaus/?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca#שירות ייעוץ לאזרח',
+        'status': 'ACTIVE',
+        'organizations': ['7cbc48b1-bf90-4136-8c16-749e77d1ecca'],
+    },
 }
 
 
@@ -38,29 +42,43 @@ def normalize_address(r):
     return f'{street} {number}, {city[0]}'
 
 
+def update_mapper():
+    def func(row):
+        row.update({k: v for k, v in row.get('data').items()})
+
+    return func
+
+
 FIELD_MAP = {
     'id': 'ItemId',
     'source': {'transform': lambda r: DATA_SOURCE_ID},
     'name': 'Title',
     'phone_numbers': {
         'source': 'PhoneNumber',
-        'type': 'array',
-        'transform': lambda r: [r['PhoneNumber'], r['PhoneNumber2']],
+        # thought it should be an array but doesnt look right in airtable.
+        # cant clearly see in code how we delimit multiple, so going for comma here.
+        'type': 'string',
+        'transform': lambda r: ','.join(
+            filter(None, [r['PhoneNumber'], r['PhoneNumber2']])
+        ),
     },
     'address_details': {
         'source': 'Location',
     },
     'description': {
         'source': 'Description',
-        'transform': lambda r: bleach.clean(r['Description'], strip=True),
+        'transform': lambda r: bleach.clean(
+            r['Description'], tags=tuple(), strip=True
+        ).replace('&nbsp;', ' '),
     },
-    'emails': {'source': 'Email', 'type': 'array', 'transform': lambda r: [r['Email']]},
+    # TODO - shouldnt we store emails?
+    # 'emails': {'source': 'Email', 'type': 'array', 'transform': lambda r: [r['Email']]},
     'urls': {
         'source': 'UrlName',
         'transform': lambda r: f'{ITEM_URL_BASE}/{r["UrlName"]}#{r["Title"]}',
     },
-    'created_on': 'DocPublishedDate',
-    'last_modified': 'DocUpdateDate',
+    # 'created_on': 'DocPublishedDate',
+    # 'last_modified': 'DocUpdateDate',
     'address': {
         'source': 'Address',
         'type': 'string',
@@ -115,57 +133,58 @@ def get_shil_data():
 
 
 def shil_organization_data_flow():
-    return DF.Flow(
+    return airflow_table_updater(
+        settings.AIRTABLE_ORGANIZATION_TABLE,
+        DATA_SOURCE_ID,
+        list(ORGANIZATION['data'].keys()),
         [ORGANIZATION],
-        dump_to_airtable(
-            {
-                (settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE): {
-                    'resource-name': 'res_1',
-                    'typecast': True,
-                }
-            }
-        ),
+        update_mapper(),
     )
 
 
 def shil_service_data_flow():
-    return DF.Flow(
+    return airflow_table_updater(
+        settings.AIRTABLE_SERVICE_TABLE,
+        DATA_SOURCE_ID,
+        list(SERVICE['data'].keys()),
         [SERVICE],
-        dump_to_airtable(
-            {
-                (settings.AIRTABLE_BASE, settings.AIRTABLE_SERVICE_TABLE): {
-                    'resource-name': 'res_1',
-                    'typecast': True,
-                }
-            }
-        ),
+        update_mapper(),
     )
 
 
 def shil_branch_data_flow():
-    return DF.Flow(
-        get_shil_data(),
-        DF.update_package(name='Shil Scrape', resources=-1),
-        DF.update_resource(name='branches', path='branches.csv', resources=-1),
-        *[ensure_field(key, args) for key, args in FIELD_MAP.items()],
-        DF.select_fields(list(FIELD_MAP.keys())),
-        dump_to_airtable(
-            {
-                (settings.AIRTABLE_BASE, settings.AIRTABLE_BRANCH_TABLE): {
-                    'resource-name': 'branches',
-                    'typecast': True,
-                }
-            }
+    return airflow_table_updater(
+        settings.AIRTABLE_BRANCH_TABLE,
+        DATA_SOURCE_ID,
+        list(FIELD_MAP.keys()),
+        DF.Flow(
+            get_shil_data(),
+            DF.update_resource(name='branches', path='branches.csv', resources=-1),
+            *[
+                ensure_field(key, args, resources=['branches'])
+                for key, args in FIELD_MAP.items()
+            ],
+            DF.select_fields(list(FIELD_MAP.keys()), resources=['branches']),
+            DF.add_field(
+                'data',
+                'object',
+                lambda r: {
+                    k: v for k, v in r.items() if not k in ('id', 'source', 'status')
+                },
+                resources=['branches'],
+            ),
+            DF.select_fields(['id', 'data'], resources=['branches']),
         ),
+        update_mapper(),
     )
 
 
 def operator(*_):
     logger.info('Starting Shil Flow')
 
-    shil_organization_data_flow().process()
-    shil_service_data_flow().process()
-    shil_branch_data_flow().process()
+    shil_organization_data_flow()
+    shil_service_data_flow()
+    shil_branch_data_flow()
 
     logger.info('Finished Shil Flow')
 
