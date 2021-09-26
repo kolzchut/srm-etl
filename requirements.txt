@@ -1,7 +1,7 @@
+dataflows>=0.3.2
 dataflows-airtable>=0.0.4
 boto3
-dataflows>=0.2.18
 pyproj
 geocoder
-git+https://github.com/frictionlessdata/tableschema-elasticsearch-py.git@feature/geopoint#egg=tableschema_elasticsearch
-git+https://github.com/pwalsh/dataflows-elasticsearch.git@feature/normalize-iterable#egg=dataflows_elasticsearch
+dataflows-elasticsearch>=0.1.0
+tableschema-elasticsearch>=2.1.0

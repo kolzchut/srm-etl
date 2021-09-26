@@ -38,30 +38,6 @@
             "admin": true
         },
         {
-            "name": "derive.to_dp",
-            "display": "Write Data Packages from staging data.",
-            "dgp": false,
-            "admin": true
-        },
-        {
-            "name": "derive.to_sql",
-            "display": "Write SQL database",
-            "dgp": false,
-            "admin": true
-        },
-        {
-            "name": "derive.to_es",
-            "display": "Write ES index",
-            "dgp": false,
-            "admin": true
-        },
-        {
-            "name": "derive.to_mapbox",
-            "display": "Write Mapbox GeoJSON data",
-            "dgp": false,
-            "admin": true
-        },
-        {
             "name": "derive",
             "display": "Derive all databases from staging data.",
             "dgp": false,

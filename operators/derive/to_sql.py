@@ -26,6 +26,14 @@ def data_api_sql_flow():
         DF.load(f'{settings.DATA_DUMP_DIR}/table_data/datapackage.json'),
         DF.dump_to_sql(
             dict(srm_api={'resource-name': 'table_data'}),
+            indexes_fields=[
+                ['branch_name'],
+                ['organization_name'],
+                ['service_name'],
+                ['response_name'],
+                ['situation_name'],
+                ['response_category_id'],
+            ],
         ),
     )
 

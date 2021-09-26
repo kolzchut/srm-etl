@@ -31,27 +31,8 @@ def set_es_item_types(resources=None):
 def data_api_es_flow():
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/table_data/datapackage.json'),
-        DF.printer(),
-        # the tableschema-elasticsearch driver requires
-        # a primary key but elasticsearch does not.
-        DF.set_primary_key(
-            [
-                'response_id',
-                'situation_id',
-                'service_id',
-                'organization_id',
-                'branch_id',
-            ]
-        ),
         dump_to_es(
-            indexes=dict(
-                # TODO - looks like we should default doc_type inside the dumper, and make it optional in dump_to_es
-                # https://github.com/elastic/elasticsearch-py/issues/846
-                # TODO - warnings
-                # ElasticsearchWarning: [types removal] Using include_type_name in put mapping requests is deprecated.
-                # ElasticsearchWarning: [types removal] Specifying types in bulk requests is deprecated.
-                srm_apiz=[dict(doc_type="_doc", resource_name='table_data')]
-            ),
+            indexes=dict(srm_api=[dict(resource_name='table_data')]),
         ),
     )
 

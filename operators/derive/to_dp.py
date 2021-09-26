@@ -1,3 +1,5 @@
+from itertools import chain
+
 import dataflows as DF
 from dataflows_airtable import load_from_airtable
 
@@ -5,6 +7,21 @@ from conf import settings
 from srm_tools.logger import logger
 
 from . import helpers
+
+
+def merge_array_fields(fieldnames):
+    def func(r):
+        # get rid of null fields
+        vals = filter(None, [r[name] for name in fieldnames])
+        # create a flat view over vals
+        vals = chain(*vals)
+        # remove duplicates
+        vals = set(vals)
+        # materialize as a list (don't have issue later with different iterable container types)
+        vals = list(vals)
+        return vals
+
+    return func
 
 
 def srm_data_pull_flow():
@@ -45,13 +62,17 @@ def flat_branches_flow():
     return DF.Flow(
         DF.load(
             f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json',
-            resources=['branches', 'locations', 'organizations', 'situations'],
+            resources=['branches', 'locations', 'organizations'],
         ),
         DF.update_package(name='Flat Branches'),
         DF.update_resource(['branches'], name='flat_branches', path='flat_branches.csv'),
         # location onto branches
-        DF.add_field('location_key', 'string', resources=['flat_branches']),
-        helpers.unwind('location', 'location_key', resources=['flat_branches']),
+        DF.add_field(
+            'location_key',
+            'string',
+            lambda r: r['location'][0],
+            resources=['flat_branches'],
+        ),
         DF.join(
             'locations',
             ['key'],
@@ -60,8 +81,12 @@ def flat_branches_flow():
             fields=dict(geometry=None, address=None),
         ),
         # organizations onto branches
-        DF.add_field('organization_key', 'string', resources=['flat_branches']),
-        helpers.unwind('organization', 'organization_key', resources=['flat_branches']),
+        DF.add_field(
+            'organization_key',
+            'string',
+            lambda r: r['organization'][0],
+            resources=['flat_branches'],
+        ),
         DF.join(
             'organizations',
             ['key'],
@@ -78,32 +103,12 @@ def flat_branches_flow():
                 organization_situations={'name': 'situations', 'aggregate': 'set'},
             ),
         ),
-        # branch situations onto branches
-        DF.duplicate('situations', '_situations'),
-        DF.add_field('branch_key', 'string', resources=['_situations']),
-        helpers.unwind('branches', 'branch_key', resources=['_situations']),
-        DF.join(
-            '_situations',
-            ['branch_key'],
-            'flat_branches',
-            ['key'],
-            fields=dict(
-                branch_situation_id={'name': 'id', 'aggregate': 'set'},
-                branch_situation_name={'name': 'name', 'aggregate': 'set'},
-            ),
-        ),
-        # organization situations data onto branches
-        DF.add_field('organization_key', 'string', resources=['situations']),
-        helpers.unwind('organizations', 'organization_key', resources=['situations']),
-        DF.join(
-            'situations',
-            ['organization_key'],
-            'flat_branches',
-            ['key'],
-            fields=dict(
-                organization_situation_id={'name': 'id', 'aggregate': 'set'},
-                organization_situation_name={'name': 'name', 'aggregate': 'set'},
-            ),
+        # merge multiple situation fields into a single field
+        DF.add_field(
+            'merged_situations',
+            'array',
+            merge_array_fields(['situations', 'organization_situations']),
+            resources=['flat_branches'],
         ),
         DF.rename_fields(
             {
@@ -116,6 +121,7 @@ def flat_branches_flow():
                 'phone_numbers': 'branch_phone_numbers',
                 'address': 'branch_address',
                 'geometry': 'branch_geometry',
+                'situations': 'branch_situations',
             },
             resources=['flat_branches'],
         ),
@@ -128,16 +134,16 @@ def flat_branches_flow():
                 'branch_urls',
                 'branch_address',
                 'branch_geometry',
-                'branch_situation_id',
-                'branch_situation_name',
+                'branch_situations',
+                'organization_key',
                 'organization_id',
                 'organization_name',
                 'organization_description',
                 'organization_purpose',
                 'organization_kind',
                 'organization_urls',
-                'organization_situation_id',
-                'organization_situation_name',
+                'organization_situations',
+                'merged_situations',
             ],
             resources=['flat_branches'],
         ),
@@ -147,45 +153,61 @@ def flat_branches_flow():
 
 
 def flat_services_flow():
-    """Produce a denormalized view of branch-related data."""
+    """Produce a denormalized view of service-related data."""
 
     return DF.Flow(
         DF.load(
+            f'{settings.DATA_DUMP_DIR}/flat_branches/datapackage.json',
+            resources=['flat_branches'],
+        ),
+        DF.load(
             f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json',
-            resources=['services', 'branches'],
+            resources=['responses', 'services'],
         ),
         DF.update_package(name='Flat Services'),
         DF.update_resource(['services'], name='flat_services', path='flat_services.csv'),
-        DF.add_field('response_key', 'string', resources=['flat_services']),
+        # responses onto services
         helpers.unwind('responses', 'response_key', resources=['flat_services']),
-        DF.add_field('situation_key', 'string', resources=['flat_services']),
-        helpers.unwind('situations', 'situation_key', resources=['flat_services']),
-        DF.add_field('organization_key', 'string', resources=['flat_services']),
-        helpers.unwind('organizations', 'organization_key', resources=['flat_services']),
-        # branches through organizations
-        DF.add_field('organization_key', 'string', resources=['branches']),
-        helpers.unwind('organization', 'organization_key', resources=['branches']),
         DF.join(
-            'branches',
+            'responses',
+            ['key'],
+            'flat_services',
+            ['response_key'],
+            fields=dict(
+                response_id={'name': 'id'},
+                response_name={'name': 'name'},
+                response_situations={'name': 'situations'},
+            ),
+        ),
+        # branches onto services, through organizations (we already have direct branches)
+        helpers.unwind('organizations', 'organization_key', resources=['flat_services']),
+        DF.join(
+            'flat_branches',
             ['organization_key'],
             'flat_services',
             ['organization_key'],
             fields=dict(
-                organization_branches={'name': 'key', 'aggregate': 'set'},
+                organization_branches={'name': 'branch_key', 'aggregate': 'set'},
             ),
         ),
-        # if branches has a value, then the record belongs to the branches directly
-        # if branches has no value, then the record belong to the branches via the organization
+        # merge multiple branch fields into a single field
         DF.add_field(
-            'match_branches',
+            'merge_branches',
             'array',
-            lambda r: r['branches'] or r['organization_branches'],
+            merge_array_fields(['branches', 'organization_branches']),
             resources=['flat_services'],
         ),
-        DF.add_field('branch_key', 'string', resources=['flat_services']),
-        helpers.unwind('match_branches', 'branch_key', resources=['flat_services']),
+        helpers.unwind('merge_branches', 'branch_key', resources=['flat_services']),
+        # merge multiple situation fields into a single field
+        DF.add_field(
+            'merged_situations',
+            'array',
+            merge_array_fields(['situations', 'response_situations']),
+            resources=['flat_services'],
+        ),
         DF.rename_fields(
             {
+                'key': 'service_key',
                 'id': 'service_id',
                 'name': 'service_name',
                 'description': 'service_description',
@@ -193,11 +215,13 @@ def flat_services_flow():
                 'payment_required': 'service_payment_required',
                 'payment_details': 'service_payment_details',
                 'urls': 'service_urls',
+                'situations': 'service_situations',
             },
             resources=['flat_services'],
         ),
         DF.select_fields(
             [
+                'service_key',
                 'service_id',
                 'service_name',
                 'service_description',
@@ -205,10 +229,15 @@ def flat_services_flow():
                 'service_payment_required',
                 'service_payment_details',
                 'service_urls',
+                'service_situations',
                 'response_key',
-                'situation_key',
-                'organization_key',
+                'response_id',
+                'response_name',
+                'response_category_id',
+                'response_category_name',
+                'response_situations',
                 'branch_key',
+                'merged_situations',
             ],
             resources=['flat_services'],
         ),
@@ -223,7 +252,7 @@ def table_data_flow():
     return DF.Flow(
         DF.load(
             f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json',
-            resources=['responses', 'situations', 'organizations'],
+            resources=['situations'],
         ),
         DF.load(
             f'{settings.DATA_DUMP_DIR}/flat_branches/datapackage.json',
@@ -236,15 +265,36 @@ def table_data_flow():
         DF.update_package(name='Table Data'),
         DF.update_resource(['flat_services'], name='table_data', path='table_data.csv'),
         DF.join(
-            'responses',
-            ['key'],
+            'flat_branches',
+            ['branch_key'],
             'table_data',
-            ['response_key'],
+            ['branch_key'],
             fields=dict(
-                response_id={'name': 'id'},
-                response_name={'name': 'name'},
+                branch_id=None,
+                branch_name=None,
+                branch_geometry=None,
+                branch_address=None,
+                organization_key=None,
+                organization_id=None,
+                organization_name=None,
+                branch_merged_situations={'name': 'merged_situations'},
             ),
         ),
+        DF.add_field(
+            'response_category_id',
+            'string',
+            lambda r: r['response_id'].split(':')[1],
+            resources=['table_data'],
+        ),
+        # merge multiple situation fields into a single field
+        DF.add_field(
+            'situations',
+            'array',
+            merge_array_fields(['branch_merged_situations', 'merged_situations']),
+            resources=['table_data'],
+        ),
+        # situations onto table records
+        helpers.unwind('situations', 'situation_key', resources=['table_data']),
         DF.join(
             'situations',
             ['key'],
@@ -255,56 +305,32 @@ def table_data_flow():
                 situation_name={'name': 'name'},
             ),
         ),
-        DF.join(
-            'organizations',
-            ['key'],
-            'table_data',
-            ['organization_key'],
-            fields=dict(
-                organization_id={'name': 'id'},
-                organization_name={'name': 'name'},
-            ),
-        ),
-        DF.join(
-            'flat_branches',
-            ['branch_key'],
-            'table_data',
-            ['branch_key'],
-            fields=dict(
-                branch_id=None,
-                branch_name=None,
-                branch_geometry=None,
-                branch_address=None,
-            ),
-        ),
-        DF.add_field(
-            'response_parent_id',
-            'string',
-            lambda r: ":".join(r['response_id'].split(':')[:-1]),
+        DF.set_primary_key(
+            ['service_id', 'response_id', 'branch_id', 'situation_id'],
             resources=['table_data'],
         ),
         DF.select_fields(
             [
-                # TODO: do we want to push these forward for data provenance?
-                # May be useful for future debugging, maybe not.
-                # 'service_key',
-                # 'response_key',
-                # 'situation_key',
-                # 'organization_key',
-                # 'branch_key',
+                # Keys from airtable may be useful for future debugging/provenance.
+                'service_key',
+                'response_key',
+                'situation_key',
+                'organization_key',
+                'branch_key',
+                # fields for our API
                 'service_id',
                 'service_name',
                 'response_id',
                 'response_name',
-                'response_parent_id',
-                'situation_id',
-                'situation_name',
+                'response_category_id',
                 'organization_id',
                 'organization_name',
                 'branch_id',
                 'branch_name',
                 'branch_geometry',
                 'branch_address',
+                'situation_id',
+                'situation_name',
             ],
             resources=['table_data'],
         ),

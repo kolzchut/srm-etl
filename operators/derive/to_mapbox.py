@@ -13,75 +13,61 @@ def geo_data_flow():
         DF.load(f'{settings.DATA_DUMP_DIR}/table_data/datapackage.json'),
         DF.update_package(name='Geo Data'),
         DF.update_resource(['table_data'], name='geo_data', path='geo_data.csv'),
+        # some addresses not resolved to points, and thus they are not useful for the map.
+        DF.filter_rows(lambda r: not r['branch_geometry'] is None, resources=['geo_data']),
         DF.join_with_self(
             'geo_data',
-            ['response_id', 'branch_geometry'],
+            ['service_id', 'response_id', 'branch_id'],
             fields=dict(
                 branch_geometry=None,
+                response_category_id=None,
                 response_id=None,
                 response_name=None,
-                organization_id={'name': 'organization_id', 'aggregate': 'set'},
-                organization_name={'name': 'organization_name', 'aggregate': 'set'},
-                branch_id={'name': 'branch_id', 'aggregate': 'set'},
-                branch_name={'name': 'branch_name', 'aggregate': 'set'},
-                service_id={'name': 'service_id', 'aggregate': 'set'},
-                service_name={'name': 'service_name', 'aggregate': 'set'},
-                situation_id={'name': 'situation_id', 'aggregate': 'set'},
-                situation_name={'name': 'situation_name', 'aggregate': 'set'},
+                organization_id=None,
+                organization_name=None,
+                branch_id=None,
+                branch_name=None,
+                service_id=None,
+                service_name=None,
+                situation_id={'name': 'situation_id', 'aggregate': 'array'},
+                situation_name={'name': 'situation_name', 'aggregate': 'array'},
             ),
-        ),
-        DF.add_field(
-            'organizations',
-            'array',
-            lambda r: [
-                {'id': vals[0], 'name': vals[1]}
-                for vals in zip(r['organization_id'], r['organization_name'])
-            ],
-        ),
-        DF.add_field(
-            'branches',
-            'array',
-            lambda r: [
-                {'id': vals[0], 'name': vals[1]} for vals in zip(r['branch_id'], r['branch_name'])
-            ],
-        ),
-        DF.add_field(
-            'services',
-            'array',
-            lambda r: [
-                {'id': vals[0], 'name': vals[1]}
-                for vals in zip(r['service_id'], r['service_name'])
-            ],
         ),
         DF.add_field(
             'situations',
             'array',
             lambda r: [
-                {'id': vals[0], 'name': vals[1]}
-                for vals in zip(r['situation_id'], r['situation_name'])
+                {'id': id, 'name': name}
+                for id, name in zip(r['situation_id'], r['situation_name'])
             ],
         ),
-        # some addresses not resolved to points, and they are not useful for the map.
-        DF.filter_rows(lambda r: not r['branch_geometry'] is None),
         DF.select_fields(
             [
                 'branch_geometry',
                 'response_id',
                 'response_name',
-                'organizations',
-                'branches',
-                'services',
+                'response_category_id',
+                'organization_id',
+                'organization_name',
+                'branch_id',
+                'branch_name',
+                'service_id',
+                'service_name',
                 'situations',
-            ]
+            ],
+            resources=['geo_data'],
         ),
+        # TODO - When we join with self, it puts the resource into a path under data/
+        # this workaround just keeps behaviour same as other dumps we have.
+        DF.update_resource(['geo_data'], path='geo_data.csv'),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data', format='geojson'),
     )
 
 
 def push_mapbox_tileset():
     return upload_tileset(
-        f'{settings.DATA_DUMP_DIR}/geo_data/data/geo_data.json',
-        'srm-kolzchut.all-points',
+        f'{settings.DATA_DUMP_DIR}/geo_data/geo_data.json',
+        'srm-kolzchut.geo-data',
         'SRM Geo Data',
     )
 
