@@ -20,7 +20,7 @@ def geo_data_flow():
             ['service_id', 'response_id', 'branch_id'],
             fields=dict(
                 branch_geometry=None,
-                response_category_id=None,
+                response_category=None,
                 response_id=None,
                 response_name=None,
                 organization_id=None,
@@ -46,7 +46,7 @@ def geo_data_flow():
                 'branch_geometry',
                 'response_id',
                 'response_name',
-                'response_category_id',
+                'response_category',
                 'organization_id',
                 'organization_name',
                 'branch_id',

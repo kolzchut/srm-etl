@@ -32,7 +32,7 @@ def data_api_sql_flow():
                 ['service_name'],
                 ['response_name'],
                 ['situation_name'],
-                ['response_category_id'],
+                ['response_category'],
             ],
         ),
     )
