@@ -343,14 +343,6 @@ def operator(*_):
 
     logger.info('Starting Data Package Flow')
 
-    # TODO - cant we run like this?
-    # DF.Flow(
-    #     srm_data_pull_flow(),
-    #     flat_branches_flow(),
-    #     flat_services_flow(),
-    #     table_data_flow(),
-    # ).process()
-
     srm_data_pull_flow().process(),
     flat_branches_flow().process(),
     flat_services_flow().process(),

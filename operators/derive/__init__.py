@@ -1,12 +1,20 @@
+from srm_tools.logger import logger
+
 from . import to_dp, to_es, to_mapbox, to_sql
+
+
+def operator(*_):
+
+    logger.info('Starting Derive Data Flow')
+
+    to_dp.operator()
+    to_sql.operator()
+    to_es.operator()
+    to_mapbox.operator()
+
+    logger.info('Finished Derive Data Flow')
+
 
 if __name__ == '__main__':
 
-    to_dp.srm_data_pull_flow().process()
-    to_dp.flat_branches_flow().process()
-    to_dp.flat_services_flow().process()
-    to_dp.table_data_flow().process()
-    to_sql.data_api_sql_flow().process()
-    to_es.data_api_es_flow().process()
-    to_mapbox.geo_data_flow().process()
-    to_mapbox.push_mapbox_tileset()
+    operator(None, None, None)
