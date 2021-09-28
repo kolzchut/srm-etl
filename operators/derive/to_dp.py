@@ -11,14 +11,14 @@ from . import helpers
 
 def merge_array_fields(fieldnames):
     def func(r):
-        # get rid of null fields
+        # get rid of null fields (could be None or [])
         vals = filter(None, [r[name] for name in fieldnames])
         # create a flat view over vals
         vals = chain(*vals)
         # remove duplicates
         vals = set(vals)
-        # materialize as a list (don't have issue later with different iterable container types)
-        vals = list(vals)
+        # return as a sorted list
+        vals = sorted(vals)
         return vals
 
     return func
