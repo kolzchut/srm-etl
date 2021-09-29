@@ -342,7 +342,6 @@ def flat_table_flow():
                 'organization_kind',
                 'organization_urls',
                 'branch_id',
-                'branch_urls',
                 'branch_name',
                 'branch_description',
                 'branch_urls',
@@ -359,14 +358,94 @@ def flat_table_flow():
     )
 
 
+def card_data_flow():
+    return DF.Flow(
+        DF.load(f'{settings.DATA_DUMP_DIR}/flat_table/datapackage.json'),
+        DF.update_package(name='Card Data'),
+        DF.update_resource(['flat_table'], name='card_data', path='card_data.csv'),
+        DF.add_field(
+            'card_id',
+            'string',
+            lambda r: f'{r["branch_id"]}:{r["service_id"]}',
+            resources=['card_data'],
+        ),
+        DF.join_with_self(
+            'card_data',
+            ['card_id'],
+            fields=dict(
+                card_id=None,
+                service_id=None,
+                service_name=None,
+                service_description=None,
+                service_details=None,
+                service_payment_required=None,
+                service_payment_details=None,
+                service_urls=None,
+                response_id={'name': 'response_id', 'aggregate': 'array'},
+                response_name={'name': 'response_name', 'aggregate': 'array'},
+                response_categories={'name': 'response_category', 'aggregate': 'set'},
+                organization_id=None,
+                organization_name=None,
+                organization_description=None,
+                organization_purpose=None,
+                organization_kind=None,
+                organization_urls=None,
+                branch_id=None,
+                branch_name=None,
+                branch_description=None,
+                branch_urls=None,
+                branch_phone_numbers=None,
+                branch_address=None,
+                branch_geometry=None,
+                situation_id={'name': 'situation_id', 'aggregate': 'array'},
+                situation_name={'name': 'situation_name', 'aggregate': 'array'},
+            ),
+        ),
+        DF.add_field(
+            'situations',
+            'array',
+            lambda r: [
+                {'id': id, 'name': name}
+                for id, name in set(tuple(zip(r['situation_id'], r['situation_name'])))
+            ],
+            resources=['card_data'],
+        ),
+        DF.add_field(
+            'responses',
+            'array',
+            lambda r: [
+                {'id': id, 'name': name}
+                for id, name in set(tuple(zip(r['response_id'], r['response_name'])))
+            ],
+            resources=['card_data'],
+        ),
+        DF.set_primary_key(['card_id']),
+        DF.delete_fields(
+            [
+                'response_id',
+                'response_name',
+                'situation_id',
+                'situation_name',
+            ],
+            resources=['card_data'],
+        ),
+        # TODO - When we join with self (in some cases??), it puts the resource into a path under data/
+        # this workaround just keeps behaviour same as other dumps we have.
+        DF.update_resource(['card_data'], path='card_data.csv'),
+        DF.validate(),
+        DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/card_data'),
+    )
+
+
 def operator(*_):
 
     logger.info('Starting Data Package Flow')
 
-    srm_data_pull_flow().process(),
-    flat_branches_flow().process(),
-    flat_services_flow().process(),
-    flat_table_flow().process(),
+    srm_data_pull_flow().process()
+    flat_branches_flow().process()
+    flat_services_flow().process()
+    flat_table_flow().process()
+    card_data_flow().process()
 
     logger.info('Finished Data Package Flow')
 
