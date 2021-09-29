@@ -246,8 +246,8 @@ def flat_services_flow():
     )
 
 
-def table_data_flow():
-    """Produce a table to back our Data APIs."""
+def flat_table_flow():
+    """Produce a flat table to back our Data APIs."""
 
     return DF.Flow(
         DF.load(
@@ -262,12 +262,12 @@ def table_data_flow():
             f'{settings.DATA_DUMP_DIR}/flat_services/datapackage.json',
             resources=['flat_services'],
         ),
-        DF.update_package(name='Table Data'),
-        DF.update_resource(['flat_services'], name='table_data', path='table_data.csv'),
+        DF.update_package(name='Flat Table'),
+        DF.update_resource(['flat_services'], name='flat_table', path='flat_table.csv'),
         DF.join(
             'flat_branches',
             ['branch_key'],
-            'table_data',
+            'flat_table',
             ['branch_key'],
             fields=dict(
                 branch_id=None,
@@ -291,21 +291,21 @@ def table_data_flow():
             'response_category',
             'string',
             lambda r: r['response_id'].split(':')[1],
-            resources=['table_data'],
+            resources=['flat_table'],
         ),
         # merge multiple situation fields into a single field
         DF.add_field(
             'situations',
             'array',
             merge_array_fields(['branch_merged_situations', 'merged_situations']),
-            resources=['table_data'],
+            resources=['flat_table'],
         ),
         # situations onto table records
-        helpers.unwind('situations', 'situation_key', resources=['table_data']),
+        helpers.unwind('situations', 'situation_key', resources=['flat_table']),
         DF.join(
             'situations',
             ['key'],
-            'table_data',
+            'flat_table',
             ['situation_key'],
             fields=dict(
                 situation_id={'name': 'id'},
@@ -314,7 +314,7 @@ def table_data_flow():
         ),
         DF.set_primary_key(
             ['service_id', 'response_id', 'branch_id', 'situation_id'],
-            resources=['table_data'],
+            resources=['flat_table'],
         ),
         DF.select_fields(
             [
@@ -352,10 +352,10 @@ def table_data_flow():
                 'situation_id',
                 'situation_name',
             ],
-            resources=['table_data'],
+            resources=['flat_table'],
         ),
         DF.validate(),
-        DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/table_data'),
+        DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/flat_table'),
     )
 
 
@@ -366,7 +366,7 @@ def operator(*_):
     srm_data_pull_flow().process(),
     flat_branches_flow().process(),
     flat_services_flow().process(),
-    table_data_flow().process(),
+    flat_table_flow().process(),
 
     logger.info('Finished Data Package Flow')
 

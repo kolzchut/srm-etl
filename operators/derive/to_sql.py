@@ -23,9 +23,9 @@ from srm_tools.logger import logger
 
 def data_api_sql_flow():
     return DF.Flow(
-        DF.load(f'{settings.DATA_DUMP_DIR}/table_data/datapackage.json'),
+        DF.load(f'{settings.DATA_DUMP_DIR}/flat_table/datapackage.json'),
         DF.dump_to_sql(
-            dict(srm_api={'resource-name': 'table_data'}),
+            dict(srm_api={'resource-name': 'flat_table'}),
             indexes_fields=[
                 ['branch_name'],
                 ['organization_name'],

@@ -30,9 +30,9 @@ def set_es_item_types(resources=None):
 
 def data_api_es_flow():
     return DF.Flow(
-        DF.load(f'{settings.DATA_DUMP_DIR}/table_data/datapackage.json'),
+        DF.load(f'{settings.DATA_DUMP_DIR}/flat_table/datapackage.json'),
         dump_to_es(
-            indexes=dict(srm_api=[dict(resource_name='table_data')]),
+            indexes=dict(srm_api=[dict(resource_name='flat_table')]),
         ),
     )
 

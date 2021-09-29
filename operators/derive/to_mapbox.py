@@ -10,9 +10,9 @@ from . import helpers
 
 def geo_data_flow():
     return DF.Flow(
-        DF.load(f'{settings.DATA_DUMP_DIR}/table_data/datapackage.json'),
+        DF.load(f'{settings.DATA_DUMP_DIR}/flat_table/datapackage.json'),
         DF.update_package(name='Geo Data'),
-        DF.update_resource(['table_data'], name='geo_data', path='geo_data.csv'),
+        DF.update_resource(['flat_table'], name='geo_data', path='geo_data.csv'),
         # some addresses not resolved to points, and thus they are not useful for the map.
         DF.filter_rows(lambda r: not r['branch_geometry'] is None, resources=['geo_data']),
         DF.join_with_self(
