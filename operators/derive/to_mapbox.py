@@ -1,3 +1,5 @@
+from itertools import chain
+
 import dataflows as DF
 
 from conf import settings
@@ -15,8 +17,25 @@ def geo_data_flow():
         DF.add_field(
             'record',
             'object',
-            lambda r: {k: str(v) for k, v in r.items()},
+            lambda r: {
+                k: v if not k == 'branch_geometry' or v is None else (float(v[0]), float(v[1]))
+                for k, v in r.items()
+            },
             resources=['geo_data'],
+        ),
+        helpers.unwind('response_categories', 'response_category', resources=['geo_data']),
+        # some addresses not resolved to points, and thus they are not useful for the map.
+        DF.filter_rows(lambda r: not r['branch_geometry'] is None, resources=['geo_data']),
+        DF.join_with_self(
+            'geo_data',
+            ['branch_geometry', 'response_category'],
+            fields=dict(
+                branch_geometry=None,
+                response_category=None,
+                situations_at_point={'name': 'situations', 'aggregate': 'array'},
+                responses_at_point={'name': 'responses', 'aggregate': 'array'},
+                records={'name': 'record', 'aggregate': 'array'},
+            ),
         ),
         DF.add_field(
             'offset',
@@ -25,24 +44,19 @@ def geo_data_flow():
             constraints={'maxLength': 2},
             resources=['geo_data'],
         ),
-        helpers.unwind('response_categories', 'response_category'),
-        # some addresses not resolved to points, and thus they are not useful for the map.
-        DF.filter_rows(lambda r: not r['branch_geometry'] is None, resources=['geo_data']),
-        DF.join_with_self(
-            'geo_data',
-            ['card_id'],
-            fields=dict(
-                card_id=None,
-                branch_geometry=None,
-                offset=None,
-                response_category=None,
-                outer_situations={'name': 'situations', 'agreggate': 'set'},
-                outer_responses={'name': 'responses', 'agreggate': 'set'},
-                records={'name': 'record', 'agreggate': 'set'},
-            ),
-        ),
         DF.set_primary_key(['branch_geometry', 'response_category']),
-        DF.rename_fields({'outer_situations': 'situations', 'outer_responses': 'responses'}),
+        DF.add_field(
+            'situations',
+            'array',
+            lambda r: list({v['id']: v for v in chain(*r['situations_at_point'])}.values()),
+            resources=['geo_data'],
+        ),
+        DF.add_field(
+            'responses',
+            'array',
+            lambda r: list({v['id']: v for v in chain(*r['responses_at_point'])}.values()),
+            resources=['geo_data'],
+        ),
         DF.select_fields(
             [
                 'branch_geometry',
