@@ -30,7 +30,7 @@ def geo_data_flow():
             'geo_data',
             ['branch_geometry', 'response_category'],
             fields=dict(
-                branch_geometry=None,
+                geometry={'name': 'branch_geometry'},
                 response_category=None,
                 situations_at_point={'name': 'situations', 'aggregate': 'array'},
                 responses_at_point={'name': 'responses', 'aggregate': 'array'},
@@ -44,22 +44,22 @@ def geo_data_flow():
             constraints={'maxLength': 2},
             resources=['geo_data'],
         ),
-        DF.set_primary_key(['branch_geometry', 'response_category']),
+        DF.set_primary_key(['geometry', 'response_category']),
         DF.add_field(
             'situations',
             'array',
-            lambda r: list({v['id']: v for v in chain(*r['situations_at_point'])}.values()),
+            lambda r: sorted(set(s['id'] for s in chain(*r['situations_at_point']))),
             resources=['geo_data'],
         ),
         DF.add_field(
             'responses',
             'array',
-            lambda r: list({v['id']: v for v in chain(*r['responses_at_point'])}.values()),
+            lambda r: sorted(set(s['id'] for s in chain(*r['responses_at_point']))),
             resources=['geo_data'],
         ),
         DF.select_fields(
             [
-                'branch_geometry',
+                'geometry',
                 'response_category',
                 'offset',
                 'situations',
