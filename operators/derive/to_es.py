@@ -26,7 +26,7 @@ class SRMMappingGenerator(MappingGenerator):
 def data_api_es_flow():
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
-        DF.set_type('card_id', type='string', **{'es:keyword': True}),
+        DF.set_type('card_id', **{'es:keyword': True}),
         DF.set_type('branch_id', type='string', **{'es:keyword': True}),
         DF.set_type('service_id', type='string', **{'es:keyword': True}),
         DF.set_type('organization_id', type='string', **{'es:keyword': True}),
@@ -60,7 +60,7 @@ def data_api_es_flow():
             },
         ),
         dump_to_es(
-            indexes=dict(srm_api=[dict(resource_name='card_data')]),
+            indexes=dict(cards=[dict(resource_name='card_data')]),
             mapper_cls=SRMMappingGenerator,
         ),
     )
