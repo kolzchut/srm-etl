@@ -8,6 +8,13 @@ from srm_tools.logger import logger
 
 from . import helpers
 
+def point_title(r):
+    records = r.get('records')
+    if len(records) > 1:
+        return '{} שירותים'.format(len(records))  # TODO - multilingual
+    else:
+        return records[0]['service_name']
+
 
 def geo_data_flow():
     return DF.Flow(
@@ -57,6 +64,12 @@ def geo_data_flow():
             lambda r: sorted(set(s['id'] for s in chain(*r['responses_at_point']))),
             resources=['geo_data'],
         ),
+        DF.add_field(
+            'title', 'string', point_title, resources=['geo_data']
+        ),
+        DF.add_field(
+            'service_count', 'integer', lambda r: len(r['records']), resources=['geo_data']
+        ),
         DF.select_fields(
             [
                 'geometry',
@@ -65,6 +78,8 @@ def geo_data_flow():
                 'situations',
                 'responses',
                 'records',
+                'title',
+                'service_count',
             ],
             resources=['geo_data'],
         ),
