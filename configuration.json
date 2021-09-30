@@ -42,6 +42,12 @@
             "display": "Taxonomy Fetcher",
             "dgp": false,
             "admin": true
+        },
+        {
+            "name": "derive",
+            "display": "Derive all databases from staging data.",
+            "dgp": false,
+            "admin": true
         }
     ],
     "theme": {
@@ -50,32 +56,101 @@
         "secondary": "#fff"
     },
     "schedules": [
-        {"name": "@daily", "display": "Daily"},
-        {"name": "@weekly", "display": "Weekly"},
-        {"name": "@monthly", "display": "Monthly"},
-        {"name": "@yearly", "display": "Yearly"},
-        {"name": "manual", "display": "Manual"}
+        {
+            "name": "@daily",
+            "display": "Daily"
+        },
+        {
+            "name": "@weekly",
+            "display": "Weekly"
+        },
+        {
+            "name": "@monthly",
+            "display": "Monthly"
+        },
+        {
+            "name": "@yearly",
+            "display": "Yearly"
+        },
+        {
+            "name": "manual",
+            "display": "Manual"
+        }
     ],
     "homepage": "https://www.kolzchut.org.il/en/Main_Page",
     "dateFormats": [
-        {"display": "Automatic",                           "format": "auto"},
-        {"display": "Automatic - YMD",                     "format": "auto_ymd"},
-        {"display": "Automatic - YDM",                     "format": "auto_ydm"},
-        {"display": "Automatic - DMY",                     "format": "auto_dmy"},
-        {"display": "Automatic - MDY",                     "format": "auto_mdy"},
-        {"display": "MM/DD/YY - 04/22/14",                 "format": "%m/%d/%y"},
-        {"display": "MM/DD/YYYY - 04/22/2014",             "format": "%m/%d/%Y"},
-        {"display": "DD/MM/YY - 22/04/14",                 "format": "%d/%m/%y"},
-        {"display": "DD/MM/YYYY - 22/04/2014",             "format": "%d/%m/%Y"},
-        {"display": "YYYY-MM-DD - 2014-04-14",             "format": "default"},
-        {"display": "YYYY/MM/DD - 2014/04/14",             "format": "%Y/%m/%d"},
-        {"display": "DD-MMM-YY - 22-Apr-14",               "format": "%d-%b-%y"},
-        {"display": "MMM DD YYYY - Apr 22 2014",           "format": "%b %d %Y"},
-        {"display": "YYYY-MM-DDTHH:MM:SS - 2014-04-22T00:00:00", "format": "%Y-%m-%dT%H:%M:%S"},
-        {"display": "YYYY-MM-DDTHH:MM:SSZ - 2014-04-22T00:00:00Z", "format": "%Y-%m-%dT%H:%M:%SZ"},
-        {"display": "DD-MM-YYYY HH:MM:SS ZZZ - 22-04-2014 00:00:00 UTC", "format": "%d-%m-%Y %H:%M:%S %Z"},
-        {"display": "MM-DD-YYYY HH:MM:SS ZZZ - 04-22-2014 00:00:00 UTC", "format": "%m-%d-%Y %H:%M:%S %Z"},
-        {"display": "DD/MM/YYYY HH:MM:SS PM - 22/4/2014 00:00:00 PM", "format": "%d/%m/%Y %H:%M:%S %p"}
+        {
+            "display": "Automatic",
+            "format": "auto"
+        },
+        {
+            "display": "Automatic - YMD",
+            "format": "auto_ymd"
+        },
+        {
+            "display": "Automatic - YDM",
+            "format": "auto_ydm"
+        },
+        {
+            "display": "Automatic - DMY",
+            "format": "auto_dmy"
+        },
+        {
+            "display": "Automatic - MDY",
+            "format": "auto_mdy"
+        },
+        {
+            "display": "MM/DD/YY - 04/22/14",
+            "format": "%m/%d/%y"
+        },
+        {
+            "display": "MM/DD/YYYY - 04/22/2014",
+            "format": "%m/%d/%Y"
+        },
+        {
+            "display": "DD/MM/YY - 22/04/14",
+            "format": "%d/%m/%y"
+        },
+        {
+            "display": "DD/MM/YYYY - 22/04/2014",
+            "format": "%d/%m/%Y"
+        },
+        {
+            "display": "YYYY-MM-DD - 2014-04-14",
+            "format": "default"
+        },
+        {
+            "display": "YYYY/MM/DD - 2014/04/14",
+            "format": "%Y/%m/%d"
+        },
+        {
+            "display": "DD-MMM-YY - 22-Apr-14",
+            "format": "%d-%b-%y"
+        },
+        {
+            "display": "MMM DD YYYY - Apr 22 2014",
+            "format": "%b %d %Y"
+        },
+        {
+            "display": "YYYY-MM-DDTHH:MM:SS - 2014-04-22T00:00:00",
+            "format": "%Y-%m-%dT%H:%M:%S"
+        },
+        {
+            "display": "YYYY-MM-DDTHH:MM:SSZ - 2014-04-22T00:00:00Z",
+            "format": "%Y-%m-%dT%H:%M:%SZ"
+        },
+        {
+            "display": "DD-MM-YYYY HH:MM:SS ZZZ - 22-04-2014 00:00:00 UTC",
+            "format": "%d-%m-%Y %H:%M:%S %Z"
+        },
+        {
+            "display": "MM-DD-YYYY HH:MM:SS ZZZ - 04-22-2014 00:00:00 UTC",
+            "format": "%m-%d-%Y %H:%M:%S %Z"
+        },
+        {
+            "display": "DD/MM/YYYY HH:MM:SS PM - 22/4/2014 00:00:00 PM",
+            "format": "%d/%m/%Y %H:%M:%S %p"
+        }
     ],
     "features": {
         "forcePrivate": true,
@@ -83,8 +158,6 @@
         "titleVisible": false,
         "dataUnpivoting": false
     },
-    "headerLinks": [
-    ],
-    "extraScripts": [
-    ]
+    "headerLinks": [],
+    "extraScripts": []
 }

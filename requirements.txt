@@ -1,6 +1,8 @@
+dataflows>=0.3.2
 dataflows-airtable>=0.0.4
 boto3
-dataflows>=0.2.18
 pyproj
 geocoder
+dataflows-elasticsearch>=0.1.0
+tableschema-elasticsearch>=2.1.0
 bleach
