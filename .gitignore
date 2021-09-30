@@ -130,5 +130,7 @@ dmypy.json
 .pyre/
 
 # default dump directory for data
-
 data/
+
+# ignore local vscode stuff
+.vscode
