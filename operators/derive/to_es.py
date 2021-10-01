@@ -1,6 +1,10 @@
+import os
+
 import dataflows as DF
 from dataflows_elasticsearch import dump_to_es
 from tableschema_elasticsearch.mappers import MappingGenerator
+
+import elasticsearch
 
 from conf import settings
 from srm_tools.logger import logger
@@ -24,6 +28,12 @@ class SRMMappingGenerator(MappingGenerator):
 
 
 def data_api_es_flow():
+
+    es_instance = elasticsearch.Elasticsearch(
+        [dict(host=os.environ['ES_HOST'], port=int(os.environ['ES_PORT']))], timeout=60,
+        **({"http_auth": os.environ['ES_HTTP_AUTH'].split(':')} if os.environ.get('ES_HTTP_AUTH') else {})
+    )
+
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
         DF.set_type('card_id', **{'es:keyword': True}),
@@ -56,8 +66,9 @@ def data_api_es_flow():
             },
         ),
         dump_to_es(
-            indexes=dict(cards=[dict(resource_name='card_data')]),
+            indexes=dict(srm_cards=[dict(resource_name='card_data')]),
             mapper_cls=SRMMappingGenerator,
+            engine=es_instance,
         ),
     )
 
