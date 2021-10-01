@@ -130,13 +130,6 @@ def updateBranchFromSourceData():
 def fetchBranchData(ga):
     print('FETCHING ALL ORGANIZATION BRANCHES')
     DF.Flow(
-        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW),
-        DF.update_resource(-1, name='locations'),
-        DF.rename_fields({
-            AIRTABLE_ID_FIELD: 'location',
-        }, resources='locations'),
-        DF.set_type('location', type='array', transform=lambda x: [x], resources='locations'),
-
         airflow_table_update_flow('Branches', 'guidestar',
             ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
             DF.Flow(
@@ -149,12 +142,6 @@ def fetchBranchData(ga):
                 DF.select_fields(['organization_id', 'id', 'name'], resources='orgs'),
                 unwind_branches(ga),
             ),
-            DF.Flow(
-                updateBranchFromSourceData(),
-                DF.join('locations', ['key'], 'fetched', ['address'], dict(
-                    location=None
-                )),
-            )
         )
     ).process()
 
