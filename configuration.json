@@ -32,12 +32,6 @@
             "admin": true
         },
         {
-            "name": "mapbox_upload",
-            "display": "Mapbox Uploader",
-            "dgp": false,
-            "admin": true
-        },
-        {
             "name": "taxonomy",
             "display": "Taxonomy Fetcher",
             "dgp": false,

@@ -1,4 +1,4 @@
-FROM akariv/dgp-app:latest
+FROM akariv/dgp-app:f8dd191dd10b875bd2cd1729509a21c7329bf629
 
 USER etl
 
