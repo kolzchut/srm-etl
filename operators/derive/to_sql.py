@@ -37,7 +37,7 @@ def data_api_sql_flow():
                         ['response_category'],
                     ],
                 }
-            )
+            ), engine='env://DATASETS_DATABASE_URL'
         ),
     )
 
