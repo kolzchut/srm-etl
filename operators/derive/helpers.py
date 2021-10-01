@@ -156,7 +156,7 @@ def point_offset_table():
     from math import cos, pi, sin
 
     diameters = [(d / 2 - 0.5) for d in [2, 2.15470, 2.41421, 2.70130, 3.00000]]
-    first = [(0, [(0.0, 0.0)])]
+    first = [(1, [(0.0, 0.0)])]
     generated = [
         (
             n,
@@ -165,9 +165,9 @@ def point_offset_table():
                 for i in range(n)
             ],
         )
-        for n, d in zip([1, 2, 3, 4, 5], diameters)
+        for n, d in zip([2, 3, 4, 5, 6], diameters)
     ]
-    last = [(6, [(0.0, 0.0)] + generated[4][1])]
+    last = [(7, [(0.0, 0.0)] + generated[4][1])]
     return first + generated + last
 
 
@@ -176,9 +176,9 @@ POINT_OFFSETS = dict(point_offset_table())
 
 def generate_offset(item_key, siblings_key):
     def func(r):
-        count = len(r[siblings_key]) - 1
+        count = len(r[siblings_key])
         index = r[siblings_key].index(r[item_key])
-        offset = POINT_OFFSETS[index][count]
+        offset = POINT_OFFSETS[count][index] if count in POINT_OFFSETS.keys() else None
         return offset
 
     return func
