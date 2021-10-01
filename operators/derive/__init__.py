@@ -8,9 +8,9 @@ def operator(*_):
     logger.info('Starting Derive Data Flow')
 
     to_dp.operator()
-    to_sql.operator()
     to_es.operator()
     to_mapbox.operator()
+    to_sql.operator()
 
     logger.info('Finished Derive Data Flow')
 
