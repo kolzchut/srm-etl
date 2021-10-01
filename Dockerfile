@@ -14,6 +14,7 @@ COPY logo.png site/static/assets/img/logo.png
 COPY events dags/events
 COPY operators dags/operators/
 COPY srm_tools srm_tools
+COPY conf conf
 
 COPY srm_etl_entrypoint.sh /app/
 ENTRYPOINT ["/app/srm_etl_entrypoint.sh"]
