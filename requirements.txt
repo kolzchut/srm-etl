@@ -3,7 +3,7 @@ dataflows-airtable>=0.0.4
 boto3
 pyproj
 geocoder
-dataflows-elasticsearch>=0.1.0
+dataflows-elasticsearch>=0.1.1
 tableschema-elasticsearch>=2.1.0
 bleach
 python-dotenv
