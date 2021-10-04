@@ -65,8 +65,9 @@ def data_api_es_flow():
                 },
             },
         ),
+        DF.update_resource('card_data', name='cards'),
         dump_to_es(
-            indexes=dict(srm_cards=[dict(resource_name='card_data')]),
+            indexes=dict(srm__cards=[dict(resource_name='cards')]),
             mapper_cls=SRMMappingGenerator,
             engine=es_instance,
         ),
