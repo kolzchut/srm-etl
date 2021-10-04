@@ -17,6 +17,7 @@ def get_gov_api(url, skip):
     # we are going to batch in 50s which seems to be the upper limit for a result set.
     # also, we get blocked sometimes, but it is not consistent - the retry logic is for that.
     timeout = 5
+    wait_when_blocked = 180
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36"
     }
@@ -37,8 +38,10 @@ def get_gov_api(url, skip):
         except:
             total, results = 0, tuple()
             retries = retries - 1
-            time.sleep(timeout)
+            time.sleep(wait_when_blocked)
 
     if total == 0:
-        logger.info('Gov API access blocked. Cannot complete data extraction.')
+        msg = 'Gov API access blocked. Cannot complete data extraction.'
+        logger.info(msg)
+        raise Exception(msg)
     return total, results
