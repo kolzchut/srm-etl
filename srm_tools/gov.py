@@ -36,7 +36,7 @@ def get_gov_api(url, skip):
             retries = 0
         except:
             total, results = 0, tuple()
-            retries = -retries
+            retries = retries - 1
             time.sleep(timeout)
 
     if total == 0:
