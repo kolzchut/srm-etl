@@ -36,6 +36,7 @@ def data_api_es_flow():
 
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
+        DF.add_field('score', 'number', 1),
         DF.set_type('card_id', **{'es:keyword': True}),
         DF.set_type('branch_id', **{'es:keyword': True}),
         DF.set_type('service_id', **{'es:keyword': True}),
