@@ -58,7 +58,7 @@ def fetchOrgData(ga):
 
 
 ## BRANCHES
-def unwind_branches(ga):
+def unwind_branches(ga:GuidestarAPI):
     def func(rows: ResourceWrapper):
         if rows.res.name != 'orgs':
             yield from rows        

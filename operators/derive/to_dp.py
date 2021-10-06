@@ -67,6 +67,7 @@ def flat_branches_flow():
         DF.update_package(name='Flat Branches'),
         DF.update_resource(['branches'], name='flat_branches', path='flat_branches.csv'),
         # location onto branches
+        DF.filter_rows(lambda r: r['location'] and len(r['location']) > 0, resources=['flat_branches']),
         DF.add_field(
             'location_key',
             'string',
