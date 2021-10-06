@@ -30,7 +30,19 @@ def geo_data_flow():
             },
             resources=['geo_data'],
         ),
-        helpers.unwind('response_categories', 'response_category', resources=['geo_data']),
+        helpers.unwind(
+            'response_categories',
+            'response_category',
+            source_delete=False,  # use to generate offsets
+            resources=['geo_data'],
+        ),
+        DF.add_field(
+            'offset',
+            'array',
+            helpers.generate_offset('response_category', 'response_categories'),
+            constraints={'maxLength': 2},
+            resources=['geo_data'],
+        ),
         # some addresses not resolved to points, and thus they are not useful for the map.
         DF.filter_rows(lambda r: not r['branch_geometry'] is None, resources=['geo_data']),
         DF.join_with_self(
@@ -39,17 +51,11 @@ def geo_data_flow():
             fields=dict(
                 geometry={'name': 'branch_geometry'},
                 response_category=None,
+                offset=None,
                 situations_at_point={'name': 'situations', 'aggregate': 'array'},
                 responses_at_point={'name': 'responses', 'aggregate': 'array'},
                 records={'name': 'record', 'aggregate': 'array'},
             ),
-        ),
-        DF.add_field(
-            'offset',
-            'array',
-            lambda r: (0, 0),
-            constraints={'maxLength': 2},
-            resources=['geo_data'],
         ),
         DF.set_primary_key(['geometry', 'response_category']),
         DF.add_field(
@@ -103,7 +109,6 @@ def operator(*_):
 
     geo_data_flow().process()
     push_mapbox_tileset()
-
     logger.info('Finished Geo Data Flow')
 
 

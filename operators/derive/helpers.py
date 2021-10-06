@@ -148,3 +148,37 @@ def preprocess_locations(select_fields=None, validate=False):
         ),
         DF.select_fields(select_fields, resources=['locations']) if select_fields else None,
     )
+
+
+def point_offset_table():
+    """Lookup table for positioning up to seven points."""
+    # https://github.com/whiletrue-industries/srm-etl/issues/8
+    from math import cos, pi, sin
+
+    diameters = [(d / 2 - 0.5) for d in [2, 2.15470, 2.41421, 2.70130, 3.00000]]
+    first = [(1, [(0.0, 0.0)])]
+    generated = [
+        (
+            n,
+            [
+                (round(d * cos(i / n * 2 * pi), 3), round(d * sin(i / n * 2 * pi), 3))
+                for i in range(n)
+            ],
+        )
+        for n, d in zip([2, 3, 4, 5, 6], diameters)
+    ]
+    last = [(7, [(0.0, 0.0)] + generated[4][1])]
+    return first + generated + last
+
+
+POINT_OFFSETS = dict(point_offset_table())
+
+
+def generate_offset(item_key, siblings_key):
+    def func(r):
+        count = len(r[siblings_key])
+        index = r[siblings_key].index(r[item_key])
+        offset = POINT_OFFSETS[count][index] if count in POINT_OFFSETS.keys() else None
+        return offset
+
+    return func
