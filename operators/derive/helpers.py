@@ -2,6 +2,22 @@ import dataflows as DF
 from dataflows.helpers.resource_matcher import ResourceMatcher
 
 
+def transform_urls(urls):
+    def transformer(s):
+        href, title = s.rsplit('#', 1)
+        return {'href': href, 'title': title}
+
+    return list(map(transformer, urls.split('\n'))) if urls else None
+
+
+def transform_email_addresses(email_addresses):
+    return email_addresses.split(',') if email_addresses else None
+
+
+def transform_phone_numbers(phone_numbers):
+    return phone_numbers.split(',') if phone_numbers else None
+
+
 def unwind(
     from_key, to_key, to_key_type='string', transformer=None, resources=None, source_delete=True
 ):
@@ -87,7 +103,10 @@ def preprocess_services(select_fields=None, validate=False):
         DF.update_resource(['Services'], name='services', path='services.csv'),
         filter_dummy_data(),
         set_staging_pkey('services'),
-        DF.filter_rows(lambda r: r['selected'] is True or r['source'] == 'guidestar', resources=['services']),
+        DF.filter_rows(
+            lambda r: r['selected'] is True or r['source'] == 'guidestar', resources=['services']
+        ),
+        DF.set_type('urls', type='array', transform=transform_urls, resources=['services']),
         DF.select_fields(select_fields, resources=['services']) if select_fields else None,
         DF.validate() if validate else None,
     )
@@ -98,6 +117,7 @@ def preprocess_organizations(select_fields=None, validate=False):
         DF.update_resource(['Organizations'], name='organizations', path='organizations.csv'),
         filter_dummy_data(),
         set_staging_pkey('organizations'),
+        DF.set_type('urls', type='array', transform=transform_urls, resources=['organizations']),
         DF.select_fields(select_fields, resources=['organizations']) if select_fields else None,
         DF.validate() if validate else None,
     )
@@ -108,6 +128,19 @@ def preprocess_branches(select_fields=None, validate=False):
         DF.update_resource(['Branches'], name='branches', path='branches.csv'),
         filter_dummy_data(),
         set_staging_pkey('branches'),
+        DF.set_type('urls', type='array', transform=transform_urls, resources=['branches']),
+        DF.set_type(
+            'phone_numbers',
+            type='array',
+            transform=transform_phone_numbers,
+            resources=['branches'],
+        ),
+        DF.set_type(
+            'email_addresses',
+            type='array',
+            transform=transform_email_addresses,
+            resources=['branches'],
+        ),
         DF.select_fields(select_fields, resources=['branches']) if select_fields else None,
         DF.validate() if validate else None,
     )
