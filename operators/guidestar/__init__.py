@@ -157,15 +157,16 @@ def unwind_services(ga: GuidestarAPI):
             for _, row in enumerate(rows):
                 regNum = row['id']
                 branches = ga.branches(regNum)
-                if len(branches) == 0:
-                    continue
                 services = ga.services(regNum)
                 for service in services:
                     ret = dict()
                     ret.update(row)
                     ret['data'] = service
                     ret['data']['organization_id'] = row['id']
-                    ret['data']['actualBranches'] = branches
+                    actual_branch_ids = [b['branchId'] for b in branches]
+                    ret['data']['branches'] = ['guidestar:' + b['branchId'] for b in (service['branches'] or []) if b['branchId'] in actual_branch_ids]
+                    if len(ret['data']['branches']) == 0:
+                        continue
                     ret['id'] = 'guidestar:' + service['serviceId']
                     yield ret
     return DF.Flow(
@@ -190,8 +191,6 @@ def updateServiceFromSourceData(taxonomies):
         row['name'] = data.pop('serviceName')
         row['description'] = data.pop('description')
         row['organizations'] = [data.pop('organization_id')]
-        actual_branch_ids = [b['branchId'] for b in data.pop('actualBranches')]
-        row['branches'] = ['guidestar:' + b['branchId'] for b in (data.pop('branches') or []) if b['branchId'] in actual_branch_ids]
         if data.pop('isForBranch'):
             assert len(row['branches']) > 0, repr(row)
             row['organizations'] = None
