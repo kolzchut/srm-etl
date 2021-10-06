@@ -67,3 +67,11 @@ class GuidestarAPI():
     def branches(self, regnum):
         resp = requests.get(f'{self.BASE}/organizations/{regnum}/branches', headers=self.headers()).json()
         return resp
+
+    def services(self, regnum):
+        params = dict(
+            filter=f'regNum={regnum}'
+        )
+        # resp = requests.get(f'{self.BASE}/organizations/{regnum}/services', headers=self.headers()).json()
+        resp = requests.get(f'https://www.guidestar.org.il/services/apexrest/api/services', params=params, headers=self.headers()).json()
+        return resp

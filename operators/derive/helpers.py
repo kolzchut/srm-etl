@@ -87,7 +87,7 @@ def preprocess_services(select_fields=None, validate=False):
         DF.update_resource(['Services'], name='services', path='services.csv'),
         filter_dummy_data(),
         set_staging_pkey('services'),
-        DF.filter_rows(lambda r: r['selected'] is True, resources=['services']),
+        DF.filter_rows(lambda r: r['selected'] is True or r['source'] == 'guidestar', resources=['services']),
         DF.select_fields(select_fields, resources=['services']) if select_fields else None,
         DF.validate() if validate else None,
     )

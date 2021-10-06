@@ -33,7 +33,7 @@ def airflow_table_update_flow(table, source_id, table_fields, fetch_data_flow, u
     :param update_data_flow: Flow to use to map the 'data' field into the table standard fields.
     """
     return DF.Flow(
-        load_from_airtable(settings.AIRTABLE_BASE, table, settings.AIRTABLE_VIEW),
+        load_from_airtable(settings.AIRTABLE_BASE, table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='current'),
         DF.filter_rows(lambda r: r['source'] in (source_id, 'dummy'), resources='current'),
 
@@ -58,5 +58,5 @@ def airflow_table_update_flow(table, source_id, table_fields, fetch_data_flow, u
                 'resource-name': 'fetched',
                 'typecast': True
             }
-        }),
+        }, settings.AIRTABLE_API_KEY),
     )
