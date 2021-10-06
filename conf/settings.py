@@ -10,6 +10,8 @@ CLICK_API = 'https://clickrevaha-sys.molsa.gov.il/api/solr?rows=1000'
 
 SHIL_API = 'https://www.gov.il/he/api/BureausApi/Index?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca'
 
+GOV_DATA_PROXY = 'https://www.gov.il/he/api/DataGovProxy/GetDGResults'
+
 GUIDESTAR_USERNAME = get_env('ETL_GUIDESTAR_USERNAME')
 GUIDESTAR_PASSWORD = get_env('ETL_GUIDESTAR_PASSWORD')
 GUIDESTAR_API = 'https://www.guidestar.org.il/services/apexrest/api'
@@ -42,8 +44,6 @@ OPENELIGIBILITY_YAML_URL = (
     'https://raw.githubusercontent.com/hasadna/openeligibility/main/taxonomy.tx.yaml'
 )
 
-BUDGETKEY_DATABASE_URL = (
-    'postgresql://readonly:readonly@data-next.obudget.org/budgetkey'
-)
+BUDGETKEY_DATABASE_URL = 'postgresql://readonly:readonly@data-next.obudget.org/budgetkey'
 
 DATA_DUMP_DIR = 'data'
