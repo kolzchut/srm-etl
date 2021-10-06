@@ -1,4 +1,4 @@
-dataflows>=0.3.3
+dataflows>=0.3.4
 dataflows-airtable>=0.0.4
 boto3
 pyproj
