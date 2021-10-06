@@ -50,16 +50,15 @@ def update_mapper():
 
 
 FIELD_MAP = {
-    'id': 'ItemId',
+    'id': {'source': 'ItemId', 'transform': lambda r: f'{DATA_SOURCE_ID}:{r["ItemId"]}'},
     'source': {'transform': lambda r: DATA_SOURCE_ID},
     'name': 'Title',
     'phone_numbers': {
         'source': 'PhoneNumber',
-        # thought it should be an array but doesnt look right in airtable.
-        # cant clearly see in code how we delimit multiple, so going for comma here.
         'type': 'string',
         'transform': lambda r: ','.join(filter(None, [r['PhoneNumber'], r['PhoneNumber2']])),
     },
+    'email_addresses': 'Email',
     'address_details': {
         'source': 'Location',
     },
@@ -69,14 +68,10 @@ FIELD_MAP = {
             '&nbsp;', ' '
         ),
     },
-    # TODO - shouldnt we store emails?
-    # 'emails': {'source': 'Email', 'type': 'array', 'transform': lambda r: [r['Email']]},
     'urls': {
         'source': 'UrlName',
         'transform': lambda r: f'{ITEM_URL_BASE}/{r["UrlName"]}#{r["Title"]}',
     },
-    # 'created_on': 'DocPublishedDate',
-    # 'last_modified': 'DocUpdateDate',
     'address': {
         'source': 'Address',
         'type': 'string',
