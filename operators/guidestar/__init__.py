@@ -283,8 +283,6 @@ def updateServiceFromSourceData(taxonomies):
             data.pop(k)
         row['situations'] = sorted(situations)
         row['responses'] = sorted(responses)
-        if row['responses']:
-            print('RRRR', row)
         assert all(v in (None, '0') for v in data.values()), repr(row)
     return DF.Flow(
         func,
@@ -296,7 +294,7 @@ def fetchServiceData(ga):
     print('FETCHING TAXONOMY MAPPING')
     taxonomy = DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, 'Guidestar Service Taxonomy Mapping', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-        DF.printer(),
+        # DF.printer(),
         # DF.select_fields(['name', 'situation_ids', 'response_ids']),
     ).results()[0][0]
     taxonomy = dict(
