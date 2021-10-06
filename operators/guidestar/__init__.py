@@ -312,10 +312,11 @@ def fetchServiceData(ga):
             }, resources='orgs'),
             DF.select_fields(['organization_id', 'id', 'name'], resources='orgs'),
             unwind_services(ga),
-            DF.checkpoint('unwind_services'),
+            # DF.checkpoint('unwind_services'),
         ),
         DF.Flow(
             updateServiceFromSourceData(taxonomy),
+            # lambda rows: (r for r in rows if 'drop' in r), 
         )
     )
 
