@@ -186,7 +186,7 @@ def updateServiceFromSourceData(taxonomies):
         row['name'] = data.pop('serviceName')
         row['description'] = data.pop('description')
         row['organizations'] = [data.pop('organization_id')]
-        row['branches'] = [b['branchId'] for b in (data.pop('branches') or [])]
+        row['branches'] = ['guidestar:' + b['branchId'] for b in (data.pop('branches') or [])]
         if data.pop('isForBranch'):
             assert len(row['branches']) > 0, repr(row)
             row['organizations'] = None
