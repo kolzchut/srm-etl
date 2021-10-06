@@ -287,6 +287,7 @@ def flat_table_flow():
                 branch_merged_situations={'name': 'merged_situations'},
             ),
         ),
+        DF.filter_rows(lambda r: r['response_id'] is not None, resources=['flat_table']),
         DF.add_field(
             'response_category',
             'string',
