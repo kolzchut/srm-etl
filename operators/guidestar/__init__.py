@@ -156,8 +156,10 @@ def unwind_services(ga: GuidestarAPI):
         else:
             for _, row in enumerate(rows):
                 regNum = row['id']
-                services = ga.services(regNum)
                 branches = ga.branches(regNum)
+                if len(branches) == 0:
+                    continue
+                services = ga.services(regNum)
                 for service in services:
                     ret = dict()
                     ret.update(row)
