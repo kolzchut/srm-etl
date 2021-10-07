@@ -10,7 +10,7 @@ from srm_tools.logger import logger
 from . import helpers
 
 def point_title(r):
-    records = r.get('records')
+    records = r.get('record_objects')
     if len(records) > 1:
         return '{} שירותים'.format(len(records))  # TODO - multilingual
     else:
