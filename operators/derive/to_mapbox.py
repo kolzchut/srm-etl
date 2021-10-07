@@ -10,11 +10,13 @@ from srm_tools.logger import logger
 from . import helpers
 
 def point_title(r):
-    records = r.get('record_objects')
-    if len(records) > 1:
-        return '{} שירותים'.format(len(records))  # TODO - multilingual
-    else:
-        return records[0]['service_name']
+    offset = r['offset']
+    if offset and offset.endswith('-1'):
+        records = r.get('record_objects')
+        if len(records) > 1:
+            return '{} שירותים'.format(len(records))  # TODO - multilingual
+        else:
+            return records[0]['service_name']
 
 
 def geo_data_flow():
