@@ -1,4 +1,5 @@
 from itertools import chain
+import json
 
 import dataflows as DF
 
@@ -53,7 +54,7 @@ def geo_data_flow():
                 offset=None,
                 situations_at_point={'name': 'situations', 'aggregate': 'array'},
                 responses_at_point={'name': 'responses', 'aggregate': 'array'},
-                records={'name': 'record', 'aggregate': 'array'},
+                record_objects={'name': 'record', 'aggregate': 'array'},
             ),
         ),
         DF.set_primary_key(['geometry', 'response_category']),
@@ -74,6 +75,12 @@ def geo_data_flow():
         ),
         DF.add_field(
             'service_count', 'integer', lambda r: len(r['records']), resources=['geo_data']
+        ),
+        DF.add_field(
+            'records',
+            'string',
+            lambda r: json.dumps(r['record_objects']),
+            resources=['geo_data'],
         ),
         DF.select_fields(
             [
