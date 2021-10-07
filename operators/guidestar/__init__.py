@@ -157,9 +157,9 @@ def unwind_services(ga: GuidestarAPI):
             for _, row in enumerate(rows):
                 regNum = row['id']
                 branches = ga.branches(regNum)
-                services = ga.services(regNum)
                 if len(branches) == 0:
                     continue
+                services = ga.services(regNum)
                 for service in services:
                     ret = dict()
                     ret.update(row)
@@ -191,7 +191,7 @@ def updateServiceFromSourceData(taxonomies):
         row['description'] = data.pop('description')
         row['organizations'] = [data.pop('organization_id')]
         actual_branch_ids = data.pop('actual_branch_ids')
-        row['branches'] = ['guidestar:' + b['branchId'] for b in (data['branches'] or []) if b['branchId'] in actual_branch_ids]
+        row['branches'] = ['guidestar:' + b['branchId'] for b in (data.pop('branches') or []) if b['branchId'] in actual_branch_ids]
         if len(row['branches']) > 0:
             row['organizations'] = None
 
