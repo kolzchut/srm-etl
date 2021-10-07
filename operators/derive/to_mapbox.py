@@ -76,7 +76,7 @@ def geo_data_flow():
             'title', 'string', point_title, resources=['geo_data']
         ),
         DF.add_field(
-            'service_count', 'integer', lambda r: len(r['records']), resources=['geo_data']
+            'service_count', 'integer', lambda r: len(r['record_objects']), resources=['geo_data']
         ),
         DF.add_field(
             'records',
