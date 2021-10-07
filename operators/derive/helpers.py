@@ -39,7 +39,7 @@ def unwind(
                 resource['schema']['fields'] = [
                     field
                     for field in resource['schema']['fields']
-                    if not field['name'] == from_key
+                    if not source_delete or not field['name'] == from_key
                 ]
                 resource['schema']['fields'].extend(new_fields)
 

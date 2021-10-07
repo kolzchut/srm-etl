@@ -33,31 +33,29 @@ def geo_data_flow():
             },
             resources=['geo_data'],
         ),
-        helpers.unwind(
-            'response_categories',
-            'response_category',
-            source_delete=False,  # use to generate offsets
-            resources=['geo_data'],
-        ),
-        DF.add_field(
-            'offset',
-            'string',
-            helpers.generate_offset('response_category', 'response_categories'),
-            resources=['geo_data'],
-        ),
         # some addresses not resolved to points, and thus they are not useful for the map.
         DF.filter_rows(lambda r: not r['branch_geometry'] is None, resources=['geo_data']),
         DF.join_with_self(
             'geo_data',
-            ['branch_geometry', 'response_category'],
+            ['branch_geometry'],
             fields=dict(
                 geometry={'name': 'branch_geometry'},
-                response_category=None,
-                offset=None,
                 situations_at_point={'name': 'situations', 'aggregate': 'array'},
                 responses_at_point={'name': 'responses', 'aggregate': 'array'},
                 record_objects={'name': 'record', 'aggregate': 'array'},
             ),
+        ),
+        DF.add_field(
+            'response_categories',
+            'array',
+            lambda r: sorted(set(s['id'].split(':')[1] for s in chain(*r['responses_at_point']))),
+            resources=['geo_data'],
+        ),
+        helpers.unwind(
+            'response_categories',
+            'response_category',
+            source_delete=False,
+            resources=['geo_data'],
         ),
         DF.set_primary_key(['geometry', 'response_category']),
         DF.add_field(
@@ -69,7 +67,13 @@ def geo_data_flow():
         DF.add_field(
             'responses',
             'array',
-            lambda r: sorted(set(s['id'] for s in chain(*r['responses_at_point']))),
+            lambda r: sorted(set(s['id'] for s in chain(*r['responses_at_point']) if s['id'].split(':')[1] == r['response_category'])),
+            resources=['geo_data'],
+        ),
+        DF.add_field(
+            'offset',
+            'string',
+            helpers.generate_offset('response_category', 'response_categories'),
             resources=['geo_data'],
         ),
         DF.add_field(
