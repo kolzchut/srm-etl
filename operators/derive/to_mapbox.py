@@ -38,9 +38,8 @@ def geo_data_flow():
         ),
         DF.add_field(
             'offset',
-            'array',
+            'string',
             helpers.generate_offset('response_category', 'response_categories'),
-            constraints={'maxLength': 2},
             resources=['geo_data'],
         ),
         # some addresses not resolved to points, and thus they are not useful for the map.
