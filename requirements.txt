@@ -7,4 +7,4 @@ dataflows-elasticsearch>=0.1.1
 tableschema-elasticsearch>=2.1.0
 bleach
 python-dotenv
-dataflows-ckan==0.2.0
+https://github.com/dataspot/dataflows-ckan/archive/refs/heads/main.tar.gz

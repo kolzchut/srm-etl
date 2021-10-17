@@ -7,6 +7,8 @@ from conf import settings
 from operators.mapbox_upload import upload_tileset
 from srm_tools.logger import logger
 
+from dataflows_ckan import dump_to_ckan
+
 from . import helpers
 
 def point_title(r):
@@ -105,6 +107,13 @@ def geo_data_flow():
         # this workaround just keeps behaviour same as other dumps we have.
         DF.update_resource(['geo_data'], path='geo_data.csv'),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data', format='geojson'),
+        DF.select_fields(['geometry', 'response_category']),
+        DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data_small', format='geojson'),
+        dump_to_ckan(
+            settings.CKAN_HOST,
+            settings.CKAN_API_KEY,
+            settings.CKAN_OWNER_ORG,
+        ),
     )
 
 
