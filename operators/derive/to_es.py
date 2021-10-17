@@ -2,6 +2,7 @@ import os
 
 import dataflows as DF
 import elasticsearch
+from dataflows_ckan import dump_to_ckan
 from dataflows_elasticsearch import dump_to_es
 from tableschema_elasticsearch.mappers import MappingGenerator
 
@@ -29,17 +30,15 @@ class SRMMappingGenerator(MappingGenerator):
 def data_api_es_flow():
 
     es_instance = elasticsearch.Elasticsearch(
-        [dict(host=os.environ['ES_HOST'], port=int(os.environ['ES_PORT']))],
+        [dict(host=settings.ES_HOST, port=int(settings.ES_PORT))],
         timeout=60,
-        **(
-            {"http_auth": os.environ['ES_HTTP_AUTH'].split(':')}
-            if os.environ.get('ES_HTTP_AUTH')
-            else {}
-        ),
+        **({"http_auth": settings.ES_HTTP_AUTH.split(':')} if settings.ES_HTTP_AUTH else {}),
     )
 
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
+        DF.update_package(name='srm_card_data'),
+        DF.update_resource('card_data', name='cards'),
         DF.add_field('score', 'number', 1),
         DF.set_type('card_id', **{'es:keyword': True}),
         DF.set_type('branch_id', **{'es:keyword': True}),
@@ -118,11 +117,15 @@ def data_api_es_flow():
                 'es:itemType': 'string',
             },
         ),
-        DF.update_resource('card_data', name='cards'),
         dump_to_es(
             indexes=dict(srm__cards=[dict(resource_name='cards')]),
             mapper_cls=SRMMappingGenerator,
             engine=es_instance,
+        ),
+        dump_to_ckan(
+            settings.CKAN_HOST,
+            settings.CKAN_API_KEY,
+            settings.CKAN_OWNER_ORG,
         ),
     )
 

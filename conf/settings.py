@@ -42,8 +42,14 @@ OPENELIGIBILITY_YAML_URL = (
     'https://raw.githubusercontent.com/hasadna/openeligibility/main/taxonomy.tx.yaml'
 )
 
-BUDGETKEY_DATABASE_URL = (
-    'postgresql://readonly:readonly@data-next.obudget.org/budgetkey'
-)
+BUDGETKEY_DATABASE_URL = 'postgresql://readonly:readonly@data-next.obudget.org/budgetkey'
 
 DATA_DUMP_DIR = 'data'
+
+ES_HOST = get_env('ES_HOST')
+ES_PORT = int(get_env('ES_PORT'))
+ES_HTTP_AUTH = get_env('ES_HTTP_AUTH', required=False)
+
+CKAN_HOST = get_env('CKAN_HOST')
+CKAN_API_KEY = get_env('CKAN_API_KEY')
+CKAN_OWNER_ORG = get_env('CKAN_OWNER_ORG')
