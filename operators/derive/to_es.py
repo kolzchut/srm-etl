@@ -33,13 +33,6 @@ def data_api_es_flow():
         [dict(host=settings.ES_HOST, port=int(settings.ES_PORT))],
         timeout=60,
         **({"http_auth": settings.ES_HTTP_AUTH.split(':')} if settings.ES_HTTP_AUTH else {}),
-        [dict(host=os.environ['ES_HOST'], port=int(os.environ['ES_PORT']))],
-        timeout=60,
-        **(
-            {"http_auth": os.environ['ES_HTTP_AUTH'].split(':')}
-            if os.environ.get('ES_HTTP_AUTH')
-            else {}
-        ),
     )
 
     return DF.Flow(
