@@ -1,6 +1,5 @@
 dataflows>=0.3.4
 dataflows-airtable>=0.0.4
-https://github.com/dataspot/dataflows-ckan/archive/refs/heads/main.tar.gz
 dataflows-elasticsearch>=0.1.1
 tableschema-elasticsearch>=2.1.0
 boto3
@@ -8,3 +7,4 @@ pyproj
 geocoder
 bleach
 python-dotenv
+https://github.com/dataspot/dataflows-ckan/archive/refs/heads/main.tar.gz
