@@ -123,7 +123,7 @@ def geo_data_flow():
 
 def push_mapbox_tileset():
     return upload_tileset(
-        f'{settings.DATA_DUMP_DIR}/geo_data/geo_data.json',
+        f'{settings.DATA_DUMP_DIR}/geo_data/geo_data.geojson',
         'srm-kolzchut.geo-data',
         'SRM Geo Data',
     )
