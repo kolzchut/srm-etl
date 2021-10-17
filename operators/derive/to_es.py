@@ -33,6 +33,13 @@ def data_api_es_flow():
         [dict(host=settings.ES_HOST, port=int(settings.ES_PORT))],
         timeout=60,
         **({"http_auth": settings.ES_HTTP_AUTH.split(':')} if settings.ES_HTTP_AUTH else {}),
+        [dict(host=os.environ['ES_HOST'], port=int(os.environ['ES_PORT']))],
+        timeout=60,
+        **(
+            {"http_auth": os.environ['ES_HTTP_AUTH'].split(':')}
+            if os.environ.get('ES_HTTP_AUTH')
+            else {}
+        ),
     )
 
     return DF.Flow(
@@ -69,15 +76,63 @@ def data_api_es_flow():
                 },
             },
         ),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
+        DF.set_type(
+            'service_urls',
+            **{
+                'es:itemType': 'object',
+                'es:schema': {
+                    'fields': [
+                        {'type': 'string', 'name': 'href'},
+                        {'type': 'string', 'name': 'text'},
+                    ]
+                },
+            },
+        ),
+        DF.set_type(
+            'branch_urls',
+            **{
+                'es:itemType': 'object',
+                'es:schema': {
+                    'fields': [
+                        {'type': 'string', 'name': 'href'},
+                        {'type': 'string', 'name': 'text'},
+                    ]
+                },
+            },
+        ),
+        DF.set_type(
+            'organization_urls',
+            **{
+                'es:itemType': 'object',
+                'es:schema': {
+                    'fields': [
+                        {'type': 'string', 'name': 'href'},
+                        {'type': 'string', 'name': 'text'},
+                    ]
+                },
+            },
+        ),
+        DF.set_type(
+            'branch_email_addresses',
+            **{
+                'es:itemType': 'string',
+            },
+        ),
+        DF.set_type(
+            'branch_phone_numbers',
+            **{
+                'es:itemType': 'string',
+            },
         ),
         dump_to_es(
             indexes=dict(srm__cards=[dict(resource_name='cards')]),
             mapper_cls=SRMMappingGenerator,
             engine=es_instance,
+        ),
+        dump_to_ckan(
+            settings.CKAN_HOST,
+            settings.CKAN_API_KEY,
+            settings.CKAN_OWNER_ORG,
         ),
     )
 
