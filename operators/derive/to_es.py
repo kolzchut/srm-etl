@@ -132,9 +132,7 @@ def data_api_es_flow():
 
 def operator(*_):
     logger.info('Starting ES Flow')
-
     data_api_es_flow().process()
-
     logger.info('Finished ES Flow')
 
 
