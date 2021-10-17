@@ -37,7 +37,7 @@ def data_api_es_flow():
 
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
-        DF.update_package(name='srm_card_data'),
+        DF.update_package(title='Card Data', name='srm_card_data'),
         DF.update_resource('card_data', name='cards'),
         DF.add_field('score', 'number', 1),
         DF.set_type('card_id', **{'es:keyword': True}),

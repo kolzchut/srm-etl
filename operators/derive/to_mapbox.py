@@ -24,7 +24,7 @@ def point_title(r):
 def geo_data_flow():
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
-        DF.update_package(name='Geo Data'),
+        DF.update_package(title='Geo Data', name='geo_data'),
         DF.update_resource(['card_data'], name='geo_data', path='geo_data.csv'),
         DF.add_field(
             'record',
@@ -108,11 +108,15 @@ def geo_data_flow():
         DF.update_resource(['geo_data'], path='geo_data.csv'),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data', format='geojson'),
         DF.select_fields(['geometry', 'response_category']),
-        DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data_small', format='geojson'),
+
+        DF.update_package(name='geo_data_clusters', title='Geo Data - For Clusters'),
+        DF.update_resource(['geo_data'], path='geo_data.geojson'),
+        DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data_clusters', force_format=False),
         dump_to_ckan(
             settings.CKAN_HOST,
             settings.CKAN_API_KEY,
             settings.CKAN_OWNER_ORG,
+            force_format=False
         ),
     )
 
@@ -128,7 +132,8 @@ def push_mapbox_tileset():
 def operator(*_):
     logger.info('Starting Geo Data Flow')
 
-    geo_data_flow().process()
+    flow = geo_data_flow()
+    flow.process()
     push_mapbox_tileset()
     logger.info('Finished Geo Data Flow')
 
