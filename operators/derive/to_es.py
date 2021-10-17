@@ -1,10 +1,9 @@
 import os
 
 import dataflows as DF
+import elasticsearch
 from dataflows_elasticsearch import dump_to_es
 from tableschema_elasticsearch.mappers import MappingGenerator
-
-import elasticsearch
 
 from conf import settings
 from srm_tools.logger import logger
@@ -30,8 +29,13 @@ class SRMMappingGenerator(MappingGenerator):
 def data_api_es_flow():
 
     es_instance = elasticsearch.Elasticsearch(
-        [dict(host=os.environ['ES_HOST'], port=int(os.environ['ES_PORT']))], timeout=60,
-        **({"http_auth": os.environ['ES_HTTP_AUTH'].split(':')} if os.environ.get('ES_HTTP_AUTH') else {})
+        [dict(host=os.environ['ES_HOST'], port=int(os.environ['ES_PORT']))],
+        timeout=60,
+        **(
+            {"http_auth": os.environ['ES_HTTP_AUTH'].split(':')}
+            if os.environ.get('ES_HTTP_AUTH')
+            else {}
+        ),
     )
 
     return DF.Flow(
@@ -64,6 +68,54 @@ def data_api_es_flow():
                         {'type': 'string', 'name': 'name'},
                     ]
                 },
+            },
+        ),
+        DF.set_type(
+            'service_urls',
+            **{
+                'es:itemType': 'object',
+                'es:schema': {
+                    'fields': [
+                        {'type': 'string', 'name': 'href'},
+                        {'type': 'string', 'name': 'text'},
+                    ]
+                },
+            },
+        ),
+        DF.set_type(
+            'branch_urls',
+            **{
+                'es:itemType': 'object',
+                'es:schema': {
+                    'fields': [
+                        {'type': 'string', 'name': 'href'},
+                        {'type': 'string', 'name': 'text'},
+                    ]
+                },
+            },
+        ),
+        DF.set_type(
+            'organization_urls',
+            **{
+                'es:itemType': 'object',
+                'es:schema': {
+                    'fields': [
+                        {'type': 'string', 'name': 'href'},
+                        {'type': 'string', 'name': 'text'},
+                    ]
+                },
+            },
+        ),
+        DF.set_type(
+            'branch_email_addresses',
+            **{
+                'es:itemType': 'string',
+            },
+        ),
+        DF.set_type(
+            'branch_phone_numbers',
+            **{
+                'es:itemType': 'string',
             },
         ),
         DF.update_resource('card_data', name='cards'),
