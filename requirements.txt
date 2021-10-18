@@ -8,3 +8,4 @@ geocoder
 bleach
 python-dotenv
 https://github.com/dataspot/dataflows-ckan/archive/refs/heads/main.tar.gz
+git+https://github.com/mozilla/unicode-slugify.git
