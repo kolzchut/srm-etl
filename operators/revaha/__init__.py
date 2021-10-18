@@ -1,7 +1,9 @@
+import hashlib
 import re
 
 import dataflows as DF
 import requests
+import slugify
 
 from conf import settings
 from srm_tools.logger import logger
@@ -10,16 +12,33 @@ from srm_tools.update_table import airflow_table_updater
 
 
 def transform_phone_numbers(r):
-    phone_numbers = r['authority_phone']
-    if r.get('machlaka_phone'):
-        phone_numbers += r['machlaka_phone']
+    phone_numbers = r['authority_phone'] if r['authority_phone'] else ''
+    machlaka_phone = r['machlaka_phone'] if r['machlaka_phone'] else ''
+    if machlaka_phone:
+        phone_numbers += machlaka_phone
     return phone_numbers.replace(' ', '')
 
 
 def transform_email_addresses(r):
     pattern = r'[\w.+-]+@[\w-]+\.[\w.-]+'
-    match = re.search(pattern, r.get('email', ''))
+    match = re.search(pattern, r['email']) if r['email'] else None
     return match.group(0) if match else None
+
+
+def sort_dict_by_keys(row):
+    return dict(sorted(row.items(), key=lambda i: i[0]))
+
+
+def make_unique_id_from_values(row):
+    input = ''.join(
+        [
+            slugify.slugify(str(v if v is not None else '').strip().lower(), space_replacement="")
+            for v in row.values()
+        ]
+    ).encode('utf-8')
+    sha = hashlib.sha1()
+    sha.update(input)
+    return f'{DATA_SOURCE_ID}:{sha}'
 
 
 DATA_SOURCE_ID = 'revaha'
@@ -33,10 +52,7 @@ ORGANIZATION = {'id': '', 'name': 'משרד הרווחה והביטחון החב
 SERVICE = {'id': ''}
 
 FIELD_MAP = {
-    'id': {
-        'source': 'authority_num',
-        'transform': lambda r: f'{DATA_SOURCE_ID}:{r["authority_num"]}',
-    },
+    'id': 'id',
     'source': {'transform': lambda r: DATA_SOURCE_ID},
     'name': {'transform': lambda r: DATA_SOURCE_ID},
     'phone_numbers': {
@@ -62,8 +78,7 @@ def gov_data_proxy(template_id, skip):
         'QueryFilters': {'skip': {'Query': skip}},
         'From': skip,
     }
-    timeout = 5
-
+    timeout = 30
     response = requests.post(
         settings.GOV_DATA_PROXY,
         json=data,
@@ -82,7 +97,7 @@ def get_revaha_data():
     total, results = gov_data_proxy(template_id, skip)
 
     while len(results) < total:
-        skip += skip + skip_by
+        skip += skip_by
         _, batch = gov_data_proxy(template_id, skip)
         results.extend(batch)
     return results
@@ -91,6 +106,8 @@ def get_revaha_data():
 def revaha_branch_data_flow():
     return DF.Flow(
         (obj['Data'] for obj in get_revaha_data()),
+        sort_dict_by_keys,
+        DF.add_field('id', 'string', make_unique_id_from_values),
         *ensure_fields(FIELD_MAP),
         DF.printer(),
     )
