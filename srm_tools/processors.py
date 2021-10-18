@@ -14,3 +14,10 @@ def ensure_field(name, args, resources=None):
         args.get('transform', lambda r: r.get(source) if source else None),
     )
     return DF.add_field(name, type, transform, resources=resources)
+
+
+def update_mapper():
+    def func(row):
+        row.update({k: v for k, v in row.get('data').items()})
+
+    return func

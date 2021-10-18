@@ -7,7 +7,7 @@ import slugify
 
 from conf import settings
 from srm_tools.logger import logger
-from srm_tools.processors import ensure_fields
+from srm_tools.processors import ensure_fields, update_mapper
 from srm_tools.update_table import airflow_table_updater
 
 
@@ -38,29 +38,51 @@ def make_unique_id_from_values(row):
     ).encode('utf-8')
     sha = hashlib.sha1()
     sha.update(input)
-    return f'{DATA_SOURCE_ID}:{sha}'
+    return f'{DATA_SOURCE_ID}:{sha.hexdigest()}'
 
+
+BASE_URL = (
+    'https://www.gov.il/he/departments/dynamiccollectors/molsa-social-departmentsd-list?skip=0'
+)
 
 DATA_SOURCE_ID = 'revaha'
 
-BRANCH_NAME = ''
+BRANCH_NAME_PREFIX = 'מחלקה לשירותים חברתיים'
 
-BRANCH_DESCRIPTION = ''
+ORGANIZATION = {
+    # the id is just a uuid I generated
+    'id': '53a2e790-87b3-44a2-a5f2-5b826f714775',
+    'data': {
+        'name': 'משרד הרווחה והביטחון החברתי',
+        'source': DATA_SOURCE_ID,
+        'kind': 'משרד ממשלתי',
+        'urls': 'f{BASE_URL}#{BRANCH_NAME_PREFIX}',
+        'description': '',
+        'purpose': '',
+        'status': 'ACTIVE',
+    },
+}
 
-ORGANIZATION = {'id': '', 'name': 'משרד הרווחה והביטחון החברתי'}
-
-SERVICE = {'id': ''}
+SERVICE = {
+    'id': '',
+    'data': {},
+}
 
 FIELD_MAP = {
     'id': 'id',
     'source': {'transform': lambda r: DATA_SOURCE_ID},
-    'name': {'transform': lambda r: DATA_SOURCE_ID},
+    'name': {'transform': lambda r: f'{BRANCH_NAME_PREFIX} {r["source_location"]}'},
     'phone_numbers': {
         'source': 'machlaka_phone',
         'type': 'string',
         'transform': transform_phone_numbers,
     },
-    'emails': {'source': 'email', 'type': 'array', 'transform': transform_email_addresses},
+    'urls': f'{BASE_URL}#{BRANCH_NAME_PREFIX}',
+    'email_addresses': {
+        'source': 'email',
+        'type': 'string',
+        'transform': transform_email_addresses,
+    },
     'address': 'adress',
     'location': {
         'source': 'address',
@@ -69,6 +91,7 @@ FIELD_MAP = {
     },
     'organization': {'type': 'array', 'transform': lambda r: [ORGANIZATION['id']]},
     'services': {'type': 'array', 'transform': lambda r: [SERVICE['id']]},
+    # '__airtable_id': {}, needed to prevent error
 }
 
 
@@ -103,19 +126,45 @@ def get_revaha_data():
     return results
 
 
+def revaha_organization_data_flow():
+    return airflow_table_updater(
+        settings.AIRTABLE_ORGANIZATION_TABLE,
+        DATA_SOURCE_ID,
+        list(ORGANIZATION['data'].keys()),
+        [ORGANIZATION],
+        update_mapper(),
+    )
+
+
 def revaha_branch_data_flow():
-    return DF.Flow(
-        (obj['Data'] for obj in get_revaha_data()),
-        sort_dict_by_keys,
-        DF.add_field('id', 'string', make_unique_id_from_values),
-        *ensure_fields(FIELD_MAP),
-        DF.printer(),
+    return airflow_table_updater(
+        settings.AIRTABLE_BRANCH_TABLE,
+        DATA_SOURCE_ID,
+        list(FIELD_MAP.keys()),
+        DF.Flow(
+            (obj['Data'] for obj in get_revaha_data()),
+            DF.update_resource(name='branches', path='branches.csv', resources=-1),
+            DF.rename_fields({'location': 'source_location'}, resources=['branches']),
+            sort_dict_by_keys,
+            DF.add_field('id', 'string', make_unique_id_from_values, resources=['branches']),
+            *ensure_fields(FIELD_MAP, resources=['branches']),
+            DF.select_fields(FIELD_MAP.keys()),
+            DF.add_field(
+                'data',
+                'object',
+                lambda r: {k: v for k, v in r.items() if not k in ('id', 'source', 'status')},
+                resources=['branches'],
+            ),
+            DF.select_fields(['id', 'data'], resources=['branches']),
+        ),
+        update_mapper(),
     )
 
 
 def operator(*_):
     logger.info('Starting Revaha Flow')
-    revaha_branch_data_flow().process()
+    revaha_organization_data_flow()
+    revaha_branch_data_flow()
     logger.info('Finished Revaha Flow')
 
 
