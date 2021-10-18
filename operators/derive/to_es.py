@@ -1,4 +1,6 @@
-import os
+import tempfile
+import shutil
+import requests
 
 import dataflows as DF
 import elasticsearch
@@ -136,21 +138,25 @@ def data_api_es_flow():
 
 def load_locations_to_es_flow():
     url = settings.LOCATION_BOUNDS_SOURCE_URL
-    return DF.Flow(
-        DF.load(url, format='datapackage'),
-        DF.update_package(title='Bounds for Locations in Israel', name='bounds-for-locations'),
-        DF.update_resource(-1, name='places'),
-        dump_to_es(
-            indexes=dict(srm__places=[dict(resource_name='places')]),
-            mapper_cls=SRMMappingGenerator,
-            engine=es_instance(),
-        ),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
-        ),
-    )
+    with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmpfile:
+        src = requests.get(url, stream=True).raw
+        shutil.copyfileobj(src, tmpfile)
+        tmpfile.close()
+        return DF.Flow(
+            DF.load(tmpfile.name, format='datapackage'),
+            DF.update_package(title='Bounds for Locations in Israel', name='bounds-for-locations'),
+            DF.update_resource(-1, name='places'),
+            dump_to_es(
+                indexes=dict(srm__places=[dict(resource_name='places')]),
+                mapper_cls=SRMMappingGenerator,
+                engine=es_instance(),
+            ),
+            dump_to_ckan(
+                settings.CKAN_HOST,
+                settings.CKAN_API_KEY,
+                settings.CKAN_OWNER_ORG,
+            ),
+        )
 
 
 def operator(*_):
