@@ -12,10 +12,10 @@ from srm_tools.update_table import airflow_table_updater
 
 
 def transform_phone_numbers(r):
-    phone_numbers = r['authority_phone'] if r['authority_phone'] else ''
-    machlaka_phone = r['machlaka_phone'] if r['machlaka_phone'] else ''
+    phone_numbers = r['authority_phone'] or ''
+    machlaka_phone = r['machlaka_phone'] or ''
     if machlaka_phone:
-        phone_numbers += machlaka_phone
+        phone_numbers = f'{phone_numbers},{machlaka_phone}'
     return phone_numbers.replace(' ', '')
 
 
@@ -56,7 +56,7 @@ ORGANIZATION = {
         'name': 'משרד הרווחה והביטחון החברתי',
         'source': DATA_SOURCE_ID,
         'kind': 'משרד ממשלתי',
-        'urls': 'f{BASE_URL}#{BRANCH_NAME_PREFIX}',
+        'urls': f'{BASE_URL}#{BRANCH_NAME_PREFIX}',
         'description': '',
         'purpose': '',
         'status': 'ACTIVE',
@@ -70,7 +70,8 @@ SERVICE = {
 
 FIELD_MAP = {
     'id': 'id',
-    'source': {'transform': lambda r: DATA_SOURCE_ID},
+    # covered by airtable updater
+    # 'source': {'transform': lambda r: DATA_SOURCE_ID},
     'name': {'transform': lambda r: f'{BRANCH_NAME_PREFIX} {r["source_location"]}'},
     'phone_numbers': {
         'source': 'machlaka_phone',
@@ -136,27 +137,32 @@ def revaha_organization_data_flow():
     )
 
 
+def revaha_fetch_branch_data_flow(data=None):
+    return DF.Flow(
+        (obj['Data'] for obj in data or get_revaha_data()),
+        DF.update_resource(name='branches', path='branches.csv', resources=-1),
+        DF.rename_fields({'location': 'source_location'}, resources=['branches']),
+        sort_dict_by_keys,
+        DF.add_field('id', 'string', make_unique_id_from_values, resources=['branches']),
+        *ensure_fields(FIELD_MAP, resources=['branches']),
+        DF.select_fields(FIELD_MAP.keys()),
+        DF.add_field(
+            'data',
+            'object',
+            lambda r: {k: v for k, v in r.items() if not k in ('id', 'source', 'status')},
+            resources=['branches'],
+        ),
+        DF.select_fields(['id', 'data'], resources=['branches']),
+        DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/revaha'),
+    )
+
+
 def revaha_branch_data_flow():
     return airflow_table_updater(
         settings.AIRTABLE_BRANCH_TABLE,
         DATA_SOURCE_ID,
         list(FIELD_MAP.keys()),
-        DF.Flow(
-            (obj['Data'] for obj in get_revaha_data()),
-            DF.update_resource(name='branches', path='branches.csv', resources=-1),
-            DF.rename_fields({'location': 'source_location'}, resources=['branches']),
-            sort_dict_by_keys,
-            DF.add_field('id', 'string', make_unique_id_from_values, resources=['branches']),
-            *ensure_fields(FIELD_MAP, resources=['branches']),
-            DF.select_fields(FIELD_MAP.keys()),
-            DF.add_field(
-                'data',
-                'object',
-                lambda r: {k: v for k, v in r.items() if not k in ('id', 'source', 'status')},
-                resources=['branches'],
-            ),
-            DF.select_fields(['id', 'data'], resources=['branches']),
-        ),
+        revaha_fetch_branch_data_flow(),
         update_mapper(),
     )
 
