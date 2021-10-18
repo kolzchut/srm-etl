@@ -27,14 +27,14 @@ class SRMMappingGenerator(MappingGenerator):
         return prop
 
 
-def data_api_es_flow():
-
-    es_instance = elasticsearch.Elasticsearch(
+def es_instance():
+    return elasticsearch.Elasticsearch(
         [dict(host=settings.ES_HOST, port=int(settings.ES_PORT))],
         timeout=60,
         **({"http_auth": settings.ES_HTTP_AUTH.split(':')} if settings.ES_HTTP_AUTH else {}),
     )
 
+def data_api_es_flow():
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
         DF.update_package(title='Card Data', name='srm_card_data'),
@@ -125,7 +125,25 @@ def data_api_es_flow():
         dump_to_es(
             indexes=dict(srm__cards=[dict(resource_name='cards')]),
             mapper_cls=SRMMappingGenerator,
-            engine=es_instance,
+            engine=es_instance(),
+        ),
+        dump_to_ckan(
+            settings.CKAN_HOST,
+            settings.CKAN_API_KEY,
+            settings.CKAN_OWNER_ORG,
+        ),
+    )
+
+def load_locations_to_es_flow():
+    url = settings.LOCATION_BOUNDS_SOURCE_URL
+    return DF.Flow(
+        DF.load(url, format='datapackage'),
+        DF.update_package(title='Bounds for Locations in Israel', name='bounds-for-locations'),
+        DF.update_resource(-1, name='places'),
+        dump_to_es(
+            indexes=dict(srm__places=[dict(resource_name='places')]),
+            mapper_cls=SRMMappingGenerator,
+            engine=es_instance(),
         ),
         dump_to_ckan(
             settings.CKAN_HOST,
@@ -138,6 +156,7 @@ def data_api_es_flow():
 def operator(*_):
     logger.info('Starting ES Flow')
     data_api_es_flow().process()
+    load_locations_to_es_flow().process()
     logger.info('Finished ES Flow')
 
 

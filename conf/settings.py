@@ -53,3 +53,5 @@ ES_HTTP_AUTH = get_env('ES_HTTP_AUTH', required=False)
 CKAN_HOST = get_env('CKAN_HOST')
 CKAN_API_KEY = get_env('CKAN_API_KEY')
 CKAN_OWNER_ORG = get_env('CKAN_OWNER_ORG')
+
+LOCATION_BOUNDS_SOURCE_URL='https://srm-staging.datacity.org.il/dataset/0386f511-bd1b-4931-8c3c-88c45272f642/resource/a5bad1e6-a40f-4ab5-b73e-56cd4947d8fa/download/place_bounds_he.zip'
