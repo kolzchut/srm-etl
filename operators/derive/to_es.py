@@ -138,6 +138,9 @@ def data_api_es_flow():
 
 def load_locations_to_es_flow():
     url = settings.LOCATION_BOUNDS_SOURCE_URL
+    scores = dict(
+        city=100, town=50, village=10, hamlet=5,
+    )
     with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmpfile:
         src = requests.get(url, stream=True).raw
         shutil.copyfileobj(src, tmpfile)
@@ -146,6 +149,7 @@ def load_locations_to_es_flow():
             DF.load(tmpfile.name, format='datapackage'),
             DF.update_package(title='Bounds for Locations in Israel', name='bounds-for-locations'),
             DF.update_resource(-1, name='places'),
+            DF.add_field('score', 'number', lambda r: scores.get(r['place'], 1)),
             dump_to_es(
                 indexes=dict(srm__places=[dict(resource_name='places')]),
                 mapper_cls=SRMMappingGenerator,
