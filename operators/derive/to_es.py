@@ -73,6 +73,7 @@ def data_api_es_flow():
             'service_urls',
             **{
                 'es:itemType': 'object',
+                'es:index': False,
                 'es:schema': {
                     'fields': [
                         {'type': 'string', 'name': 'href'},
@@ -85,6 +86,7 @@ def data_api_es_flow():
             'branch_urls',
             **{
                 'es:itemType': 'object',
+                'es:index': False,
                 'es:schema': {
                     'fields': [
                         {'type': 'string', 'name': 'href'},
@@ -97,6 +99,7 @@ def data_api_es_flow():
             'organization_urls',
             **{
                 'es:itemType': 'object',
+                'es:index': False,
                 'es:schema': {
                     'fields': [
                         {'type': 'string', 'name': 'href'},
@@ -109,12 +112,14 @@ def data_api_es_flow():
             'branch_email_addresses',
             **{
                 'es:itemType': 'string',
+                'es:index': False,
             },
         ),
         DF.set_type(
             'branch_phone_numbers',
             **{
                 'es:itemType': 'string',
+                'es:index': False,
             },
         ),
         dump_to_es(
