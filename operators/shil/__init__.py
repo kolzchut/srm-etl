@@ -4,6 +4,7 @@ import dataflows as DF
 from conf import settings
 from srm_tools.gov import get_gov_api
 from srm_tools.logger import logger
+from srm_tools.processors import update_mapper
 from srm_tools.update_table import airflow_table_updater
 
 ITEM_URL_BASE = 'https://www.gov.il/he/departments/bureaus'
@@ -40,13 +41,6 @@ SERVICE = {
 def normalize_address(r):
     _, city, _, _, street, number, *_ = r['Address'].values()
     return f'{street} {number}, {city[0]}'
-
-
-def update_mapper():
-    def func(row):
-        row.update({k: v for k, v in row.get('data').items()})
-
-    return func
 
 
 FIELD_MAP = {
