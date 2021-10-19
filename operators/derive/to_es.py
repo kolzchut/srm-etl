@@ -20,9 +20,11 @@ class SRMMappingGenerator(MappingGenerator):
         if field['type'] == 'any':
             field['es:itemType'] = 'string'
         prop = super()._convert_type(schema_type, field, prefix)
-        boost, keyword = field.get('es:boost'), field.get('es:keyword')
+        boost, keyword, autocomplete = field.get('es:boost'), field.get('es:keyword'), field.get('es:autocomplete')
         if keyword:
             prop['type'] = 'keyword'
+        if autocomplete:
+            prop['type'] = 'search_as_you_type'
         if boost:
             prop['boost'] = boost
         if schema_type in ('number', 'integer', 'geopoint'):
@@ -150,6 +152,7 @@ def load_locations_to_es_flow():
             DF.load(tmpfile.name, format='datapackage'),
             DF.update_package(title='Bounds for Locations in Israel', name='bounds-for-locations'),
             DF.update_resource(-1, name='places'),
+            DF.set_type('name', **{'es:autocomplete': True}),
             DF.add_field('score', 'number', lambda r: scores.get(r['place'], 1)),
             dump_to_es(
                 indexes=dict(srm__places=[dict(resource_name='places')]),
@@ -170,6 +173,8 @@ def load_responses_to_es_flow():
         DF.update_resource(-1, name='responses'),
         DF.filter_rows(lambda r: r['status'] == 'ACTIVE'),
         DF.select_fields(['id', 'name', 'breadcrumbs']),
+        DF.set_type('id', **{'es:keyword': True}),
+        DF.set_type('name', **{'es:autocomplete': True}),
         DF.add_field('score', 'number', lambda r: 10*(6 - len(r['id'].split(':')))),
         DF.set_primary_key(['id']),
         dump_to_es(
