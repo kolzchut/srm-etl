@@ -165,7 +165,7 @@ def load_locations_to_es_flow():
 
 def load_responses_to_es_flow():
     return DF.Flow(
-        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_TABLE_RESPONSES, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_RESPONSE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_package(title='Taxonomy Responses', name='responses'),
         DF.update_resource(-1, name='responses'),
         DF.filter_rows(lambda r: r['status'] == 'ACTIVE'),
