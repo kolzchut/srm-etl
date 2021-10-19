@@ -1,5 +1,6 @@
 import tempfile
 import shutil
+from dataflows_airtable.load_from_airtable import load_from_airtable
 import requests
 
 import dataflows as DF
@@ -162,11 +163,32 @@ def load_locations_to_es_flow():
             ),
         )
 
+def load_responses_to_es_flow():
+    return DF.Flow(
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_TABLE_RESPONSES, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.update_package(title='Taxonomy Responses', name='responses'),
+        DF.update_resource(-1, name='responses'),
+        DF.filter_rows(lambda r: r['status'] == 'ACTIVE'),
+        DF.select_fields(['id', 'name', 'breadcrumbs']),
+        DF.add_field('score', 'number', lambda r: 10*(6 - len(r['id'].split(':')))),
+        DF.set_primary_key(['id']),
+        dump_to_es(
+            indexes=dict(srm__responses=[dict(resource_name='responses')]),
+            mapper_cls=SRMMappingGenerator,
+            engine=es_instance(),
+        ),
+        dump_to_ckan(
+            settings.CKAN_HOST,
+            settings.CKAN_API_KEY,
+            settings.CKAN_OWNER_ORG,
+        ),
+    )
 
 def operator(*_):
     logger.info('Starting ES Flow')
     data_api_es_flow().process()
     load_locations_to_es_flow().process()
+    load_responses_to_es_flow().process()
     logger.info('Finished ES Flow')
 
 
