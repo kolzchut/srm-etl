@@ -24,6 +24,7 @@ class SRMMappingGenerator(MappingGenerator):
         if keyword:
             prop['type'] = 'keyword'
         if autocomplete:
+            prop['type'] = 'search_as_you_type'
             prop['term_vector'] = 'with_positions_offsets'
         if boost:
             prop['boost'] = boost
