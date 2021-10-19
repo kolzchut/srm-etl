@@ -23,8 +23,8 @@ class SRMMappingGenerator(MappingGenerator):
         boost, keyword, autocomplete = field.get('es:boost'), field.get('es:keyword'), field.get('es:autocomplete')
         if keyword:
             prop['type'] = 'keyword'
-        if autocomplete:
-            prop['type'] = 'search_as_you_type'
+        # if autocomplete:
+        #     prop['type'] = 'search_as_you_type'
         if boost:
             prop['boost'] = boost
         if schema_type in ('number', 'integer', 'geopoint'):
