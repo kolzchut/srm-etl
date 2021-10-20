@@ -31,7 +31,7 @@ def handle_node(node, breadcrumbs=None):
                 description=handle_tx(node.get('description'), 'he'),
                 name_en=handle_tx(node['name']),
                 description_en=handle_tx(node.get('description')),
-                breadcrumbs='/'.join(breadcrumbs),
+                breadcrumbs='/'.join(breadcrumbs[1:]),
             )
         )
         yield record
