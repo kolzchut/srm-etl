@@ -12,6 +12,8 @@ from tableschema_elasticsearch.mappers import MappingGenerator
 from conf import settings
 from srm_tools.logger import logger
 
+from . import helpers
+
 
 class SRMMappingGenerator(MappingGenerator):
     @classmethod
@@ -168,11 +170,23 @@ def load_locations_to_es_flow():
 
 def load_responses_to_es_flow():
     return DF.Flow(
+        DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
+        DF.select_fields(['responses']),
+        helpers.unwind('responses', 'response', 'object'),
+        DF.add_field('id', 'string', lambda r: r['response']['id']),
+        DF.join_with_self('card_data', ['id'], dict(
+            id=None,
+            count=dict(aggregate='count')
+        )),
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_RESPONSE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_package(title='Taxonomy Responses', name='responses'),
         DF.update_resource(-1, name='responses'),
+        DF.join('card_data', ['id'], 'responses', ['id'], dict(
+            count=None
+        )),
         DF.filter_rows(lambda r: r['status'] == 'ACTIVE'),
-        DF.select_fields(['id', 'name', 'breadcrumbs']),
+        DF.filter_rows(lambda r: r['count'] is not None),
+        DF.select_fields(['id', 'name', 'breadcrumbs', 'count']),
         DF.set_type('id', **{'es:keyword': True}),
         DF.set_type('name', **{'es:autocomplete': True}),
         DF.add_field('score', 'number', lambda r: 10*(6 - len(r['id'].split(':')))),
@@ -187,6 +201,7 @@ def load_responses_to_es_flow():
             settings.CKAN_API_KEY,
             settings.CKAN_OWNER_ORG,
         ),
+        # DF.printer()
     )
 
 def operator(*_):

@@ -16,6 +16,9 @@ def point_title(r):
     if offset and offset.endswith('-1'):
         records = r.get('record_objects')
         if len(records) > 1:
+            branch = list(set([r['branch_name'] for f in records]))
+            if len(branch) == 1:
+                return branch[0]
             return '{} שירותים'.format(len(records))  # TODO - multilingual
         else:
             return records[0]['service_name']
@@ -82,6 +85,9 @@ def geo_data_flow():
             'title', 'string', point_title, resources=['geo_data']
         ),
         DF.add_field(
+            'point_id', 'string', lambda r: r['record_objects'][0]['card_id'], resources=['geo_data']
+        ),
+        DF.add_field(
             'service_count', 'integer', lambda r: len(r['record_objects']), resources=['geo_data']
         ),
         DF.add_field(
@@ -99,6 +105,7 @@ def geo_data_flow():
                 'responses',
                 'records',
                 'title',
+                'point_id',
                 'service_count',
             ],
             resources=['geo_data'],
