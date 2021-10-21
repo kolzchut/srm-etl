@@ -16,7 +16,7 @@ def point_title(r):
     if offset and offset.endswith('-1'):
         records = r.get('record_objects')
         if len(records) > 1:
-            branch = list(set([r['branch_name'] for f in records]))
+            branch = list(set([f['branch_name'] for f in records]))
             if len(branch) == 1:
                 return branch[0]
             return '{} שירותים'.format(len(records))  # TODO - multilingual
