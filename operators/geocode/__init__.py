@@ -102,7 +102,7 @@ def operator(*_):
                 'resource-name': 'locations',
                 'typecast': True
             }
-        }),
+        }, settings.AIRTABLE_API_KEY),
         DF.printer()
     ).process()
 
