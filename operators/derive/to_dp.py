@@ -308,7 +308,7 @@ def flat_table_flow():
             resources=['flat_table'],
         ),
         # situations onto table records
-        helpers.unwind('situations', 'situation_key', resources=['flat_table']),
+        helpers.unwind('situations', 'situation_key', resources=['flat_table'], allow_empty=True),
         DF.join(
             'situations',
             ['key'],

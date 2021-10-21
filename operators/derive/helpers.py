@@ -19,7 +19,8 @@ def transform_phone_numbers(phone_numbers):
 
 
 def unwind(
-    from_key, to_key, to_key_type='string', transformer=None, resources=None, source_delete=True
+    from_key, to_key, to_key_type='string',
+    transformer=None, resources=None, source_delete=True, allow_empty=None
 ):
 
     """From a row of data, generate a row per value from from_key, where the value is set onto to_key."""
@@ -28,8 +29,11 @@ def unwind(
     def _unwinder(rows):
         for row in rows:
             try:
-                iter(row[from_key])
-                for value in row[from_key]:
+                values = row[from_key]
+                iter(values)
+                if len(values) == 0:
+                    values = [None]
+                for value in values:
                     ret = {}
                     ret.update(row)
                     ret[to_key] = value
