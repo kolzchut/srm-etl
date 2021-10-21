@@ -84,7 +84,7 @@ def get_session():
 
 def operator(*_):
     DF.Flow(
-        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW),
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, **{'name': 'locations'}),
         DF.filter_rows(lambda r: any((not r.get(f)) for f in ('resolved_lat', 'resolved_lon'))),
         DF.filter_rows(lambda r: r['status'] not in ('NOT_FOUND', )),
