@@ -1,4 +1,3 @@
-from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 import requests
 import os
 import json
@@ -6,6 +5,7 @@ import json
 import dataflows as DF
 
 from dataflows_airtable import dump_to_airtable, load_from_airtable
+from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
 from pyproj import Transformer
 import geocoder
@@ -21,7 +21,6 @@ def geocode(session):
         keyword = row.get('id')
         if not keyword:
             return
-
         geocode_req = dict(
             keyword=keyword, type=0,
         )
@@ -32,7 +31,6 @@ def geocode(session):
             assert False
         resp = resp.json()
 
-        # print(key, row, any((not row.get(f)) for f in ('resolved_lat', 'resolved_lon')), resp)
         row['status'] = 'VALID'
         if resp['status'] == 0 and resp['errorCode'] == 0:
             assert 'data' in resp and len(resp['data']) > 0, str(resp)
@@ -52,7 +50,6 @@ def geocode(session):
                 row['resolved_lon'], row['resolved_lat'] = resp.lng, resp.lat
             else:
                 row['status'] = 'NOT_FOUND'
-
     return func
 
 def get_session():
@@ -77,7 +74,6 @@ def get_session():
             Origin=settings.GOVMAP_REQUEST_ORIGIN,
             Referer=settings.GOVMAP_REQUEST_ORIGIN,
         )
-        print('HEADERS', headers)
     except Exception as e:
         logger.error(e)
         headers = {}
@@ -91,19 +87,19 @@ def operator(*_):
     print('GEOCODING')
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-        DF.update_resource(-1, **{'name': 'locations'}),
+        DF.update_resource(-1, name='locations'),
         DF.filter_rows(lambda r: any((not r.get(f)) for f in ('resolved_lat', 'resolved_lon'))),
         DF.filter_rows(lambda r: r['status'] not in ('NOT_FOUND', )),
+        DF.select_fields([AIRTABLE_ID_FIELD, 'id', 'status', 'provider', 'accuracy', 'resolved_lat', 'resolved_lon']),
         DF.set_type('resolved_l.+', type='number', transform=lambda v: float(v) if v is not None else None),
         geocode(get_session()),
-        DF.dump_to_path('geocode'),
         dump_to_airtable({
             (settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE): {
                 'resource-name': 'locations',
                 'typecast': True
             }
         }, settings.AIRTABLE_API_KEY),
-        DF.printer()
+        DF.dump_to_path('geocode'),
     ).process()
 
 
