@@ -90,7 +90,7 @@ def operator(*_):
         DF.update_resource(-1, name='locations'),
         DF.filter_rows(lambda r: any((not r.get(f)) for f in ('resolved_lat', 'resolved_lon'))),
         DF.filter_rows(lambda r: r['status'] not in ('NOT_FOUND', )),
-        DF.select_fields([AIRTABLE_ID_FIELD, 'id', 'status', 'provider', 'accuracy', 'resolved_lat', 'resolved_lon']),
+        DF.select_fields([AIRTABLE_ID_FIELD, 'id', 'status', 'provider', 'accuracy', 'resolved_lat', 'resolved_lon', 'resolved_address']),
         DF.set_type('resolved_l.+', type='number', transform=lambda v: float(v) if v is not None else None),
         geocode(get_session()),
         dump_to_airtable({
