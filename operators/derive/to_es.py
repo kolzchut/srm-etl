@@ -2,6 +2,7 @@ import tempfile
 import shutil
 from dataflows_airtable.load_from_airtable import load_from_airtable
 import requests
+import uuid
 
 import dataflows as DF
 import elasticsearch
@@ -13,6 +14,24 @@ from conf import settings
 from srm_tools.logger import logger
 
 from . import helpers
+
+
+def dump_to_es_and_delete(**kwargs):
+    unique_id = uuid.uuid4().hex
+    engine: elasticsearch.Elasticsearch = kwargs.get('engine')
+    indexes = list(kwargs.get('indexes').keys())
+
+    def deleter():
+        for index in indexes:
+            response = engine.delete_by_query(index, body=dict(query=dict(bool=dict(must_not=dict(term=dict(revision=unique_id))))))
+            print('DELETED', index, response)
+
+    return DF.Flow(
+        DF.add_field('revision', 'string', unique_id, **{'es:keyword': True}),
+        dump_to_es(**kwargs),
+        DF.delete_fields(['revision']),
+        DF.finalizer(deleter)
+    )
 
 
 class SRMMappingGenerator(MappingGenerator):
@@ -129,7 +148,7 @@ def data_api_es_flow():
                 'es:index': False,
             },
         ),
-        dump_to_es(
+        dump_to_es_and_delete(
             indexes=dict(srm__cards=[dict(resource_name='cards')]),
             mapper_cls=SRMMappingGenerator,
             engine=es_instance(),
@@ -156,7 +175,7 @@ def load_locations_to_es_flow():
             DF.update_resource(-1, name='places'),
             DF.set_type('name', **{'es:autocomplete': True}),
             DF.add_field('score', 'number', lambda r: scores.get(r['place'], 1)),
-            dump_to_es(
+            dump_to_es_and_delete(
                 indexes=dict(srm__places=[dict(resource_name='places')]),
                 mapper_cls=SRMMappingGenerator,
                 engine=es_instance(),
@@ -191,7 +210,7 @@ def load_responses_to_es_flow():
         DF.set_type('name', **{'es:autocomplete': True}),
         DF.add_field('score', 'number', lambda r: 10*(6 - len(r['id'].split(':')))),
         DF.set_primary_key(['id']),
-        dump_to_es(
+        dump_to_es_and_delete(
             indexes=dict(srm__responses=[dict(resource_name='responses')]),
             mapper_cls=SRMMappingGenerator,
             engine=es_instance(),
