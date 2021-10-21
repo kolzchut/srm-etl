@@ -31,7 +31,7 @@ def unwind(
             try:
                 values = row[from_key]
                 iter(values)
-                if len(values) == 0:
+                if allow_empty and len(values) == 0:
                     values = [None]
                 for value in values:
                     ret = {}
