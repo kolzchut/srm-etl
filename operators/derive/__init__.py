@@ -10,7 +10,7 @@ def operator(*_):
     to_dp.operator()
     to_es.operator()
     to_mapbox.operator()
-    to_sql.operator()
+    # to_sql.operator()
 
     logger.info('Finished Derive Data Flow')
 
