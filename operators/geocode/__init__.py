@@ -18,7 +18,7 @@ from conf import settings
 def geocode(session):
     transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
     def func(row):
-        keyword = row.get('key')
+        keyword = row.get('id')
         if not keyword:
             return
 
@@ -56,26 +56,31 @@ def geocode(session):
     return func
 
 def get_session():
-    token = settings.GOVMAP_API_KEY
-    auth_data = dict(
-        api_token=token, user_token='', domain=settings.GOVMAP_REQUEST_ORIGIN, token=''
-    )
-    headers = dict(
-        auth_data=json.dumps(auth_data),
-        Origin=settings.GOVMAP_REQUEST_ORIGIN,
-        Referer=settings.GOVMAP_REQUEST_ORIGIN,
-    )
+    try:
+        token = settings.GOVMAP_API_KEY
+        auth_data = dict(
+            api_token=token, user_token='', domain=settings.GOVMAP_REQUEST_ORIGIN, token=''
+        )
+        headers = dict(
+            auth_data=json.dumps(auth_data),
+            Origin=settings.GOVMAP_REQUEST_ORIGIN,
+            Referer=settings.GOVMAP_REQUEST_ORIGIN,
+        )
 
-    resp = requests.post(settings.GOVMAP_AUTH,
-                    json=dict(),
-                    headers=headers)
-    # print(resp.status_code)
-    # print(resp.content)
-    headers = dict(
-        auth_data=json.dumps(resp.json()),
-        Origin=settings.GOVMAP_REQUEST_ORIGIN,
-        Referer=settings.GOVMAP_REQUEST_ORIGIN,
-    )
+        resp = requests.post(settings.GOVMAP_AUTH,
+                        json=dict(),
+                        headers=headers)
+        # print(resp.status_code)
+        # print(resp.content)
+        headers = dict(
+            auth_data=json.dumps(resp.json()),
+            Origin=settings.GOVMAP_REQUEST_ORIGIN,
+            Referer=settings.GOVMAP_REQUEST_ORIGIN,
+        )
+        print('HEADERS', headers)
+    except Exception as e:
+        logger.error(e)
+        headers = {}
 
     session = requests.Session()
     session.headers.update(headers)
@@ -83,6 +88,7 @@ def get_session():
 
 
 def operator(*_):
+    print('GEOCODING')
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, **{'name': 'locations'}),
@@ -97,6 +103,7 @@ def operator(*_):
                 'typecast': True
             }
         }),
+        DF.printer()
     ).process()
 
 
