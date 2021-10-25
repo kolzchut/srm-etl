@@ -173,6 +173,10 @@ def preprocess_locations(select_fields=None, validate=False):
             ),
             resources=['locations'],
         ),
+        DF.filter_rows(
+            lambda r: r['accuracy'] in ('ROOFTOP', 'RANGE_INTERPOLATED', 'STREET_MID_POINT', 'POI_MID_POINT', 'ADDR_V1'),
+            resources=['locations'],
+        ),
         DF.add_field(
             'lat',
             'number',

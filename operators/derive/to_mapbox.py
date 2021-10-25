@@ -1,15 +1,49 @@
 from itertools import chain
 import json
+import time
 
+import requests
+import boto3
 import dataflows as DF
 
 from conf import settings
-from operators.mapbox_upload import upload_tileset
 from srm_tools.logger import logger
 
 from dataflows_ckan import dump_to_ckan
 
 from . import helpers
+
+
+def upload_tileset(filename, tileset, name):
+    AUTH = dict(access_token=settings.MAPBOX_ACCESS_TOKEN)
+    creds = requests.get(settings.MAPBOX_UPLOAD_CREDENTIALS, params=AUTH).json()
+    print(creds, AUTH)
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id=creds['accessKeyId'],
+        aws_secret_access_key=creds['secretAccessKey'],
+        aws_session_token=creds['sessionToken'],
+        region_name='us-east-1',
+    )
+    s3_client.upload_file(
+        filename, creds['bucket'], creds['key']
+    )
+    data = dict(
+        tileset=tileset,
+        url=creds['url'],
+        name=name
+    )
+    upload = requests.post(settings.MAPBOX_CREATE_UPLOAD, params=AUTH, json=data).json()
+    print(upload)
+    assert not upload.get('error')
+    while True:
+        status = requests.get(settings.MAPBOX_UPLOAD_STATUS + upload['id'], params=AUTH).json()
+        assert not status.get('error')
+        print('{complete} / {progress}'.format(**status))
+        if status['complete']:
+            break
+        time.sleep(10)
+
 
 def point_title(r):
     offset = r['offset']
