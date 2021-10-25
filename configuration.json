@@ -8,8 +8,8 @@
             "admin": true
         },
         {
-            "name": "entities",
-            "display": "Scrape Entities from BudgetKey",
+            "name": "soproc",
+            "display": "Scrape Social Procurement Data",
             "dgp": false,
             "admin": true
         },
