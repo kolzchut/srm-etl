@@ -10,6 +10,7 @@ from srm_tools.update_table import airflow_table_update_flow, airflow_table_upda
 from srm_tools.situations import Situations
 
 from conf import settings
+from .click_scraper import scrape_click
 
 
 situations = Situations()
@@ -25,6 +26,8 @@ def entities(regNums):
             for x in (
                 'בע״מ',
                  "בע'מ",
+                 'ע״ר',
+                 'חל״צ'
             ):
                 name = name.replace(x, '')
             name = name.strip()
@@ -74,7 +77,7 @@ def updateFromSourceData():
 def fetchOrgData():
     print('FETCHING ALL ORGANIZATIONS')
     query = '''
-        with suppliers as (select jsonb_array_elements(suppliers) as supplier from activities where suppliers is not null and suppliers::text != 'null' and catalog_number is not null)
+        with suppliers as (select jsonb_array_elements(suppliers) as supplier from activities where suppliers is not null and suppliers::text != 'null')
         select supplier->>'entity_id' as entity_id, supplier->>'entity_kind' as entity_kind from suppliers
     '''
     social_service_entity_ids = fetch_from_budgetkey(query)
@@ -92,7 +95,7 @@ def fetchOrgData():
 def fetchBranchData():
     print('FETCHING ALL BRANCHES')
     query = '''
-        with suppliers as (select jsonb_array_elements(suppliers) as supplier from activities where suppliers is not null and suppliers::text != 'null' and catalog_number is not null)
+        with suppliers as (select jsonb_array_elements(suppliers) as supplier from activities where suppliers is not null and suppliers::text != 'null')
         select supplier->>'entity_id' as entity_id, supplier->>'entity_kind' as entity_kind from suppliers
     '''
     social_service_entity_ids = fetch_from_budgetkey(query)
@@ -107,11 +110,67 @@ def fetchBranchData():
         updateFromSourceData()
     )
 
+def soprocServices(services):
+    taxonomy = DF.Flow(
+        load_from_airtable(settings.AIRTABLE_BASE, 'Social Procurement Taxonomy Mapping', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+    ).results()[0][0]
+    taxonomy = dict(
+        (r.pop('name'), r) for r in taxonomy
+    )
+
+    click_data = scrape_click()
+    for service in services:
+        catalog_number = str(service['catalog_number']) if service['catalog_number'] is not None else None
+        click = click_data.get(catalog_number) or dict()
+        id = 'soproc:' + service['id']
+        tags = (
+            (service['intervention'] or []) +
+            (service['subject'] or []) +
+            (service['target_age_group'] or []) +
+            (service['target_audience'] or [])
+        )
+        data = dict(
+            name=service['name'],
+            description=service['description'],
+            organizations=[s['entity_id'] for s in (service['suppliers'] or [])],
+        )
+        data.update(click)
+        data['situations'] = sorted(set([s for t in tags for s in (taxonomy[t]['situation_ids'] or [])] + (data.get('situations') or [])))
+        data['responses'] = sorted(set([s for t in tags for s in (taxonomy[t]['response_ids'] or [])] + (data.get('responses') or [])))
+
+        yield dict(
+            id=id,
+            tags=tags,
+            data=data
+        )
+
+def fetchServiceData():
+    print('FETCHING ALL SERVICES')
+    query = '''
+        select * from activities
+    '''
+    social_service_activities = fetch_from_budgetkey(query)
+    print('COLLECTED {} relevant services'.format(len(social_service_activities)))
+    airflow_table_updater(settings.AIRTABLE_SERVICE_TABLE, 'social-procurement',
+        ['name', 'description', 'details', 'location', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations'],
+        soprocServices(social_service_activities),
+        updateFromSourceData()
+    )
+
+
 def operator(name, params, pipeline):
     logger.info('STARTING Entity Scraping')
     fetchOrgData()
     fetchBranchData()
+    fetchServiceData()
 
 
 if __name__ == '__main__':
     operator(None, None, None)
+    # query = '''
+    #     select * from activities
+    # '''
+    # social_service_activities = fetch_from_budgetkey(query)
+    # svc = list(soprocServices(social_service_activities))
+    # print(svc[0])
+    

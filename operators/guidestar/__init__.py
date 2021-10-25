@@ -41,7 +41,7 @@ def updateOrgFromSourceData():
 def fetchOrgData(ga):
     print('FETCHING ALL ORGANIZATIONS')
     query = '''
-        with suppliers as (select jsonb_array_elements(suppliers) as supplier from activities where suppliers is not null and suppliers::text != 'null' and catalog_number is not null)
+        with suppliers as (select jsonb_array_elements(suppliers) as supplier from activities where suppliers is not null and suppliers::text != 'null')
         select supplier->>'entity_id' as entity_id, supplier->>'entity_kind' as entity_kind from suppliers
     '''
     social_service_entity_ids = fetch_from_budgetkey(query)

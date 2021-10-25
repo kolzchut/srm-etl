@@ -1,18 +1,8 @@
 import json
-from srm_tools.budgetkey import fetch_from_budgetkey
-from dataflows.base.flow import Flow
-from datapackage import resource
-
 import requests
 
 import dataflows as DF
-
-from dataflows_airtable import dump_to_airtable, load_from_airtable
-from dataflows_airtable.consts import AIRTABLE_ID_FIELD
-
-from srm_tools.logger import logger
-from srm_tools.update_table import airflow_table_updater
-from srm_tools.situations import Situations
+from dataflows_airtable import load_from_airtable
 
 from conf import settings
 
@@ -20,17 +10,17 @@ KEEP_FIELDS = ['cat', 'Name']
 DT_SUFFIXES = dict((k, i) for i, k in enumerate(['', 'i', 'ss', 't', 's', 'base64', 'f', 'is']))
 SELECT_FIELDS = {
     'id': 'catalog_number',
-    'page_url': 'page_url',
+    'urls': 'urls',
 
     # 'DisplayName': '',
 
     'Administration': 'department',
     'parent_group_name': 'service_group',
     'group_name': 'unit',
-    'FamilyName': 'title',
+    'FamilyName': 'name',
 
-    'Service_Purpose': 'description',
-    'Short_Description': 'subtitle',
+    'Service_Purpose': 'purpose',
+    'Short_Description': 'description',
     'Description': 'details',
 
     'Naming_Outputs': 'tags',
@@ -46,8 +36,8 @@ SELECT_FIELDS = {
     'Target_Community': 'target_community_text',
     'Duration_of_Service': 'service_duration_text',
 
-    'Deducitable': 'deductible',
-    'Deductible': 'deductible_details',
+    'Deducitable': 'payment_required',
+    'Deductible': 'payment_details',
     # 'Relationship_Type', # TODO: See if useful
     
     'Service_Status': 'service_status',
@@ -65,7 +55,6 @@ DEDUCTIBLE_TYPE = {
     'בחלק מהמקרים תתכן השתתפות עצמית': 'sometimes',
     'כרוך בהשתתפות עצמית': 'yes'
 }
-situations = Situations()
 
 
 def remove_nbsp():
@@ -87,23 +76,15 @@ def filter_results():
         DF.filter_rows(lambda row: row.get('distribution_channel') is not None and row.get('distribution_channel')[0] == 1),
     )
 
-
-def fetch_organizations():
-    def func(rows):
-        results = fetch_from_budgetkey('''
-            select catalog_number, jsonb_array_elements(suppliers) as supplier from activities
-                where suppliers is not null and suppliers::text != 'null'
-        ''')
-        results = list(results)
-        print('GOT {} SUPPLIERS'.format(len(results)))
-        suppliers = dict()
-        for rec in results:
-            suppliers.setdefault(rec['catalog_number'], []).append(rec['supplier']['entity_id'])
-
-        for row in rows:
-            catalog_number = row.get('catalog_number')
-            row['organizations'] = sorted(set(suppliers.get(catalog_number, [])), reverse=True)
-            yield row
+def fetch_from_taxonomy(taxonomy, field):
+    def func(r):
+        tags = r['tags'] or []
+        ret = set()
+        for t in tags:
+            rec = taxonomy[t]
+            val = rec.get(field) or []
+            ret.update(val)
+        return sorted(ret)
     return func
 
 
@@ -139,54 +120,51 @@ def scrape_click():
     )
     # print(next(docs))
     
+    taxonomy = DF.Flow(
+        load_from_airtable(settings.AIRTABLE_BASE, 'Click Service Taxonomy Mapping', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+    ).results()[0][0]
+    taxonomy = dict(
+        (r.pop('name'), r) for r in taxonomy
+    )
+
+
     records = DF.Flow(
         docs,
         DF.concatenate(concat_fields),
         DF.update_resource(-1, name='click'),
         remove_nbsp(),
         filter_results(),
-        DF.add_field('page_url', 'string', lambda r: 'https://clickrevaha.molsa.gov.il/{Name}/product-page/{product_id}'.format(**r)),
+        DF.add_field('urls', 'string', lambda r: 'https://clickrevaha.molsa.gov.il/{Name}/product-page/{product_id}#דף השירות בקליק לרווחה'.format(**r)),
         DF.select_fields(list(SELECT_FIELDS.keys())),
         DF.rename_fields(SELECT_FIELDS),
-        DF.add_field('organizations', 'array', []),
-        fetch_organizations(),
-        DF.set_type('tags', type='array', transform=lambda v: v.split('|') if v else []),
+        DF.set_type('details',
+            transform=lambda _, row: '\n\n'.join(row[f].strip() for f in [
+                'description', 'details', 'implementation_details','target_community_text', 'service_duration_text'
+            ] if row.get(f))
+        ),
+        DF.set_type('tags', type='array', 
+            transform=lambda v, row: (
+                (v.split('|') if v else []) +
+                ['age-{age_min}-{age_max}'.format(**row)] +
+                (row.get('target_populations_level_1') or []) +
+                (row.get('target_populations_level_2') or []) +
+                (row.get('service_subject') or [])
+            )
+        ),
         DF.set_type('delivery_channels', type='array', transform=lambda v: v.split('|') if v else []),
-        DF.set_type('deductible', type='string', transform=lambda v: DEDUCTIBLE_TYPE.get(v)),
+        DF.set_type('payment_required', type='string', transform=lambda v: DEDUCTIBLE_TYPE.get(v)),
+        DF.add_field('situations', 'array', fetch_from_taxonomy(taxonomy, 'situation_ids')),
+        DF.add_field('responses', 'array', fetch_from_taxonomy(taxonomy, 'response_ids')),
+        DF.select_fields(['catalog_number', 'name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses']),
     ).results()[0][0]
-    return [
-        dict(id='clr-{}'.format(r['catalog_number']), data=r)
-        for r in records
-    ]
-
-def updateServiceFromSourceData():
-    def func(row):
-        data = row.get('data')
-        if not data:
-            return
-        row['name'] = data['title']
-        row['description'] = data['subtitle']
-        row['details'] = '\n\n'.join(data[f].strip() for f in [
-            'description', 'details', 'implementation_details','target_community_text', 'service_duration_text'
-        ] if data.get(f))
-        row['payment_required'] = data['deductible']
-        row['payment_details'] = data['deductible_details']
-        row['urls'] = data['page_url'] + '#דף השירות בקליק לרווחה'
-        row['organizations'] = data['organizations']
-        row['situations'] = situations.situations_for_age_range(data['age_min'], data['age_max'])
-        row['situations'].extend(situations.situations_for_clr_target_population(data.get('target_populations_level_1') or []))
-        row['situations'].extend(situations.situations_for_clr_target_population(data.get('target_populations_level_2') or []))
-        row['situations'] = situations.convert_situation_list(sorted(set(row['situations'])))
-    return func
-
-def operator(*_):
-    airflow_table_updater(
-        'Services', 'click-lerevaha',
-        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'organizations'],
-        scrape_click(),
-        updateServiceFromSourceData()
-    )
+    return dict((r['catalog_number'], r) for r in records)
 
 
 if __name__ == '__main__':
-    operator()
+    sc = scrape_click()
+    print(len(sc))
+    import pprint
+    pprint.pprint(sc['143'])
+    # all_tags = [t for v in sc.values() for t in v['tags']]
+    # with open('tags', 'w') as t:
+    #     t.write('\n'.join(sorted(set(all_tags))))

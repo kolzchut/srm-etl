@@ -14,12 +14,6 @@
             "admin": true
         },
         {
-            "name": "click",
-            "display": "Scrape Click-LeRevaha",
-            "dgp": false,
-            "admin": true
-        },
-        {
             "name": "shil",
             "display": "Scrape Shil",
             "dgp": false,
