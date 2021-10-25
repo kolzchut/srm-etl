@@ -174,12 +174,12 @@ def flat_services_flow():
         DF.update_package(name='Flat Services'),
         DF.update_resource(['services'], name='flat_services', path='flat_services.csv'),
         # responses onto services
-        helpers.unwind('responses', 'response_key', resources=['flat_services']),
+        helpers.unwind('response_ids', 'response_id', resources=['flat_services']),
         DF.join(
             'responses',
-            ['key'],
+            ['id'],
             'flat_services',
-            ['response_key'],
+            ['response_id'],
             fields=dict(
                 response_id={'name': 'id'},
                 response_name={'name': 'name'},

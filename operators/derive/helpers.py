@@ -82,6 +82,16 @@ def set_staging_pkey(resource_name):
     return DF.rename_fields({'__airtable_id': 'key'}, resources=[resource_name])
 
 
+def update_responses_with_parents(v):
+    response_ids = v or []
+    ret = set()
+    for response_id in response_ids:
+        parts = response_id.split(':')
+        for i in range(2, len(parts)):
+            ret.add(':'.join(parts[:i]))
+    return sorted(ret)
+
+
 def preprocess_responses(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Responses'], name='responses', path='responses.csv'),
@@ -111,6 +121,7 @@ def preprocess_services(select_fields=None, validate=False):
         #     lambda r: r['selected'] is True or r['source'] == 'guidestar', resources=['services']
         # ),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['services']),
+        DF.set_type('response_ids', transform=update_responses_with_parents, resources=['services']),
         DF.select_fields(select_fields, resources=['services']) if select_fields else None,
         DF.validate() if validate else None,
     )
