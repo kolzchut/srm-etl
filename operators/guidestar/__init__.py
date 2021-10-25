@@ -177,9 +177,12 @@ def updateServiceFromSourceData(taxonomies):
     def update_from_taxonomy(names, responses, situations):
         for name in names:
             if name:
-                mapping = taxonomies[name]
-                responses.update(mapping['response_ids'] or [])
-                situations.update(mapping['situation_ids'] or [])
+                try:
+                    mapping = taxonomies[name]
+                    responses.update(mapping['response_ids'] or [])
+                    situations.update(mapping['situation_ids'] or [])
+                except KeyError:
+                    print('WARNING: no mapping for {}'.format(name))
 
     def func(row):
         data = row['data']

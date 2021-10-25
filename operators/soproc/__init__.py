@@ -152,7 +152,7 @@ def fetchServiceData():
     social_service_activities = list(fetch_from_budgetkey(query))
     print('COLLECTED {} relevant services'.format(len(social_service_activities)))
     airflow_table_updater(settings.AIRTABLE_SERVICE_TABLE, 'social-procurement',
-        ['name', 'description', 'details', 'location', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations'],
+        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations'],
         soprocServices(social_service_activities),
         updateFromSourceData()
     )
