@@ -428,8 +428,8 @@ def card_data_flow():
             ],
             resources=['card_data'],
         ),
-        DF.add_field('response_ids', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_id']),
-        DF.add_field('situation_ids', 'array', lambda r: helpers.update_taxonomy_with_parents(r['situation_id']),
+        DF.add_field('response_ids', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_id'])),
+        DF.add_field('situation_ids', 'array', lambda r: helpers.update_taxonomy_with_parents(r['situation_id'])),
         DF.set_primary_key(['card_id']),
         DF.delete_fields(
             [
