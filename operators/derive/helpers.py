@@ -87,7 +87,7 @@ def update_taxonomy_with_parents(v):
     ret = set()
     for id in ids:
         parts = id.split(':')
-        for i in range(2, len(parts)):
+        for i in range(2, len(parts) + 1):
             ret.add(':'.join(parts[:i]))
     return sorted(ret)
 
