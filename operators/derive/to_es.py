@@ -148,6 +148,20 @@ def data_api_es_flow():
                 'es:index': False,
             },
         ),
+        DF.set_type(
+            'response_ids',
+            **{
+                'es:itemType': 'string',
+                'es:keyword': True,
+            },
+        ),
+        DF.set_type(
+            'situation_ids',
+            **{
+                'es:itemType': 'string',
+                'es:keyword': True,
+            },
+        ),
         dump_to_es_and_delete(
             indexes=dict(srm__cards=[dict(resource_name='cards')]),
             mapper_cls=SRMMappingGenerator,
