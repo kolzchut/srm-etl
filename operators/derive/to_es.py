@@ -188,11 +188,18 @@ def load_locations_to_es_flow():
         )
 
 def load_responses_to_es_flow():
+    
+    def print_top(row):
+        parts = row['id'].split(':')
+        if len(parts) == 2:
+            print('STATS', parts[1], row['count'])
+
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
-        DF.select_fields(['responses']),
-        helpers.unwind('responses', 'response', 'object'),
-        DF.add_field('id', 'string', lambda r: r['response']['id']),
+        DF.add_field('response_ids', 'array', lambda r: [r['id'] for r in r['responses']]),
+        DF.set_type('response_ids', transform=lambda v: helpers.update_taxonomy_with_parents(v)),
+        DF.select_fields(['response_ids']),
+        helpers.unwind('response_ids', 'id', 'object'),
         DF.join_with_self('card_data', ['id'], dict(
             id=None,
             count=dict(aggregate='count')
@@ -208,8 +215,9 @@ def load_responses_to_es_flow():
         DF.select_fields(['id', 'name', 'breadcrumbs', 'count']),
         DF.set_type('id', **{'es:keyword': True}),
         DF.set_type('name', **{'es:autocomplete': True}),
-        DF.add_field('score', 'number', lambda r: 10*(6 - len(r['id'].split(':')))),
+        DF.add_field('score', 'number', lambda r: r['count']),
         DF.set_primary_key(['id']),
+        print_top,
         dump_to_es_and_delete(
             indexes=dict(srm__responses=[dict(resource_name='responses')]),
             mapper_cls=SRMMappingGenerator,
