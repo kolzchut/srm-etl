@@ -430,7 +430,7 @@ def card_data_flow():
         ),
         DF.add_field('response_ids', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_id'])),
         DF.add_field('situation_ids', 'array', lambda r: helpers.update_taxonomy_with_parents(r['situation_id'])),
-        DF.filter_rows(lambda r: not r['branch_geometry'] is None, resources=['geo_data']),
+        DF.filter_rows(lambda r: not r['branch_geometry'] is None, resources=['card_data']),
         DF.set_primary_key(['card_id']),
         DF.delete_fields(
             [
