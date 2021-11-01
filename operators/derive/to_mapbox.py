@@ -73,7 +73,6 @@ def geo_data_flow():
             resources=['geo_data'],
         ),
         # some addresses not resolved to points, and thus they are not useful for the map.
-        DF.filter_rows(lambda r: not r['branch_geometry'] is None, resources=['geo_data']),
         DF.join_with_self(
             'geo_data',
             ['branch_geometry'],

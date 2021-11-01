@@ -9,6 +9,7 @@ import elasticsearch
 from dataflows_ckan import dump_to_ckan
 from dataflows_elasticsearch import dump_to_es
 from tableschema_elasticsearch.mappers import MappingGenerator
+import yaml
 
 from conf import settings
 from srm_tools.logger import logger
@@ -245,11 +246,60 @@ def load_responses_to_es_flow():
         # DF.printer()
     )
 
+
+def load_situations_flow():
+
+    OPENELIGIBILITY_YAML_URL = 'https://raw.githubusercontent.com/hasadna/openeligibility/main/taxonomy.tx.yaml'
+    taxonomy = requests.get(OPENELIGIBILITY_YAML_URL).text
+    taxonomy = yaml.safe_load(taxonomy)
+    situations = [t for t in taxonomy if t['slug'] == 'human_situations'][0]['items']
+
+    return DF.Flow(
+        situations,
+        # DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
+        # DF.add_field('response_ids', 'array', lambda r: [r['id'] for r in r['responses']]),
+        # DF.set_type('response_ids', transform=lambda v: helpers.update_taxonomy_with_parents(v)),
+        # DF.select_fields(['response_ids']),
+        # helpers.unwind('response_ids', 'id', 'object'),
+        # DF.join_with_self('card_data', ['id'], dict(
+        #     id=None,
+        #     count=dict(aggregate='count')
+        # )),
+        # load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_RESPONSE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.update_package(title='Taxonomy Situations', name='situations'),
+        DF.update_resource(-1, name='situations', path='situations.json'),
+        # DF.join('card_data', ['id'], 'responses', ['id'], dict(
+        #     count=None
+        # )),
+        # DF.filter_rows(lambda r: r['status'] == 'ACTIVE'),
+        # DF.filter_rows(lambda r: r['count'] is not None),
+        # DF.select_fields(['id', 'name', 'breadcrumbs', 'count']),
+        # DF.set_type('id', **{'es:keyword': True}),
+        # DF.set_type('name', **{'es:autocomplete': True}),
+        # DF.add_field('score', 'number', lambda r: r['count']),
+        # DF.set_primary_key(['id']),
+        # print_top,
+        # dump_to_es_and_delete(
+        #     indexes=dict(srm__responses=[dict(resource_name='responses')]),
+        #     mapper_cls=SRMMappingGenerator,
+        #     engine=es_instance(),
+        # ),
+        dump_to_ckan(
+            settings.CKAN_HOST,
+            settings.CKAN_API_KEY,
+            settings.CKAN_OWNER_ORG,
+            force_format=False
+        ),
+        DF.printer()
+    )
+
+
 def operator(*_):
     logger.info('Starting ES Flow')
-    data_api_es_flow().process()
-    load_locations_to_es_flow().process()
-    load_responses_to_es_flow().process()
+    # data_api_es_flow().process()
+    # load_locations_to_es_flow().process()
+    # load_responses_to_es_flow().process()
+    load_situations_flow().process()
     logger.info('Finished ES Flow')
 
 
