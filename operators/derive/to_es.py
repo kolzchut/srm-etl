@@ -242,6 +242,7 @@ def load_responses_to_es_flow():
             settings.CKAN_HOST,
             settings.CKAN_API_KEY,
             settings.CKAN_OWNER_ORG,
+            format='json'
         ),
         # DF.printer()
     )
