@@ -238,6 +238,7 @@ def load_responses_to_es_flow():
             mapper_cls=SRMMappingGenerator,
             engine=es_instance(),
         ),
+        DF.update_resource(-1, name='responses', path='responses.json'),
         dump_to_ckan(
             settings.CKAN_HOST,
             settings.CKAN_API_KEY,
