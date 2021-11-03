@@ -147,7 +147,7 @@ def geo_data_flow():
         # this workaround just keeps behaviour same as other dumps we have.
         DF.update_resource(['geo_data'], path='geo_data.csv'),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data', format='geojson'),
-        DF.select_fields(['geometry', 'response_category', 'responses']),
+        DF.select_fields(['geometry', 'response_category', 'responses', 'situations']),
 
         DF.update_package(name='geo_data_clusters', title='Geo Data - For Clusters'),
         DF.update_resource(['geo_data'], path='geo_data.geojson'),
