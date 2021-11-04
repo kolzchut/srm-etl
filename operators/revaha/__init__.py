@@ -91,7 +91,7 @@ FIELD_MAP = {
         'transform': lambda r: [r['adress']],
     },
     'organization': {'type': 'array', 'transform': lambda r: [ORGANIZATION['id']]},
-    'services': {'type': 'array', 'transform': lambda r: [SERVICE['id']]},
+    'services': {'type': 'array', 'transform': lambda r: []},
     # '__airtable_id': {}, needed to prevent error
 }
 
@@ -145,7 +145,7 @@ def revaha_fetch_branch_data_flow(data=None):
         sort_dict_by_keys,
         DF.add_field('id', 'string', make_unique_id_from_values, resources=['branches']),
         *ensure_fields(FIELD_MAP, resources=['branches']),
-        DF.select_fields(FIELD_MAP.keys()),
+        DF.select_fields(FIELD_MAP.keys(), resources=['branches']),
         DF.add_field(
             'data',
             'object',
