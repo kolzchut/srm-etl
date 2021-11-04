@@ -1,4 +1,4 @@
-FROM akariv/dgp-app:f8dd191dd10b875bd2cd1729509a21c7329bf629
+FROM akariv/dgp-app:395a2c0bad5cb84ef74d76ace3196e2d93a3c13a
 
 USER etl
 
