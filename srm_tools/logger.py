@@ -6,6 +6,7 @@ MODULES = [
     'boto',
     'botocore',
     'boto3',
+    's3transfer',
     's3transfer.utils',
     's3transfer.tasks',
 ]
