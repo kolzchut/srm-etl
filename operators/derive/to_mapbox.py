@@ -172,9 +172,6 @@ def push_mapbox_tileset():
 
 def operator(*_):
     logger.info('Starting Geo Data Flow')
-    logging.getLogger('boto').setLevel(logging.CRITICAL)
-    logging.getLogger('botocore').setLevel(logging.CRITICAL)
-    logging.getLogger('botocore3').setLevel(logging.CRITICAL)
 
     flow = geo_data_flow()
     flow.process()
