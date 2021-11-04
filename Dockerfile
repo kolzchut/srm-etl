@@ -16,5 +16,7 @@ COPY operators dags/operators/
 COPY srm_tools srm_tools
 COPY conf conf
 
+ENV AIRFLOW__CORE__LOG_FORMAT="%(asctime)s:%(levelname)-8s:%(name)s:%(message)s"
+
 COPY srm_etl_entrypoint.sh /app/
 ENTRYPOINT ["/app/srm_etl_entrypoint.sh"]
