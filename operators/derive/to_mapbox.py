@@ -8,11 +8,12 @@ import boto3
 import dataflows as DF
 
 from conf import settings
-from srm_tools.logger import logger
 
 from dataflows_ckan import dump_to_ckan
 
 from . import helpers
+
+from srm_tools.logger import logger
 
 
 def upload_tileset(filename, tileset, name):

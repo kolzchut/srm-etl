@@ -10,9 +10,8 @@ from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 from pyproj import Transformer
 import geocoder
 
-from srm_tools.logger import logger
-
 from conf import settings
+from srm_tools.logger import logger
 
 
 def geocode(session):

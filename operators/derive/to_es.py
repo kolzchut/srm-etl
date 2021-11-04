@@ -12,9 +12,10 @@ from tableschema_elasticsearch.mappers import MappingGenerator
 import yaml
 
 from conf import settings
-from srm_tools.logger import logger
 
 from . import helpers
+
+from srm_tools.logger import logger
 
 
 def dump_to_es_and_delete(**kwargs):

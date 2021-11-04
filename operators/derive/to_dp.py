@@ -4,9 +4,10 @@ import dataflows as DF
 from dataflows_airtable import load_from_airtable
 
 from conf import settings
-from srm_tools.logger import logger
 
 from . import helpers
+
+from srm_tools.logger import logger
 
 
 def merge_array_fields(fieldnames):

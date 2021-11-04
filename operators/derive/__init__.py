@@ -1,6 +1,6 @@
-from srm_tools.logger import logger
-
 from . import to_dp, to_es, to_mapbox, to_sql
+
+from srm_tools.logger import logger
 
 
 def operator(*_):

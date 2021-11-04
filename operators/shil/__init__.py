@@ -3,8 +3,8 @@ import dataflows as DF
 
 from conf import settings
 from srm_tools.gov import get_gov_api
-from srm_tools.logger import logger
 from srm_tools.update_table import airflow_table_updater
+from srm_tools.logger import logger
 
 ITEM_URL_BASE = 'https://www.gov.il/he/departments/bureaus'
 
