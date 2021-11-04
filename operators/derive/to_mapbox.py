@@ -1,6 +1,7 @@
 from itertools import chain
 import json
 import time
+import logging
 
 import requests
 import boto3
@@ -171,6 +172,7 @@ def push_mapbox_tileset():
 
 def operator(*_):
     logger.info('Starting Geo Data Flow')
+    logging.getLogger('boto').setLevel(logging.CRITICAL)
 
     flow = geo_data_flow()
     flow.process()
