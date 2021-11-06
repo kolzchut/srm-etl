@@ -1,4 +1,4 @@
-FROM akariv/dgp-app:f8dd191dd10b875bd2cd1729509a21c7329bf629
+FROM akariv/dgp-app:395a2c0bad5cb84ef74d76ace3196e2d93a3c13a
 
 USER etl
 
@@ -15,6 +15,8 @@ COPY events dags/events
 COPY operators dags/operators/
 COPY srm_tools srm_tools
 COPY conf conf
+
+ENV AIRFLOW__CORE__LOG_FORMAT="%(asctime)s:%(levelname)-8s:%(name)s:%(message)s"
 
 COPY srm_etl_entrypoint.sh /app/
 ENTRYPOINT ["/app/srm_etl_entrypoint.sh"]

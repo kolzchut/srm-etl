@@ -9,11 +9,13 @@ import elasticsearch
 from dataflows_ckan import dump_to_ckan
 from dataflows_elasticsearch import dump_to_es
 from tableschema_elasticsearch.mappers import MappingGenerator
+import yaml
 
 from conf import settings
-from srm_tools.logger import logger
 
 from . import helpers
+
+from srm_tools.logger import logger
 
 
 def dump_to_es_and_delete(**kwargs):
@@ -237,19 +239,44 @@ def load_responses_to_es_flow():
             mapper_cls=SRMMappingGenerator,
             engine=es_instance(),
         ),
+        DF.update_resource(-1, name='responses', path='responses.json'),
         dump_to_ckan(
             settings.CKAN_HOST,
             settings.CKAN_API_KEY,
             settings.CKAN_OWNER_ORG,
+            format='json'
         ),
         # DF.printer()
     )
+
+
+def load_situations_flow():
+
+    OPENELIGIBILITY_YAML_URL = 'https://raw.githubusercontent.com/hasadna/openeligibility/main/taxonomy.tx.yaml'
+    taxonomy = requests.get(OPENELIGIBILITY_YAML_URL).text
+    taxonomy = yaml.safe_load(taxonomy)
+    situations = [t for t in taxonomy if t['slug'] == 'human_situations'][0]['items']
+
+    return DF.Flow(
+        situations,
+        DF.update_package(title='Taxonomy Situations', name='situations'),
+        DF.update_resource(-1, name='situations', path='situations.json'),
+        dump_to_ckan(
+            settings.CKAN_HOST,
+            settings.CKAN_API_KEY,
+            settings.CKAN_OWNER_ORG,
+            force_format=False
+        ),
+        DF.printer()
+    )
+
 
 def operator(*_):
     logger.info('Starting ES Flow')
     data_api_es_flow().process()
     load_locations_to_es_flow().process()
     load_responses_to_es_flow().process()
+    load_situations_flow().process()
     logger.info('Finished ES Flow')
 
 

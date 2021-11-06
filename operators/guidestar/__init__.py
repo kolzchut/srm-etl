@@ -10,11 +10,11 @@ except ImportError:
 from dataflows_airtable import dump_to_airtable, load_from_airtable
 from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
-from srm_tools.logger import logger
 from srm_tools.update_table import airflow_table_update_flow, airflow_table_updater
 from srm_tools.situations import Situations
 
 from conf import settings
+from srm_tools.logger import logger
 
 
 situations = Situations()

@@ -1,17 +1,19 @@
 from itertools import chain
 import json
 import time
+import logging
 
 import requests
 import boto3
 import dataflows as DF
 
 from conf import settings
-from srm_tools.logger import logger
 
 from dataflows_ckan import dump_to_ckan
 
 from . import helpers
+
+from srm_tools.logger import logger
 
 
 def upload_tileset(filename, tileset, name):
@@ -73,7 +75,6 @@ def geo_data_flow():
             resources=['geo_data'],
         ),
         # some addresses not resolved to points, and thus they are not useful for the map.
-        DF.filter_rows(lambda r: not r['branch_geometry'] is None, resources=['geo_data']),
         DF.join_with_self(
             'geo_data',
             ['branch_geometry'],
@@ -148,7 +149,7 @@ def geo_data_flow():
         # this workaround just keeps behaviour same as other dumps we have.
         DF.update_resource(['geo_data'], path='geo_data.csv'),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data', format='geojson'),
-        DF.select_fields(['geometry', 'response_category', 'responses']),
+        DF.select_fields(['geometry', 'response_category', 'responses', 'situations']),
 
         DF.update_package(name='geo_data_clusters', title='Geo Data - For Clusters'),
         DF.update_resource(['geo_data'], path='geo_data.geojson'),
