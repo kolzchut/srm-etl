@@ -92,12 +92,14 @@ def geo_data_flow():
             'array',
             lambda r: [s['id'].split(':')[1] for s in chain(*r['responses_at_point'])],
             resources=['geo_data'],
+            **{'es:itemType': 'string', 'es:keyword': True},
         ),
         DF.add_field(
             'response_category',
             'string',
             lambda r: Counter(r['response_categories']).most_common(1)[0][0],
             resources=['geo_data'],
+            **{'es:keyword': True},
         ),
         DF.set_primary_key(['geometry']),
         DF.add_field(
@@ -105,18 +107,21 @@ def geo_data_flow():
             'array',
             lambda r: sorted(set(s['id'] for s in chain(*r['situations_at_point']))),
             resources=['geo_data'],
+            **{'es:itemType': 'string', 'es:keyword': True},
         ),
         DF.add_field(
             'responses',
             'array',
             lambda r: sorted(set(s['id'] for s in chain(*r['responses_at_point']))),
             resources=['geo_data'],
+            **{'es:itemType': 'string', 'es:keyword': True},
         ),
         DF.add_field(
             'title', 'string', point_title, resources=['geo_data']
         ),
         DF.add_field(
             'point_id', 'string', lambda r: r['record_objects'][0]['card_id'], resources=['geo_data']
+            **{'es:keyword': True},
         ),
         DF.add_field(
             'service_count', 'integer', lambda r: len(r['record_objects']), resources=['geo_data']
@@ -126,6 +131,7 @@ def geo_data_flow():
             'string',
             lambda r: json.dumps(r['record_objects']),
             resources=['geo_data'],
+            **{'es:itemType': 'string', 'es:index': False}
         ),
         DF.select_fields(
             [
