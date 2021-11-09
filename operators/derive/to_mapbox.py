@@ -103,14 +103,14 @@ def geo_data_flow():
         DF.add_field(
             'situation_ids',
             'array',
-            lambda r: sorted(set(s['id'] for s in chain(*r['situations_at_point']))),
+            lambda r: helpers.update_taxonomy_with_parents(set(s['id'] for s in chain(*r['situations_at_point']))),
             resources=['geo_data'],
             **{'es:itemType': 'string', 'es:keyword': True},
         ),
         DF.add_field(
             'response_ids',
             'array',
-            lambda r: sorted(set(s['id'] for s in chain(*r['responses_at_point']))),
+            lambda r: helpers.update_taxonomy_with_parents(set(s['id'] for s in chain(*r['responses_at_point']))),
             resources=['geo_data'],
             **{'es:itemType': 'string', 'es:keyword': True},
         ),
