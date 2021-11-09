@@ -140,7 +140,7 @@ def revaha_organization_data_flow():
 def revaha_fetch_branch_data_flow(data=None):
     return DF.Flow(
         (obj['Data'] for obj in data or get_revaha_data()),
-        DF.update_resource(name='branches', path='branches.csv', resources=-1),
+        DF.update_resource(-1, name='branches', path='branches.csv'),
         DF.rename_fields({'location': 'source_location'}, resources=['branches']),
         sort_dict_by_keys,
         DF.add_field('id', 'string', make_unique_id_from_values, resources=['branches']),
@@ -175,4 +175,5 @@ def operator(*_):
 
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    # operator(None, None, None)
+    DF.Flow(revaha_branch_data_flow(),DF.printer()).process()

@@ -1,4 +1,5 @@
 from itertools import chain
+from collections import Counter
 import json
 import time
 import logging
@@ -88,16 +89,16 @@ def geo_data_flow():
         DF.add_field(
             'response_categories',
             'array',
-            lambda r: sorted(set(s['id'].split(':')[1] for s in chain(*r['responses_at_point']))),
+            lambda r: [s['id'].split(':')[1] for s in chain(*r['responses_at_point'])],
             resources=['geo_data'],
         ),
-        helpers.unwind(
-            'response_categories',
+        DF.add_field(
             'response_category',
-            source_delete=False,
+            'string',
+            lambda r: Counter(r['response_categories']).most_common(1)[0][0],
             resources=['geo_data'],
         ),
-        DF.set_primary_key(['geometry', 'response_category']),
+        DF.set_primary_key(['geometry']),
         DF.add_field(
             'situations',
             'array',
@@ -107,13 +108,7 @@ def geo_data_flow():
         DF.add_field(
             'responses',
             'array',
-            lambda r: sorted(set(s['id'] for s in chain(*r['responses_at_point']) if s['id'].split(':')[1] == r['response_category'])),
-            resources=['geo_data'],
-        ),
-        DF.add_field(
-            'offset',
-            'string',
-            helpers.generate_offset('response_category', 'response_categories'),
+            lambda r: sorted(set(s['id'] for s in chain(*r['responses_at_point']))),
             resources=['geo_data'],
         ),
         DF.add_field(
@@ -135,7 +130,7 @@ def geo_data_flow():
             [
                 'geometry',
                 'response_category',
-                'offset',
+                'response_categories',
                 'situations',
                 'responses',
                 'records',
@@ -149,8 +144,8 @@ def geo_data_flow():
         # this workaround just keeps behaviour same as other dumps we have.
         DF.update_resource(['geo_data'], path='geo_data.csv'),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data', format='geojson'),
-        DF.select_fields(['geometry', 'response_category', 'responses', 'situations']),
 
+        DF.select_fields(['geometry', 'response_categories', 'point_id']),
         DF.update_package(name='geo_data_clusters', title='Geo Data - For Clusters'),
         DF.update_resource(['geo_data'], path='geo_data.geojson'),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data_clusters', force_format=False),

@@ -26,12 +26,6 @@
             "admin": true
         },
         {
-            "name": "revaha",
-            "display": "Scrape Mahlakot HaRevaha",
-            "dgp": false,
-            "admin": true
-        },
-        {
             "name": "geocode",
             "display": "Geocoding",
             "dgp": false,
