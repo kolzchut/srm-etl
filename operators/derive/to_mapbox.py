@@ -50,16 +50,14 @@ def upload_tileset(filename, tileset, name):
 
 
 def point_title(r):
-    offset = r['offset']
-    if offset and offset.endswith('-1'):
-        records = r.get('record_objects')
-        if len(records) > 1:
-            branch = list(set([f['branch_name'] for f in records]))
-            if len(branch) == 1:
-                return branch[0]
-            return '{} שירותים'.format(len(records))  # TODO - multilingual
-        else:
-            return records[0]['service_name']
+    records = r.get('record_objects')
+    if len(records) > 1:
+        branch = list(set([f['branch_name'] for f in records]))
+        if len(branch) == 1:
+            return branch[0]
+        return '{} שירותים'.format(len(records))  # TODO - multilingual
+    else:
+        return records[0]['service_name']
 
 
 def geo_data_flow():
