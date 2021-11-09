@@ -120,7 +120,7 @@ def geo_data_flow():
             'title', 'string', point_title, resources=['geo_data']
         ),
         DF.add_field(
-            'point_id', 'string', lambda r: r['record_objects'][0]['card_id'], resources=['geo_data']
+            'point_id', 'string', lambda r: r['record_objects'][0]['card_id'], resources=['geo_data'],
             **{'es:keyword': True},
         ),
         DF.add_field(
