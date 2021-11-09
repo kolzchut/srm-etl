@@ -152,6 +152,7 @@ def geo_data_flow():
 
         # Save mapbox data to ES and CKAN
         DF.update_resource('geo_data', name='points'),
+        DF.add_field('score', 'number', 10, resources=['points']),
         dump_to_es_and_delete(
             indexes=dict(srm__points=[dict(resource_name='points')]),
         ),
