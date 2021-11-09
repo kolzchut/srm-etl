@@ -40,6 +40,7 @@ def dump_to_es_and_delete(**kwargs):
     unique_id = uuid.uuid4().hex
     engine: elasticsearch.Elasticsearch = es_instance()
     indexes = list(kwargs.get('indexes').keys())
+    kwargs.setdefault('engine', engine)
     kwargs.setdefault('mapper_cls', SRMMappingGenerator)
 
     def deleter():
