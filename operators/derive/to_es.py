@@ -2,65 +2,19 @@ import tempfile
 import shutil
 from dataflows_airtable.load_from_airtable import load_from_airtable
 import requests
-import uuid
 
 import dataflows as DF
-import elasticsearch
 from dataflows_ckan import dump_to_ckan
-from dataflows_elasticsearch import dump_to_es
-from tableschema_elasticsearch.mappers import MappingGenerator
 import yaml
 
 from conf import settings
 
 from . import helpers
+from .es_utils import dump_to_es_and_delete
 
 from srm_tools.logger import logger
 
 
-def dump_to_es_and_delete(**kwargs):
-    unique_id = uuid.uuid4().hex
-    engine: elasticsearch.Elasticsearch = kwargs.get('engine')
-    indexes = list(kwargs.get('indexes').keys())
-
-    def deleter():
-        for index in indexes:
-            response = engine.delete_by_query(index, body=dict(query=dict(bool=dict(must_not=dict(term=dict(revision=unique_id))))))
-            print('DELETED', index, response)
-
-    return DF.Flow(
-        DF.add_field('revision', 'string', unique_id, **{'es:keyword': True}),
-        dump_to_es(**kwargs),
-        DF.delete_fields(['revision']),
-        DF.finalizer(deleter)
-    )
-
-
-class SRMMappingGenerator(MappingGenerator):
-    @classmethod
-    def _convert_type(cls, schema_type, field, prefix):
-        # TODO: should be in base class
-        if field['type'] == 'any':
-            field['es:itemType'] = 'string'
-        prop = super()._convert_type(schema_type, field, prefix)
-        boost, keyword, autocomplete = field.get('es:boost'), field.get('es:keyword'), field.get('es:autocomplete')
-        if keyword:
-            prop['type'] = 'keyword'
-        if autocomplete:
-            prop['index_prefixes'] = {}
-        if boost:
-            prop['boost'] = boost
-        if schema_type in ('number', 'integer', 'geopoint'):
-            prop['index'] = True
-        return prop
-
-
-def es_instance():
-    return elasticsearch.Elasticsearch(
-        [dict(host=settings.ES_HOST, port=int(settings.ES_PORT))],
-        timeout=60,
-        **({"http_auth": settings.ES_HTTP_AUTH.split(':')} if settings.ES_HTTP_AUTH else {}),
-    )
 
 def data_api_es_flow():
     return DF.Flow(
@@ -166,8 +120,6 @@ def data_api_es_flow():
         ),
         dump_to_es_and_delete(
             indexes=dict(srm__cards=[dict(resource_name='cards')]),
-            mapper_cls=SRMMappingGenerator,
-            engine=es_instance(),
         ),
         dump_to_ckan(
             settings.CKAN_HOST,
@@ -193,8 +145,6 @@ def load_locations_to_es_flow():
             DF.add_field('score', 'number', lambda r: scores.get(r['place'], 1)),
             dump_to_es_and_delete(
                 indexes=dict(srm__places=[dict(resource_name='places')]),
-                mapper_cls=SRMMappingGenerator,
-                engine=es_instance(),
             ),
             dump_to_ckan(
                 settings.CKAN_HOST,
@@ -236,8 +186,6 @@ def load_responses_to_es_flow():
         print_top,
         dump_to_es_and_delete(
             indexes=dict(srm__responses=[dict(resource_name='responses')]),
-            mapper_cls=SRMMappingGenerator,
-            engine=es_instance(),
         ),
         DF.update_resource(-1, name='responses', path='responses.json'),
         dump_to_ckan(

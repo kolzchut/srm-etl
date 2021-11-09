@@ -13,6 +13,7 @@ from conf import settings
 from dataflows_ckan import dump_to_ckan
 
 from . import helpers
+from .es_utils import dump_to_es_and_delete
 
 from srm_tools.logger import logger
 
@@ -145,9 +146,22 @@ def geo_data_flow():
         DF.update_resource(['geo_data'], path='geo_data.csv'),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data', format='geojson'),
 
+        # Save mapbox data to ES and CKAN
+        DF.update_resource('geo_data', name='points'),
+        dump_to_es_and_delete(
+            indexes=dict(srm__points=[dict(resource_name='points')]),
+        ),
+        dump_to_ckan(
+            settings.CKAN_HOST,
+            settings.CKAN_API_KEY,
+            settings.CKAN_OWNER_ORG,
+            force_format=False
+        ),
+
+        # Generate Cluster dataset
         DF.select_fields(['geometry', 'response_categories', 'point_id']),
         DF.update_package(name='geo_data_clusters', title='Geo Data - For Clusters'),
-        DF.update_resource(['geo_data'], path='geo_data.geojson'),
+        DF.update_resource(['points'], path='geo_data.geojson'),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data_clusters', force_format=False),
         dump_to_ckan(
             settings.CKAN_HOST,
