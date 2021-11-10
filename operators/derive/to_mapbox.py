@@ -79,7 +79,7 @@ def geo_data_flow():
             'geo_data',
             ['branch_geometry'],
             fields=dict(
-                geometry={'name': 'branch_geometry'},
+                branch_geometry={'name': 'branch_geometry'},
                 situations_at_point={'name': 'situations', 'aggregate': 'array'},
                 responses_at_point={'name': 'responses', 'aggregate': 'array'},
                 record_objects={'name': 'record', 'aggregate': 'array'},
@@ -133,7 +133,7 @@ def geo_data_flow():
         ),
         DF.select_fields(
             [
-                'geometry',
+                'branch_geometry',
                 'response_category',
                 'response_categories',
                 'situation_ids',
@@ -152,7 +152,7 @@ def geo_data_flow():
 
         # Save mapbox data to ES and CKAN
         DF.update_resource('geo_data', name='points'),
-        DF.select_fields(['geometry', 'response_categories', 'point_id', 'response_ids', 'situation_ids', 'response_category']),
+        DF.select_fields(['branch_geometry', 'response_categories', 'point_id', 'response_ids', 'situation_ids', 'response_category']),
         DF.add_field('score', 'number', 10, resources=['points']),
         dump_to_es_and_delete(
             indexes=dict(srm__points=[dict(resource_name='points')]),
@@ -165,7 +165,7 @@ def geo_data_flow():
         ),
 
         # Generate Cluster dataset
-        DF.select_fields(['geometry', 'response_categories', 'point_id']),
+        DF.select_fields(['branch_geometry', 'response_categories', 'point_id']),
         DF.update_package(name='geo_data_clusters', title='Geo Data - For Clusters'),
         DF.update_resource(['points'], path='geo_data.geojson'),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data_clusters', force_format=False),
