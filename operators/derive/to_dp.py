@@ -446,6 +446,7 @@ def card_data_flow():
             'response_categories',
             'array',
             lambda r: [r['id'].split(':')[1] for r in r['responses']],
+            **{'es:itemType': 'string', 'es:keyword': True},
             resources=['card_data'],
         ),
         DF.add_field(
