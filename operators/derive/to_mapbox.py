@@ -130,7 +130,7 @@ def points_flow():
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
         DF.update_package(title='Points Data', name='points_data'),
         DF.update_resource(['card_data'], name='points', path='points.csv'),
-        DF.set_primary_key(['card_id']),
+        DF.set_primary_key(['point_id']),
         DF.select_fields(
             [
                 'branch_geometry',
