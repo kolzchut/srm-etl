@@ -99,7 +99,7 @@ def geo_data_flow():
             resources=['geo_data'],
             **{'es:keyword': True},
         ),
-        DF.set_primary_key(['geometry']),
+        DF.set_primary_key(['branch_geometry']),
         DF.add_field(
             'situation_ids',
             'array',
