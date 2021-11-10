@@ -18,6 +18,19 @@ def transform_phone_numbers(phone_numbers):
     return phone_numbers.split(',') if phone_numbers else None
 
 
+def calc_point_id(geometry):
+    return ''.join('{:08.5f}'.format(c) for c in geometry).replace('.','')
+
+
+def validate_geometry(geometry):
+    if geometry:
+        if len(geometry) == 2:
+            # Y: 29.3-33.3
+            # X: 33-37
+            if 33 < geometry[0] < 37 and 29.3 < geometry[1] < 33.3:
+                return True
+    return False
+
 def unwind(
     from_key, to_key, to_key_type='string',
     transformer=None, resources=None, source_delete=True, allow_empty=None

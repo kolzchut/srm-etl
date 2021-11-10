@@ -1,3 +1,4 @@
+from collections import Counter
 from itertools import chain
 
 import dataflows as DF
@@ -429,10 +430,39 @@ def card_data_flow():
             ],
             resources=['card_data'],
         ),
-        DF.add_field('response_ids', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_id'])),
-        DF.add_field('situation_ids', 'array', lambda r: helpers.update_taxonomy_with_parents(r['situation_id'])),
-        DF.filter_rows(lambda r: not r['branch_geometry'] is None, resources=['card_data']),
-        DF.set_primary_key(['card_id']),
+        DF.add_field(
+            'response_ids', 'array', 
+            lambda r: helpers.update_taxonomy_with_parents(r['response_id']),
+            **{'es:itemType': 'string', 'es:keyword': True},
+            resources=['card_data']
+        ),
+        DF.add_field(
+            'situation_ids', 'array',
+            lambda r: helpers.update_taxonomy_with_parents(r['situation_id']),
+            **{'es:itemType': 'string', 'es:keyword': True},
+            resources=['card_data']
+        ),
+        DF.add_field(
+            'response_categories',
+            'array',
+            lambda r: [r['id'].split(':')[1] for r in r['responses']],
+            resources=['card_data'],
+        ),
+        DF.add_field(
+            'response_category',
+            'string',
+            lambda r: Counter(r['response_categories']).most_common(1)[0][0],
+            resources=['card_data'],
+            **{'es:keyword': True},
+        ),
+        DF.filter_rows(lambda r: helpers.validate_geometry(r['branch_geometry']), resources=['card_data']),
+        DF.add_field(
+            'point_id', 'string',
+            lambda r: helpers.calc_point_id(r['branch_geometry']),
+            **{'es:keyword': True},
+            resources=['card_data']
+        ),
+        DF.set_primary_key(['card_id'], resources=['card_data']),
         DF.delete_fields(
             [
                 'response_id',

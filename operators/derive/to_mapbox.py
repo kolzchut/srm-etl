@@ -77,20 +77,19 @@ def geo_data_flow():
         # some addresses not resolved to points, and thus they are not useful for the map.
         DF.join_with_self(
             'geo_data',
-            ['branch_geometry'],
+            ['point_id'],
             fields=dict(
                 branch_geometry={'name': 'branch_geometry'},
-                situations_at_point={'name': 'situations', 'aggregate': 'array'},
-                responses_at_point={'name': 'responses', 'aggregate': 'array'},
+                point_id={'name': 'point_id'},
                 record_objects={'name': 'record', 'aggregate': 'array'},
             ),
         ),
+        DF.set_primary_key(['point_id']),
         DF.add_field(
             'response_categories',
             'array',
-            lambda r: [s['id'].split(':')[1] for s in chain(*r['responses_at_point'])],
+            lambda r: [r['response_category'] for r in r['record_objects']],
             resources=['geo_data'],
-            **{'es:itemType': 'string', 'es:keyword': True},
         ),
         DF.add_field(
             'response_category',
@@ -99,30 +98,8 @@ def geo_data_flow():
             resources=['geo_data'],
             **{'es:keyword': True},
         ),
-        DF.set_primary_key(['branch_geometry']),
-        DF.add_field(
-            'situation_ids',
-            'array',
-            lambda r: helpers.update_taxonomy_with_parents(set(s['id'] for s in chain(*r['situations_at_point']))),
-            resources=['geo_data'],
-            **{'es:itemType': 'string', 'es:keyword': True},
-        ),
-        DF.add_field(
-            'response_ids',
-            'array',
-            lambda r: helpers.update_taxonomy_with_parents(set(s['id'] for s in chain(*r['responses_at_point']))),
-            resources=['geo_data'],
-            **{'es:itemType': 'string', 'es:keyword': True},
-        ),
         DF.add_field(
             'title', 'string', point_title, resources=['geo_data']
-        ),
-        DF.add_field(
-            'point_id', 'string', lambda r: r['record_objects'][0]['card_id'], resources=['geo_data'],
-            **{'es:keyword': True},
-        ),
-        DF.add_field(
-            'service_count', 'integer', lambda r: len(r['record_objects']), resources=['geo_data']
         ),
         DF.add_field(
             'records',
@@ -135,13 +112,9 @@ def geo_data_flow():
             [
                 'branch_geometry',
                 'response_category',
-                'response_categories',
-                'situation_ids',
-                'response_ids',
                 'records',
                 'title',
                 'point_id',
-                'service_count',
             ],
             resources=['geo_data'],
         ),
@@ -149,11 +122,28 @@ def geo_data_flow():
         # this workaround just keeps behaviour same as other dumps we have.
         DF.update_resource(['geo_data'], path='geo_data.csv'),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data', format='geojson'),
+    )
 
-        # Save mapbox data to ES and CKAN
-        DF.update_resource('geo_data', name='points'),
-        DF.select_fields(['branch_geometry', 'response_categories', 'point_id', 'response_ids', 'situation_ids', 'response_category']),
+
+def points_flow():
+    return DF.Flow(
+        DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
+        DF.update_package(title='Points Data', name='points_data'),
+        DF.update_resource(['card_data'], name='points', path='points.csv'),
+        DF.set_primary_key(['card_id']),
+        DF.select_fields(
+            [
+                'branch_geometry',
+                'response_categories',
+                'response_category',
+                'point_id',
+                'situation_ids',
+                'response_ids',
+            ],
+            resources=['points'],
+        ),
         DF.add_field('score', 'number', 10, resources=['points']),
+        # Save mapbox data to ES and CKAN
         dump_to_es_and_delete(
             indexes=dict(srm__points=[dict(resource_name='points')]),
         ),
@@ -178,6 +168,7 @@ def geo_data_flow():
     )
 
 
+
 def push_mapbox_tileset():
     return upload_tileset(
         f'{settings.DATA_DUMP_DIR}/geo_data/geo_data.geojson',
@@ -189,9 +180,9 @@ def push_mapbox_tileset():
 def operator(*_):
     logger.info('Starting Geo Data Flow')
 
-    flow = geo_data_flow()
-    flow.process()
+    geo_data_flow().process()
     push_mapbox_tileset()
+    points_flow().process()
     logger.info('Finished Geo Data Flow')
 
 
