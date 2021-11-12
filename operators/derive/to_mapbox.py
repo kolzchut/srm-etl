@@ -108,6 +108,12 @@ def geo_data_flow():
             resources=['geo_data'],
             **{'es:itemType': 'string', 'es:index': False}
         ),
+        DF.add_field(
+            'service_count',
+            'integer',
+            lambda r: len(r['record_objects']),
+            resources=['geo_data'],
+        ),
         DF.select_fields(
             [
                 'branch_geometry',
@@ -115,6 +121,7 @@ def geo_data_flow():
                 'records',
                 'title',
                 'point_id',
+                'service_count',
             ],
             resources=['geo_data'],
         ),
