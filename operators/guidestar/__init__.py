@@ -237,6 +237,8 @@ def updateServiceFromSourceData(taxonomies):
                 row['details'] = 'שירות אינטרנטי מקוון'
             elif area == 'Via Phone or Mail':
                 row['details'] = 'במענה טלפוני או בדוא"ל'
+            elif area == 'Customer Place':
+                row['details'] = 'אצל מקבלי השירות'
             elif area == 'Not relevant':
                 pass
             else:
