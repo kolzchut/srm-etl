@@ -41,7 +41,7 @@ def handle_node(node, breadcrumbs=None):
 
 def fetch_taxonomy(key, languages=('he', )):
     taxonomy = requests.get(settings.OPENELIGIBILITY_YAML_URL).content
-    taxonomy = yaml.load(taxonomy)
+    taxonomy = yaml.load(taxonomy, Loader=yaml.SafeLoader)
     root = [t for t in taxonomy if t['slug'] == key][0]
     return DF.Flow(
         handle_node(root),
