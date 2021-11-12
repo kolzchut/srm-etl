@@ -264,7 +264,7 @@ def updateServiceFromSourceData(taxonomies):
                 details += 'נושאים נוספים:' + other + '\n'
             update_from_taxonomy(secondary_topics, responses, situations)
 
-            target_audience = data.pop('youthTargetAudience').split(';')
+            target_audience = (data.pop('youthTargetAudience') or '').split(';')
             if 'אחר' in target_audience:
                 target_audience.remove('אחר')
             update_from_taxonomy(target_audience, responses, situations)

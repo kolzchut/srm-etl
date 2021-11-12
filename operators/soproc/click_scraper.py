@@ -127,7 +127,6 @@ def scrape_click():
         (r.pop('name'), r) for r in taxonomy
     )
 
-
     records = DF.Flow(
         docs,
         DF.concatenate(concat_fields),
