@@ -34,7 +34,7 @@ def updateOrgFromSourceData():
         if data.get('website'):
             urls.append(data['website'] + '#אתר הבית')
         if data.get('urlGuidestar'):
-            urls.append(data['urlGuidestar'] + '#הארגון בגיידסטאר')
+            urls.append(data['urlGuidestar'] + '#מידע נוסף ב״גיידסטאר״')
         row['urls'] = '\n'.join(urls)
     return func
 
@@ -112,8 +112,8 @@ def updateBranchFromSourceData():
         row['address_details'] = data.get('drivingInstructions')
         row['description'] = None
         row['urls'] = None
-        if data.get('branchURL'):
-            row['urls'] = data['branchURL'] + '#הסניף בגיידסטאר'
+        # if data.get('branchURL'):
+        #     row['urls'] = data['branchURL'] + '#הסניף בגיידסטאר'
         row['phone_numbers'] = None
         if data.get('phone'):
             row['phone_numbers'] = data['phone']
