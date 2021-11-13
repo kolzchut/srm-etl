@@ -273,6 +273,8 @@ def updateServiceFromSourceData(taxonomies):
             if other:
                 details += 'קהל יעד:' + other + '\n'
 
+            data.pop('youthActivity_Area', None)
+
             intervention_type = data.pop('youthActivityInterventionType').split(';')
             if 'אחר' in intervention_type:
                 intervention_type.remove('אחר')
@@ -288,7 +290,7 @@ def updateServiceFromSourceData(taxonomies):
         if url and url.startswith('http'):
             row['url'] = f'{url}#מידע נוסף על השירות'
 
-        for k in ('isForCoronaVirus', 'lastModifiedDate', 'serviceId', 'regNum', 'isForBranch', 'youthActivity_Area'):
+        for k in ('isForCoronaVirus', 'lastModifiedDate', 'serviceId', 'regNum', 'isForBranch'):
             data.pop(k)
         row['situations'] = sorted(situations)
         row['responses'] = sorted(responses)
