@@ -42,6 +42,12 @@
             "display": "Derive all databases from staging data.",
             "dgp": false,
             "admin": true
+        },
+        {
+            "name": "presets",
+            "display": "Load Presets from AirTable to ES",
+            "dgp": false,
+            "admin": true
         }
     ],
     "theme": {
