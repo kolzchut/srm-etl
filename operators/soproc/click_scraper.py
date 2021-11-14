@@ -133,7 +133,7 @@ def scrape_click():
         DF.update_resource(-1, name='click'),
         remove_nbsp(),
         filter_results(),
-        DF.add_field('urls', 'string', lambda r: 'https://clickrevaha.molsa.gov.il/{Name}/product-page/{product_id}#השירות בהרחבה ב״קליק לרווחה״'.format(**r)),
+        DF.add_field('urls', 'string', lambda r: 'https://clickrevaha.molsa.gov.il/product-page/{product_id}#השירות בהרחבה ב״קליק לרווחה״'.format(**r)),
         DF.select_fields(list(SELECT_FIELDS.keys())),
         DF.rename_fields(SELECT_FIELDS),
         DF.set_type('details',
