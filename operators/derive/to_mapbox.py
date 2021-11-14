@@ -101,6 +101,7 @@ def geo_data_flow():
         DF.add_field(
             'title', 'string', point_title, resources=['geo_data']
         ),
+        DF.set_type('record_objects', transform=lambda v, row: helpers.reorder_records_by_category(v, row['response_category'])),
         DF.add_field(
             'records',
             'string',

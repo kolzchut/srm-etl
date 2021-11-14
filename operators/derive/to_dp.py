@@ -456,6 +456,7 @@ def card_data_flow():
             resources=['card_data'],
             **{'es:keyword': True},
         ),
+        DF.set_type('responses', transform=lambda v, row: helpers.reorder_responses_by_category(v, row['response_category'])),
         DF.filter_rows(lambda r: helpers.validate_geometry(r['branch_geometry']), resources=['card_data']),
         DF.add_field(
             'point_id', 'string',

@@ -105,6 +105,20 @@ def update_taxonomy_with_parents(v):
     return sorted(ret)
 
 
+def reorder_responses_by_category(responses, category):
+    return (
+        [r for r in responses if r['id'].split(':')[1] == category] +
+        [r for r in responses if r['id'].split(':')[1] != category]
+    )
+
+
+def reorder_records_by_category(records, category):
+    return (
+        [r for r in records if r['response_category'] == category] +
+        [r for r in records if r['response_category'] != category]
+    )
+
+
 def preprocess_responses(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Responses'], name='responses', path='responses.csv'),
