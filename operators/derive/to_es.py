@@ -133,6 +133,11 @@ def load_locations_to_es_flow():
     scores = dict(
         city=100, town=50, village=10, hamlet=5,
     )
+    def calc_score(r):
+        b = r['bounds']
+        size = (b[2] - b[0]) * (b[3] - b[1]) * 1000
+        return size * scores[r['place']]
+
     with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmpfile:
         src = requests.get(url, stream=True).raw
         shutil.copyfileobj(src, tmpfile)
@@ -142,7 +147,7 @@ def load_locations_to_es_flow():
             DF.update_package(title='Bounds for Locations in Israel', name='bounds-for-locations'),
             DF.update_resource(-1, name='places'),
             DF.set_type('name', **{'es:autocomplete': True}),
-            DF.add_field('score', 'number', lambda r: scores.get(r['place'], 1)),
+            DF.add_field('score', 'number', calc_score),
             dump_to_es_and_delete(
                 indexes=dict(srm__places=[dict(resource_name='places')]),
             ),
