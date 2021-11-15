@@ -136,7 +136,7 @@ def load_locations_to_es_flow():
     def calc_score(r):
         b = r['bounds']
         size = (b[2] - b[0]) * (b[3] - b[1]) * 100000
-        return size * scores[r['place']]
+        return size * scores.get(r['place'], 1)
 
     with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmpfile:
         src = requests.get(url, stream=True).raw
