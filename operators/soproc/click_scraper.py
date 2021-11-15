@@ -137,7 +137,7 @@ def scrape_click():
         DF.select_fields(list(SELECT_FIELDS.keys())),
         DF.rename_fields(SELECT_FIELDS),
         DF.set_type('details',
-            transform=lambda _, row: '\n\n'.join(row[f].strip() for f in [
+            transform=lambda _, row: ''.join('<p>{}</p>'.format(row[f].strip()) for f in [
                 'description', 'details', 'implementation_details','target_community_text', 'service_duration_text'
             ] if row.get(f))
         ),
