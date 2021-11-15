@@ -33,8 +33,6 @@ class SRMMappingGenerator(MappingGenerator):
             prop['boost'] = boost
         if schema_type in ('number', 'integer', 'geopoint'):
             prop['index'] = True
-        if 'scaling_factor' in prop:
-            prop['scaling_factor'] = 10000
         return prop
 
 
