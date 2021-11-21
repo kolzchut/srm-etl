@@ -30,12 +30,18 @@ class ManualFixes():
             var = dict((r[AIRTABLE_ID_FIELD], r) for r in var)
         return var
 
-    def response_ids(self, slugs):
+    def check_ids(self, ids, fixed_value):
+        ids = [v['id'] for v in ids.values()]
+        return all(id in ids for id in fixed_value)
+
+    def response_ids(self, slugs, fixed_value):
         self.responses = self.fetch_aux_table(self.responses, settings.AIRTABLE_RESPONSE_TABLE)
+        assert self.check_ids(self.responses, fixed_value)
         return sorted(self.responses[k]['id'] for k in slugs)
 
-    def situation_ids(self, slugs):
+    def situation_ids(self, slugs, fixed_value):
         self.situations = self.fetch_aux_table(self.situations, settings.AIRTABLE_SITUATION_TABLE)
+        assert self.check_ids(self.situations, fixed_value)
         return sorted(self.situations[k]['id'] for k in slugs)
 
     def apply_manual_fixes(self):
@@ -57,12 +63,12 @@ class ManualFixes():
                         actual_value = row.get(field)
                         if field == 'responses':
                             current_value = sorted(k.strip() for k in current_value.split(','))
-                            actual_value = self.response_ids(actual_value)
                             fixed_value = sorted(k.strip() for k in fixed_value.split(','))
+                            actual_value = self.response_ids(actual_value, fixed_value)
                         elif field == 'situations':
                             current_value = sorted(k.strip() for k in current_value.split(','))
-                            actual_value = self.situation_ids(actual_value)
                             fixed_value = sorted(k.strip() for k in fixed_value.split(','))
+                            actual_value = self.situation_ids(actual_value, fixed_value)
 
                         if actual_value == current_value:
                             row[field] = fixed_value
