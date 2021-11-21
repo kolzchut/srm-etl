@@ -15,9 +15,28 @@ class ManualFixes():
         self.manual_fixes = dict(
             (r[AIRTABLE_ID_FIELD], r) for r in self.manual_fixes
         )
-        print(self.manual_fixes)
         self.status = dict()
         self.used = set()
+        self.responses = None
+        self.situations = None
+
+    def fetch_aux_table(self, var, table):
+        if var is None:
+            var = DF.Flow(
+                load_from_airtable(settings.AIRTABLE_BASE, table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+                DF.select_fields([AIRTABLE_ID_FIELD, 'id']),
+            ).results()[0][0]
+            logger.info(f'Got {len(var)} {table} records')
+            var = dict((r[AIRTABLE_ID_FIELD], r) for r in var)
+        return var
+
+    def response_ids(self, slugs):
+        self.responses = self.fetch_aux_table(self.responses, settings.AIRTABLE_RESPONSE_TABLE)
+        return sorted(self.responses[k]['id'] for k in slugs)
+
+    def situation_ids(self, slugs):
+        self.situations = self.fetch_aux_table(self.situations, settings.AIRTABLE_SITUATION_TABLE)
+        return sorted(self.situations[k]['id'] for k in slugs)
 
     def apply_manual_fixes(self):
         def func(row):
@@ -36,6 +55,15 @@ class ManualFixes():
                         })
                         self.used.add(fix_id)
                         actual_value = row.get(field)
+                        if field == 'responses':
+                            current_value = sorted(k.strip() for k in current_value.split(','))
+                            actual_value = self.response_ids(actual_value)
+                            fixed_value = sorted(k.strip() for k in fixed_value.split(','))
+                        elif field == 'situations':
+                            current_value = sorted(k.strip() for k in current_value.split(','))
+                            actual_value = self.situation_ids(actual_value)
+                            fixed_value = sorted(k.strip() for k in fixed_value.split(','))
+
                         if actual_value == current_value:
                             row[field] = fixed_value
                             status['etl_status'] = 'Active'
