@@ -57,17 +57,25 @@ class ManualFixes():
                         })
                         self.used.add(fix_id)
                         actual_value = row.get(field)
+                        extra_field = None
+                        extra_value = None
                         if field == 'responses':
                             current_value = self.response_ids(current_value)
+                            extra_field = 'response_ids'
+                            extra_value = [x.strip() for x in fixed_value.split(',')]
                             fixed_value = self.response_ids(fixed_value)
                             actual_value = sorted(actual_value)
                         elif field == 'situations':
                             current_value = self.situation_ids(current_value)
+                            extra_field = 'situation_ids'
+                            extra_value = [x.strip() for x in fixed_value.split(',')]
                             fixed_value = self.situation_ids(fixed_value)
                             actual_value = sorted(actual_value)
 
                         if actual_value == current_value:
                             row[field] = fixed_value
+                            if extra_field is not None and extra_field in row:
+                                row[extra_field] = extra_value
                             print('FIXED!', field, actual_value, '->', fixed_value)
                             status['etl_status'] = 'Active'
                         else:
