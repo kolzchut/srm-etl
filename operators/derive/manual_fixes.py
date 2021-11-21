@@ -58,17 +58,21 @@ class ManualFixes():
                         self.used.add(fix_id)
                         actual_value = row.get(field)
                         if field == 'responses':
-                            current_value = sorted(k.strip() for k in current_value.split(','))
+                            current_value = self.response_ids(current_value)
                             fixed_value = self.response_ids(fixed_value)
                             actual_value = sorted(actual_value)
                         elif field == 'situations':
-                            current_value = sorted(k.strip() for k in current_value.split(','))
+                            current_value = self.situation_ids(current_value)
                             fixed_value = self.situation_ids(fixed_value)
                             actual_value = sorted(actual_value)
 
                         if actual_value == current_value:
                             row[field] = fixed_value
+                            print('FIXED!', field, actual_value, '->', fixed_value)
                             status['etl_status'] = 'Active'
+                        else:
+                            print('NOT FIXED!', field, actual_value, '!=', current_value)
+
 
         return DF.Flow(
             func,
