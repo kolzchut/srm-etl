@@ -7,8 +7,11 @@ from dataflows_airtable import load_from_airtable
 from conf import settings
 
 from . import helpers
+from .manual_fixes import ManualFixes
 
 from srm_tools.logger import logger
+
+from operators.derive import manual_fixes
 
 
 def merge_array_fields(fieldnames):
@@ -28,6 +31,8 @@ def merge_array_fields(fieldnames):
 
 def srm_data_pull_flow():
     """Pull curated data from the data staging area."""
+    manual_fixes = ManualFixes()
+
     return DF.Flow(
         load_from_airtable(
             settings.AIRTABLE_BASE, settings.AIRTABLE_RESPONSE_TABLE, settings.AIRTABLE_VIEW
@@ -47,6 +52,7 @@ def srm_data_pull_flow():
         load_from_airtable(
             settings.AIRTABLE_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW
         ),
+        manual_fixes.apply_manual_fixes(),
         DF.update_package(name='SRM Data'),
         helpers.preprocess_responses(validate=True),
         helpers.preprocess_situations(validate=True),
