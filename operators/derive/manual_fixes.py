@@ -27,22 +27,18 @@ class ManualFixes():
                 DF.select_fields([AIRTABLE_ID_FIELD, 'id']),
             ).results()[0][0]
             logger.info(f'Got {len(var)} {table} records')
-            var = dict((r[AIRTABLE_ID_FIELD], r) for r in var)
+            var = dict((r['id'], r) for r in var)
         return var
 
-    def check_ids(self, ids, fixed_value):
-        ids = [v['id'] for v in ids.values()]
-        return all(id in ids for id in fixed_value)
-
-    def response_ids(self, slugs, fixed_value):
+    def response_ids(self, slugs):
+        slugs = [s.strip() for s in slugs.split(',')]
         self.responses = self.fetch_aux_table(self.responses, settings.AIRTABLE_RESPONSE_TABLE)
-        assert self.check_ids(self.responses, fixed_value)
-        return sorted(self.responses[k]['id'] for k in slugs)
+        return sorted(self.responses[k][AIRTABLE_ID_FIELD] for k in slugs)
 
-    def situation_ids(self, slugs, fixed_value):
+    def situation_ids(self, slugs):
+        slugs = [s.strip() for s in slugs.split(',')]
         self.situations = self.fetch_aux_table(self.situations, settings.AIRTABLE_SITUATION_TABLE)
-        assert self.check_ids(self.situations, fixed_value)
-        return sorted(self.situations[k]['id'] for k in slugs)
+        return sorted(self.situations[k][AIRTABLE_ID_FIELD] for k in slugs)
 
     def apply_manual_fixes(self):
         def func(row):
@@ -63,12 +59,12 @@ class ManualFixes():
                         actual_value = row.get(field)
                         if field == 'responses':
                             current_value = sorted(k.strip() for k in current_value.split(','))
-                            fixed_value = sorted(k.strip() for k in fixed_value.split(','))
-                            actual_value = self.response_ids(actual_value, fixed_value)
+                            fixed_value = self.response_ids(fixed_value)
+                            actual_value = sorted(actual_value)
                         elif field == 'situations':
                             current_value = sorted(k.strip() for k in current_value.split(','))
-                            fixed_value = sorted(k.strip() for k in fixed_value.split(','))
-                            actual_value = self.situation_ids(actual_value, fixed_value)
+                            fixed_value = self.situation_ids(fixed_value)
+                            actual_value = sorted(actual_value)
 
                         if actual_value == current_value:
                             row[field] = fixed_value
