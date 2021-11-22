@@ -3,11 +3,11 @@ FROM akariv/dgp-app:395a2c0bad5cb84ef74d76ace3196e2d93a3c13a
 USER root
 RUN apt-get install -y curl gnupg wget unzip build-essential libsqlite3-dev zlib1g-dev
 
-USER etl
-
 RUN wget https://github.com/mapbox/tippecanoe/archive/refs/tags/1.36.0.zip && \
     unzip 1.36.0.zip && rm 1.36.0.zip
 RUN cd tippecanoe-1.36.0 && make -j && make install
+
+USER etl
 
 COPY requirements.txt .
 RUN pip install -r requirements.txt
