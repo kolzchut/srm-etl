@@ -3,6 +3,8 @@ from collections import Counter
 import json
 import time
 import logging
+from pathlib import Path
+import subprocess
 
 import requests
 import boto3
@@ -19,6 +21,12 @@ from srm_tools.logger import logger
 
 
 def upload_tileset(filename, tileset, name):
+
+    mbtiles = str(Path(filename).with_suffix('.mbtiles'))
+    cmd = ['tippecanoe', '-z10', '-o', mbtiles, '-n', name, filename]
+    out = subprocess.check_output(cmd, cwd='/app/geojson').decode('utf8')
+    print(out)
+
     AUTH = dict(access_token=settings.MAPBOX_ACCESS_TOKEN)
     creds = requests.get(settings.MAPBOX_UPLOAD_CREDENTIALS, params=AUTH).json()
     print(creds, AUTH)
@@ -30,7 +38,7 @@ def upload_tileset(filename, tileset, name):
         region_name='us-east-1',
     )
     s3_client.upload_file(
-        filename, creds['bucket'], creds['key']
+        mbtiles, creds['bucket'], creds['key']
     )
     data = dict(
         tileset=tileset,
