@@ -24,7 +24,7 @@ def upload_tileset(filename, tileset, name):
 
     mbtiles = str(Path(filename).with_suffix('.mbtiles'))
     cmd = ['tippecanoe', '-z10', '-o', mbtiles, '-n', name, filename]
-    out = subprocess.check_output(cmd, cwd='/app/geojson').decode('utf8')
+    out = subprocess.check_output(cmd).decode('utf8')
     print(out)
 
     AUTH = dict(access_token=settings.MAPBOX_ACCESS_TOKEN)
