@@ -91,6 +91,10 @@ def filter_dummy_data():
     return DF.filter_rows(lambda r: not any([r.get('id') == 'dummy', r.get('name') == 'dummy']))
 
 
+def filter_active_data():
+    return DF.filter_rows(lambda r: r['status'] != 'INACTIVE')
+
+
 def set_staging_pkey(resource_name):
     return DF.rename_fields({'__airtable_id': 'key'}, resources=[resource_name])
 
@@ -123,6 +127,7 @@ def preprocess_responses(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Responses'], name='responses', path='responses.csv'),
         filter_dummy_data(),
+        filter_active_data(),
         set_staging_pkey('responses'),
         DF.select_fields(select_fields, resources=['responses']) if select_fields else None,
         DF.validate() if validate else None,
@@ -133,6 +138,7 @@ def preprocess_situations(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Situations'], name='situations', path='situations.csv'),
         filter_dummy_data(),
+        filter_active_data(),
         set_staging_pkey('situations'),
         DF.select_fields(select_fields, resources=['situations']) if select_fields else None,
         DF.validate() if validate else None,
@@ -143,6 +149,7 @@ def preprocess_services(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Services'], name='services', path='services.csv'),
         filter_dummy_data(),
+        filter_active_data(),
         set_staging_pkey('services'),
         # DF.filter_rows(
         #     lambda r: r['selected'] is True or r['source'] == 'guidestar', resources=['services']
@@ -157,6 +164,7 @@ def preprocess_organizations(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Organizations'], name='organizations', path='organizations.csv'),
         filter_dummy_data(),
+        filter_active_data(),
         set_staging_pkey('organizations'),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['organizations']),
         DF.select_fields(select_fields, resources=['organizations']) if select_fields else None,
@@ -168,6 +176,7 @@ def preprocess_branches(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Branches'], name='branches', path='branches.csv'),
         filter_dummy_data(),
+        filter_active_data(),
         set_staging_pkey('branches'),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['branches']),
         DF.set_type(

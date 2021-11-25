@@ -113,6 +113,7 @@ def flat_branches_flow():
                 organization_urls={'name': 'urls'},
                 organization_situations={'name': 'situations', 'aggregate': 'set'},
             ),
+            mode='inner'
         ),
         # merge multiple situation fields into a single field
         DF.add_field(
@@ -300,6 +301,7 @@ def flat_table_flow():
                 organization_urls=None,
                 branch_merged_situations={'name': 'merged_situations'},
             ),
+            mode='inner'
         ),
         DF.filter_rows(lambda r: r['response_id'] is not None, resources=['flat_table']),
         DF.add_field(
