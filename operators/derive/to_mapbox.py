@@ -24,8 +24,13 @@ def upload_tileset(filename, tileset, name):
 
     mbtiles = str(Path(filename).with_suffix('.mbtiles'))
     cmd = ['tippecanoe', '-z10', '-o', mbtiles, '-n', name, filename]
-    out = subprocess.check_output(cmd).decode('utf8')
-    print(out)
+    try:
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode('utf8')
+        print(out)
+    except subprocess.CalledProcessError as e:
+        out = e.output.decode('utf8')
+        logger.error(f'Error creating tileset: {out}')
+        raise        
 
     AUTH = dict(access_token=settings.MAPBOX_ACCESS_TOKEN)
     creds = requests.get(settings.MAPBOX_UPLOAD_CREDENTIALS, params=AUTH).json()
