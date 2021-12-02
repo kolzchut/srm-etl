@@ -32,7 +32,7 @@ def sort_dict_by_keys(row):
 def make_unique_id_from_values(row):
     input = ''.join(
         [
-            slugify.slugify(str(v if v is not None else '').strip().lower(), space_replacement="")
+            slugify.slugify(str(v if v is not None else '').strip(), to_lower=True, separator='')
             for v in row.values()
         ]
     ).encode('utf-8')

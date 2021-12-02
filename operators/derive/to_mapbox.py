@@ -22,7 +22,10 @@ from srm_tools.logger import logger
 
 def upload_tileset(filename, tileset, name):
 
-    mbtiles = str(Path(filename).with_suffix('.mbtiles'))
+    mbtiles = Path(filename).with_suffix('.mbtiles')
+    if mbtiles.exists():
+        mbtiles.unlink()
+    mbtiles = str(mbtiles)
     cmd = ['tippecanoe', '-z10', '-o', mbtiles, '-n', name, filename]
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode('utf8')
