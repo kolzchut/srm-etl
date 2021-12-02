@@ -48,6 +48,12 @@
             "display": "Load Presets from AirTable to ES",
             "dgp": false,
             "admin": true
+        },
+        {
+            "name": "backup",
+            "display": "Backup Manual Airtable to CKAN",
+            "dgp": false,
+            "admin": true
         }
     ],
     "theme": {
