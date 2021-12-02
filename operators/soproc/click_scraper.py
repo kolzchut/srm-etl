@@ -121,7 +121,7 @@ def scrape_click():
     # print(next(docs))
     
     taxonomy = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_BASE, 'Click Service Taxonomy Mapping', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_CLICK_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
     ).results()[0][0]
     taxonomy = dict(
         (r.pop('name'), r) for r in taxonomy

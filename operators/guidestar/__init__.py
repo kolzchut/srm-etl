@@ -304,7 +304,7 @@ def fetchServiceData(ga):
     print('FETCHING ALL ORGANIZATION SERVICES')
     print('FETCHING TAXONOMY MAPPING')
     taxonomy = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_BASE, 'Guidestar Service Taxonomy Mapping', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_GUIDESTAR_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         # DF.printer(),
         # DF.select_fields(['name', 'situation_ids', 'response_ids']),
     ).results()[0][0]
