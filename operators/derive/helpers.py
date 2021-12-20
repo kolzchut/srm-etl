@@ -155,6 +155,7 @@ def preprocess_services(select_fields=None, validate=False):
         #     lambda r: r['selected'] is True or r['source'] == 'guidestar', resources=['services']
         # ),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['services']),
+        DF.set_type('name', transform=lambda v, row: row['name_manual'] or v, resources=['services']),
         DF.select_fields(select_fields, resources=['services']) if select_fields else None,
         DF.validate() if validate else None,
     )
