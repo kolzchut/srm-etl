@@ -231,7 +231,7 @@ def flat_services_flow():
                 'payment_required': 'service_payment_required',
                 'payment_details': 'service_payment_details',
                 'urls': 'service_urls',
-                'situations_manual': 'service_situations',
+                'situations': 'service_situations',
             },
             resources=['flat_services'],
         ),

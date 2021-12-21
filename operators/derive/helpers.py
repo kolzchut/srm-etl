@@ -156,6 +156,9 @@ def preprocess_services(select_fields=None, validate=False):
         # ),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['services']),
         DF.set_type('name', transform=lambda v, row: row['name_manual'] or v, resources=['services']),
+        DF.set_type('responses', transform=lambda _, row: row['responses_manual'], resources=['services']),
+        DF.set_type('situations', transform=lambda _, row: row['situations_manual'], resources=['services']),
+        DF.delete_fields(['situations_manual', 'responses_manual', 'name_manual'], resources=['services']),
         DF.select_fields(select_fields, resources=['services']) if select_fields else None,
         DF.validate() if validate else None,
     )
