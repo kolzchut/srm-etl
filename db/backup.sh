@@ -8,7 +8,7 @@
 FILENAME="$(date +%Y%m%d%H%M%S).sql"
 
 cd `mktemp -d` &&\
-PGPASSWORD=postgres pg_dumpall -h $DB_BACKUP_HOST -U postgres -f "${FILENAME}" &&\
+PGPASSWORD=postgres pg_dumpall --inserts -h $DB_BACKUP_HOST -U postgres -f "${FILENAME}" &&\
 gzip "${FILENAME}" &&\
 AWS_ACCESS_KEY_ID=$DB_BACKUP_AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY=$DB_BACKUP_AWS_SECRET_ACCESS_KEY \
   aws s3 cp "${FILENAME}.gz" "s3://${DB_BACKUP_BUCKET}/srm-etl-db/"

@@ -7,6 +7,7 @@ RUN curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscl
 
 COPY 10-create-dbs.sql /docker-entrypoint-initdb.d/
 COPY 20-readonly-user.sh /docker-entrypoint-initdb.d/
+COPY 30-restore-from-backup.sh /docker-entrypoint-initdb.d/
 COPY backup.sh /srv/
 
 ENV POSTGRES_USER=postgres
