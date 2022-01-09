@@ -145,8 +145,8 @@ def scrape_click():
             transform=lambda v, row: (
                 (v.split('|') if v else []) +
                 ['age-{age_min}-{age_max}'.format(**row)] +
-                (row.get('target_populations_level_1') or []) +
-                (row.get('target_populations_level_2') or []) +
+                (row.get('target_populations_level_1') or '').split('|') +
+                (row.get('target_populations_level_2') or '').split('|') +
                 (row.get('service_subject') or [])
             )
         ),
