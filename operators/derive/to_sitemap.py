@@ -52,7 +52,7 @@ def operator(*_):
     # relational_sql_flow().process()
     data_api_sitemap_flow()
 
-    logger.info('Finished SQL Flow')
+    logger.info('Finished Sitemap Flow')
 
 
 if __name__ == '__main__':

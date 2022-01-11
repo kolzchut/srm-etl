@@ -197,8 +197,8 @@ def points_flow():
 def push_mapbox_tileset():
     return upload_tileset(
         f'{settings.DATA_DUMP_DIR}/geo_data/geo_data.geojson',
-        'srm-kolzchut.geo-data',
-        'SRM Geo Data',
+        settings.MAPBOX_TILESET_ID,
+        settings.MAPBOX_TILESET_NAME,
     )
 
 
@@ -208,6 +208,7 @@ def operator(*_):
     geo_data_flow().process()
     push_mapbox_tileset()
     points_flow().process()
+
     logger.info('Finished Geo Data Flow')
 
 
