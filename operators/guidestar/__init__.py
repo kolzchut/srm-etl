@@ -288,7 +288,7 @@ def updateServiceFromSourceData(taxonomies):
 
         url = data.pop('url')
         if url and url.startswith('http'):
-            row['url'] = f'{url}#מידע נוסף על השירות'
+            row['urls'] = f'{url}#מידע נוסף על השירות'
 
         for k in ('isForCoronaVirus', 'lastModifiedDate', 'serviceId', 'regNum', 'isForBranch'):
             data.pop(k)
