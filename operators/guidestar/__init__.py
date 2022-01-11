@@ -31,10 +31,10 @@ def updateOrgFromSourceData():
         row['description'] = None
         row['purpose'] = data.get('orgGoal')
         urls = []
-        if data.get('urlGuidestar'):
-            urls.append(data['urlGuidestar'] + '#מידע נוסף ב״גיידסטאר״')
         if data.get('website'):
             urls.append(data['website'] + '#אתר הבית')
+        if data.get('urlGuidestar'):
+            urls.append(data['urlGuidestar'] + '#מידע נוסף ב״גיידסטאר״')
         row['urls'] = '\n'.join(urls)
     return func
 
