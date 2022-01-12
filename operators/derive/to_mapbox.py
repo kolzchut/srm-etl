@@ -121,7 +121,7 @@ def geo_data_flow():
         DF.set_type(
             'records',
             transform=lambda v, row: helpers.reorder_records_by_category(v, row['response_category']),
-            **{'es:index': False}
+            **{'es:index': False, 'es:itemType': 'object'},
         ),
         DF.add_field(
             'service_count',
