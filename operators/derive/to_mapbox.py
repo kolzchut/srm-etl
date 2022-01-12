@@ -80,7 +80,7 @@ def point_title(r):
 def geo_data_flow():
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
-        DF.update_package(title='Geo Data', name='geo_data'),
+        DF.update_package(title='Full Point Data', name='geo_data'),
         DF.update_resource(['card_data'], name='geo_data', path='geo_data.csv'),
         DF.add_field(
             'record',
@@ -98,14 +98,14 @@ def geo_data_flow():
             fields=dict(
                 branch_geometry={'name': 'branch_geometry'},
                 point_id={'name': 'point_id'},
-                record_objects={'name': 'record', 'aggregate': 'array'},
+                records={'name': 'record', 'aggregate': 'array'},
             ),
         ),
         DF.set_primary_key(['point_id']),
         DF.add_field(
             'response_categories',
             'array',
-            lambda r: [r['response_category'] for r in r['record_objects']],
+            lambda r: [r['response_category'] for r in r['records']],
             resources=['geo_data'],
         ),
         DF.add_field(
@@ -118,18 +118,15 @@ def geo_data_flow():
         DF.add_field(
             'title', 'string', point_title, resources=['geo_data']
         ),
-        DF.set_type('record_objects', transform=lambda v, row: helpers.reorder_records_by_category(v, row['response_category'])),
-        DF.add_field(
+        DF.set_type(
             'records',
-            'string',
-            lambda r: json.dumps(r['record_objects']),
-            resources=['geo_data'],
-            **{'es:itemType': 'string', 'es:index': False}
+            transform=lambda v, row: helpers.reorder_records_by_category(v, row['response_category']),
+            **{'es:index': False}
         ),
         DF.add_field(
             'service_count',
             'integer',
-            lambda r: len(r['record_objects']),
+            lambda r: len(r['records']),
             resources=['geo_data'],
         ),
         DF.select_fields(
@@ -143,9 +140,22 @@ def geo_data_flow():
             ],
             resources=['geo_data'],
         ),
-        # TODO - When we join with self (in some cases??), it puts the resource into a path under data/
-        # this workaround just keeps behaviour same as other dumps we have.
+        dump_to_es_and_delete(
+            indexes=dict(srm__geo_data=[dict(resource_name='geo_data')]),
+        ),
         DF.update_resource(['geo_data'], path='geo_data.csv'),
+        dump_to_ckan(
+            settings.CKAN_HOST,
+            settings.CKAN_API_KEY,
+            settings.CKAN_OWNER_ORG,
+            force_format=False
+        ),
+        DF.set_type(
+            'records',
+            'string',
+            lambda r: json.dumps(r['records']),
+            resources=['geo_data'],
+        ),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data', format='geojson'),
     )
 
