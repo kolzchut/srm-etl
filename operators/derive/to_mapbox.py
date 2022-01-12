@@ -140,6 +140,7 @@ def geo_data_flow():
             ],
             resources=['geo_data'],
         ),
+        DF.add_field('score', 'number', 10, resources=['geo_data']),
         dump_to_es_and_delete(
             indexes=dict(srm__geo_data=[dict(resource_name='geo_data')]),
         ),
@@ -150,6 +151,7 @@ def geo_data_flow():
             settings.CKAN_OWNER_ORG,
             force_format=False
         ),
+        DF.delete_fields(['score']),
         DF.set_type(
             'records',
             type='string',
