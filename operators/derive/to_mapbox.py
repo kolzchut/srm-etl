@@ -67,7 +67,7 @@ def upload_tileset(filename, tileset, name):
 
 
 def point_title(r):
-    records = r.get('record_objects')
+    records = r.get('records')
     if len(records) > 1:
         branch = list(set([f['branch_name'] for f in records]))
         if len(branch) == 1:
@@ -152,8 +152,8 @@ def geo_data_flow():
         ),
         DF.set_type(
             'records',
-            'string',
-            lambda r: json.dumps(r['records']),
+            type='string',
+            transform=lambda v: json.dumps(v),
             resources=['geo_data'],
         ),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data', format='geojson'),
