@@ -151,7 +151,7 @@ def geo_data_flow():
             settings.CKAN_OWNER_ORG,
             force_format=False
         ),
-        DF.delete_fields(['score']),
+        DF.delete_fields(['score'], resources=['geo_data']),
         DF.set_type(
             'records',
             type='string',
