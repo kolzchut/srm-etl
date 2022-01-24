@@ -151,6 +151,7 @@ def scrape_click():
             )
         ),
         DF.set_type('delivery_channels', type='array', transform=lambda v: v.split('|') if v else []),
+        DF.set_type('name', type='string', transform=lambda v: ''.join(v)),
         DF.set_type('payment_required', type='string', transform=lambda v: DEDUCTIBLE_TYPE.get(v)),
         DF.add_field('situations', 'array', []), # fetch_from_taxonomy(taxonomy, 'situation_ids')),
         DF.add_field('responses', 'array', []), # fetch_from_taxonomy(taxonomy, 'response_ids')),

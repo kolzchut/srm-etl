@@ -67,11 +67,12 @@ def companyBranches(regNums):
 
 
 def updateFromSourceData():
-    def func(row):
-        data = row.get('data')
-        if data is None:
-            return
-        row.update(data)
+    def func(rows):
+        for row in rows:
+            data = row.get('data')
+            if data is not None:
+                row.update(data)
+            yield row
     return func
 
 def fetchOrgData():
