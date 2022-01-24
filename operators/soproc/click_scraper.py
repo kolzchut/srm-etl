@@ -89,11 +89,11 @@ def fetch_from_taxonomy(taxonomy, field):
 
 
 def scrape_click():
-    try:
-        docs = json.load(open('click-cache.json'))
-    except:
-        docs = requests.get(settings.CLICK_API).json().get('response').get('docs')
-        json.dump(docs, open('click-cache.json', 'w'))
+    # try:
+    #     docs = json.load(open('click-cache.json'))
+    # except:
+    docs = requests.get(settings.CLICK_API).json().get('response').get('docs')
+    json.dump(docs, open('click-cache.json', 'w'))
 
     # print(len(docs))
     all_keys = set()
@@ -145,16 +145,17 @@ def scrape_click():
             transform=lambda v, row: (
                 (v.split('|') if v else []) +
                 ['age-{age_min}-{age_max}'.format(**row)] +
-                (row.get('target_populations_level_1') or '').split('|') +
-                (row.get('target_populations_level_2') or '').split('|') +
+                (row.get('target_populations_level_1') or []) +
+                (row.get('target_populations_level_2') or []) +
                 (row.get('service_subject') or [])
             )
         ),
         DF.set_type('delivery_channels', type='array', transform=lambda v: v.split('|') if v else []),
         DF.set_type('payment_required', type='string', transform=lambda v: DEDUCTIBLE_TYPE.get(v)),
-        DF.add_field('situations', 'array', fetch_from_taxonomy(taxonomy, 'situation_ids')),
-        DF.add_field('responses', 'array', fetch_from_taxonomy(taxonomy, 'response_ids')),
+        DF.add_field('situations', 'array', []), # fetch_from_taxonomy(taxonomy, 'situation_ids')),
+        DF.add_field('responses', 'array', []), # fetch_from_taxonomy(taxonomy, 'response_ids')),
         DF.select_fields(['catalog_number', 'name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses']),
+        # DF.printer()
     ).results()[0][0]
     return dict((r['catalog_number'], r) for r in records)
 
@@ -163,6 +164,7 @@ if __name__ == '__main__':
     sc = scrape_click()
     print(len(sc))
     import pprint
+    pprint.pprint(sc.keys())
     pprint.pprint(sc['143'])
     # all_tags = [t for v in sc.values() for t in v['tags']]
     # with open('tags', 'w') as t:
