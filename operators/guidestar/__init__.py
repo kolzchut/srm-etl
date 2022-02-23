@@ -185,6 +185,9 @@ def updateServiceFromSourceData(taxonomies):
                     print('WARNING: no mapping for {}'.format(name))
 
     def func(row):
+        if 'data' not in row:
+            print('NO DATA', row)
+            return
         data = row['data']
 
         responses = set()
