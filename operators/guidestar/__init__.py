@@ -186,7 +186,7 @@ def updateServiceFromSourceData(taxonomies):
 
     def func(row):
         if 'data' not in row:
-            print('NO DATA', row)
+            # print('NO DATA', row)
             return
         data = row['data']
 

@@ -204,6 +204,52 @@ def load_responses_to_es_flow():
         # DF.printer()
     )
 
+def filter_situations(res_name):
+    current = DF.Flow(
+        DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
+        DF.select_fields(['situation_ids']),
+        helpers.unwind('situation_ids', 'id', 'string'),
+        DF.join_with_self('card_data', ['id'], dict(
+            id=None,
+            count=dict(aggregate='count')
+        )),
+    ).results()[0][0]
+    current = dict((c['id'], c['count']) for c in current)
+    
+    def contained(item):
+        slug = item['slug']
+        count = current.get(slug)
+        if not count:
+            for c in current.keys():
+                if c.startswith(slug):
+                    count = current[c]
+                    break
+        if not count:
+            print('SKIPPING SLUG', slug)
+            return
+        ret = dict(
+            name=item['name'],
+            slug=slug,
+            count=count,
+        )
+        if 'items' in item:
+            ret['items'] = [contained(i) for i in item['items']]
+            ret['items'] = [i for i in ret['items'] if i is not None]
+            ret['count'] += sum(i['count'] for i in ret['items'])
+        return ret
+
+    def func(rows):
+        if rows.res.name == res_name:
+            for row in rows:
+                row = contained(row)
+                if row:
+                    yield row
+        else:
+            yield from rows
+    return DF.Flow(
+        DF.add_field('count', 'integer', 0, resources='situations_actual'),
+        func
+    )
 
 def load_situations_flow():
 
@@ -216,6 +262,10 @@ def load_situations_flow():
         situations,
         DF.update_package(title='Taxonomy Situations', name='situations'),
         DF.update_resource(-1, name='situations', path='situations.json'),
+        DF.duplicate('situations', 'situations_actual'),
+        DF.update_resource(-1, path='situations_actual.json'),
+        filter_situations('situations_actual'),
+        DF.sort_rows('{count}', reverse=True, resources='situations_actual'),
         dump_to_ckan(
             settings.CKAN_HOST,
             settings.CKAN_API_KEY,
