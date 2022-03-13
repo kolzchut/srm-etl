@@ -27,7 +27,7 @@ def upload_tileset(filename, tileset, name):
         mbtiles.unlink()
     mbtiles = str(mbtiles)
     layer_name = tileset.split('.')[-1].replace('-', '_')
-    cmd = ['tippecanoe', '-B5', '-z10', '-o', mbtiles, '-n', name, '-l', layer_name, filename]
+    cmd = ['tippecanoe', '-B6', '-z10', '-o', mbtiles, '-n', name, '-l', layer_name, filename]
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode('utf8')
         print(out)
