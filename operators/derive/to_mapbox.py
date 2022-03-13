@@ -77,6 +77,16 @@ def point_title(r):
         return records[0]['service_name']
 
 
+def preprocess_field(k, v):
+    if v is None:
+        return None
+    if k == 'branch_geometry':
+        return (float(v[0]), float(v[1]))
+    elif k == 'service_details':
+        return None
+    return v
+
+
 def geo_data_flow():
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
@@ -86,7 +96,7 @@ def geo_data_flow():
             'record',
             'object',
             lambda r: {
-                k: v if not k in ('branch_geometry', 'service_details', ) or v is None else (float(v[0]), float(v[1]))
+                k: preprocess_field(k, v)
                 for k, v in r.items()
             },
             resources=['geo_data'],
