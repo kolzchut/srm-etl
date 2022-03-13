@@ -86,7 +86,7 @@ def geo_data_flow():
             'record',
             'object',
             lambda r: {
-                k: v if not k == 'branch_geometry' or v is None else (float(v[0]), float(v[1]))
+                k: v if not k in ('branch_geometry', 'service_details', ) or v is None else (float(v[0]), float(v[1]))
                 for k, v in r.items()
             },
             resources=['geo_data'],
