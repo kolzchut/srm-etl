@@ -203,7 +203,7 @@ def points_flow():
         ),
 
         # Generate Cluster dataset
-        DF.select_fields(['branch_geometry', 'response_categories', 'point_id']),
+        DF.select_fields(['branch_geometry', 'response_categories', 'point_id', 'card_id']),
         DF.update_package(name='geo_data_clusters', title='Geo Data - For Clusters'),
         DF.update_resource(['points'], path='geo_data.geojson'),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data_clusters', force_format=False),
