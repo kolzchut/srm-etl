@@ -1,3 +1,4 @@
+import requests
 from srm_tools.budgetkey import fetch_from_budgetkey
 import dataflows as DF
 from dataflows.base.resource_wrapper import ResourceWrapper
@@ -38,6 +39,12 @@ def updateOrgFromSourceData():
         row['urls'] = '\n'.join(urls)
     return func
 
+def fetchKZOrgs():
+    URL = 'https://www.kolzchut.org.il/w/he/index.php?title=מיוחד:CargoExport&tables=organization&fields=organization_number&where=organization_number+is+not+null&format=json'
+    regs = requests.get(URL).json()
+    regs = [r['organization_number'] for r in regs]
+    return regs
+
 def fetchOrgData(ga):
     print('FETCHING ALL ORGANIZATIONS')
     query = '''
@@ -45,10 +52,13 @@ def fetchOrgData(ga):
         select supplier->>'entity_id' as entity_id, supplier->>'entity_kind' as entity_kind from suppliers
     '''
     social_service_entity_ids = fetch_from_budgetkey(query)
-    regNums = sorted(set(
+    social_service_entity_ids = [
         row['entity_id'] for row in social_service_entity_ids
         if row['entity_kind'] == 'association'
-    ))
+    ]
+    kolzchut_entity_ids = fetchKZOrgs()
+    regNums = sorted(set(social_service_entity_ids + kolzchut_entity_ids))
+
     print('COLLECTED {} relevant organizations'.format(len(regNums)))
     airflow_table_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'guidestar',
         ['name', 'kind', 'urls', 'description', 'purpose'],
