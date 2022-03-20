@@ -193,6 +193,16 @@ def updateServiceFromSourceData(taxonomies):
                     situations.update(mapping['situation_ids'] or [])
                 except KeyError:
                     print('WARNING: no mapping for {}'.format(name))
+                    DF.Flow(
+                        [dict(name=name)],
+                        DF.update_resource(-1, name='taxonomies'),
+                        dump_to_airtable({
+                            (settings.AIRTABLE_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_GUIDESTAR_TABLE): {
+                                'resource-name': 'taxonomies',
+                                'typecast': True
+                            }
+                        }, settings.AIRTABLE_API_KEY),
+                    ).process()
 
     def func(row):
         if 'data' not in row:
