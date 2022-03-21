@@ -146,6 +146,7 @@ def fetchBranchData(ga):
                 load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
                 DF.update_resource(-1, name='orgs'),
                 DF.filter_rows(lambda r: r['source'] == 'guidestar', resources='orgs'),
+                DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
                 DF.rename_fields({
                     AIRTABLE_ID_FIELD: 'organization_id',
                 }, resources='orgs'),
@@ -341,6 +342,7 @@ def fetchServiceData(ga):
             load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='orgs'),
             DF.filter_rows(lambda r: r['source'] == 'guidestar', resources='orgs'),
+            DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
             DF.rename_fields({
                 AIRTABLE_ID_FIELD: 'organization_id',
             }, resources='orgs'),
