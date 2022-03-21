@@ -1,3 +1,4 @@
+from collections import Counter
 import dataflows as DF
 from dataflows.helpers.resource_matcher import ResourceMatcher
 
@@ -273,3 +274,11 @@ def generate_offset(item_key, siblings_key):
         return offset
 
     return func
+
+
+def most_common_category(row):
+    response_categories = row['response_categories']
+    if len(response_categories) == 0:
+        print('ERROR: no response categories', repr(row))
+        return None
+    return Counter(response_categories).most_common(1)[0][0]

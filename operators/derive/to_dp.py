@@ -1,4 +1,3 @@
-from collections import Counter
 from itertools import chain
 
 import dataflows as DF
@@ -460,7 +459,7 @@ def card_data_flow():
         DF.add_field(
             'response_category',
             'string',
-            lambda r: Counter(r['response_categories']).most_common(1)[0][0],
+            helpers.most_common_category,
             resources=['card_data'],
             **{'es:keyword': True},
         ),
