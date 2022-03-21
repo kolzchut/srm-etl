@@ -159,7 +159,7 @@ def preprocess_services(select_fields=None, validate=False):
         DF.set_type('name', transform=lambda v, row: row['name_manual'] or v, resources=['services']),
         DF.set_type('responses', transform=lambda _, row: row['responses_manual'] if row['source'] in ('social-procurement', 'shil') else row['responses'], resources=['services']),
         DF.set_type('situations', transform=lambda _, row: row['situations_manual'] if row['source'] in ('social-procurement', 'shil') else row['situations'], resources=['services']),
-        DF.add_field('response_ids', transform=lambda _, row: row['responses_manual_ids'] if row['source'] in ('social-procurement', 'shil') else row['responses_ids'], resources=['services']),
+        DF.add_field('response_ids', 'array', transform=lambda _, row: row['responses_manual_ids'] if row['source'] in ('social-procurement', 'shil') else row['responses_ids'], resources=['services']),
         DF.delete_fields(['situations_manual', 'responses_manual', 'name_manual', 'responses_manual_ids', 'responses_ids'], resources=['services']),
         DF.select_fields(select_fields, resources=['services']) if select_fields else None,
         DF.validate() if validate else None,
