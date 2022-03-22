@@ -122,7 +122,9 @@ def soprocServices(services):
     click_data = scrape_click()
     for service in services:
         catalog_number = str(service['catalog_number']) if service['catalog_number'] is not None else None
-        click = click_data.get(catalog_number) or dict()
+        extra_data = click_data.get(catalog_number) or dict(
+            urls='https://www.socialpro.org.il/i/activities/gov_social_service/{}#דף השירות ב״מפתח לרכש החברתי״'.format(service['id']),
+        )
         id = 'soproc:' + service['id']
         tags = (
             (service['intervention'] or []) +
@@ -135,7 +137,7 @@ def soprocServices(services):
             description=service['description'],
             organizations=[s['entity_id'] for s in (service['suppliers'] or [])],
         )
-        data.update(click)
+        data.update(extra_data)
         data['situations'] = sorted(set([s for t in tags for s in (taxonomy[t]['situation_ids'] or [])] + (data.get('situations') or [])))
         data['responses'] = sorted(set([s for t in tags for s in (taxonomy[t]['response_ids'] or [])] + (data.get('responses') or [])))
 
