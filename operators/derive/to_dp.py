@@ -192,6 +192,7 @@ def flat_services_flow():
                 response_id={'name': 'id'},
                 response_name={'name': 'name'},
                 response_situations={'name': 'situations'},
+                response_synonyms={'name': 'synonyms'},
             ),
         ),
         # branches onto services, through organizations (we already have direct branches)
@@ -249,6 +250,7 @@ def flat_services_flow():
                 'response_id',
                 'response_name',
                 'response_situations',
+                'response_synonyms',
                 'branch_key',
                 'merged_situations',
             ],
@@ -326,6 +328,7 @@ def flat_table_flow():
             fields=dict(
                 situation_id={'name': 'id'},
                 situation_name={'name': 'name'},
+                situation_synonyms={'name': 'synonyms'},
             ),
         ),
         DF.set_primary_key(
@@ -350,6 +353,7 @@ def flat_table_flow():
                 'service_urls',
                 'response_id',
                 'response_name',
+                'response_synonyms',
                 'response_category',
                 'organization_id',
                 'organization_name',
@@ -367,6 +371,7 @@ def flat_table_flow():
                 'branch_geometry',
                 'situation_id',
                 'situation_name',
+                'situation_synonyms',
             ],
             resources=['flat_table'],
         ),
@@ -400,6 +405,7 @@ def card_data_flow():
                 service_urls=None,
                 response_id={'name': 'response_id', 'aggregate': 'array'},
                 response_name={'name': 'response_name', 'aggregate': 'array'},
+                response_synonyms={'name': 'response_synonyms', 'aggregate': 'array'},
                 response_categories={'name': 'response_category', 'aggregate': 'set'},
                 organization_id=None,
                 organization_name=None,
@@ -417,14 +423,15 @@ def card_data_flow():
                 branch_geometry=None,
                 situation_id={'name': 'situation_id', 'aggregate': 'array'},
                 situation_name={'name': 'situation_name', 'aggregate': 'array'},
+                situation_synonyms={'name': 'situation_synonyms', 'aggregate': 'array'},
             ),
         ),
         DF.add_field(
             'situations',
             'array',
             lambda r: [
-                {'id': id, 'name': name}
-                for id, name in set(tuple(zip(r['situation_id'], r['situation_name'])))
+                {'id': id, 'name': name, 'synonyms': synonyms}
+                for id, name, synonyms in set(tuple(zip(r['situation_id'], r['situation_name'], r['situation_synonyms'])))
             ],
             resources=['card_data'],
         ),
@@ -432,8 +439,8 @@ def card_data_flow():
             'responses',
             'array',
             lambda r: [
-                {'id': id, 'name': name}
-                for id, name in set(tuple(zip(r['response_id'], r['response_name'])))
+                {'id': id, 'name': name, 'synonyms': synonyms}
+                for id, name, synonyms in set(tuple(zip(r['response_id'], r['response_name'], r['response_synonyms'])))
             ],
             resources=['card_data'],
         ),
@@ -476,8 +483,10 @@ def card_data_flow():
             [
                 'response_id',
                 'response_name',
+                'response_synonyms',
                 'situation_id',
                 'situation_name',
+                'situation_synonyms',
             ],
             resources=['card_data'],
         ),
