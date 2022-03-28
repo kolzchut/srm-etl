@@ -130,6 +130,7 @@ def preprocess_responses(select_fields=None, validate=False):
         filter_dummy_data(),
         filter_active_data(),
         set_staging_pkey('responses'),
+        DF.set_type('synonyms', type='array', transform=lambda v: tuple(v.strip().split('\n')) if v else tuple(), resources=['responses']),
         DF.select_fields(select_fields, resources=['responses']) if select_fields else None,
         DF.validate() if validate else None,
     )
@@ -141,6 +142,7 @@ def preprocess_situations(select_fields=None, validate=False):
         filter_dummy_data(),
         filter_active_data(),
         set_staging_pkey('situations'),
+        DF.set_type('synonyms', type='array', transform=lambda v: tuple(v.strip().split('\n')) if v else tuple(), resources=['situations']),
         DF.select_fields(select_fields, resources=['situations']) if select_fields else None,
         DF.validate() if validate else None,
     )

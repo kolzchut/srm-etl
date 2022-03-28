@@ -431,7 +431,7 @@ def card_data_flow():
             'array',
             lambda r: [
                 {'id': id, 'name': name, 'synonyms': synonyms}
-                for id, name, synonyms in set(tuple(zip(r['situation_id'], r['situation_name'], r['situation_synonyms'])))
+                for id, name, synonyms in set(tuple(zip(r['situation_id'], r['situation_name'], map(tuple, r['situation_synonyms']))))
             ],
             resources=['card_data'],
         ),
@@ -440,7 +440,7 @@ def card_data_flow():
             'array',
             lambda r: [
                 {'id': id, 'name': name, 'synonyms': synonyms}
-                for id, name, synonyms in set(tuple(zip(r['response_id'], r['response_name'], r['response_synonyms'])))
+                for id, name, synonyms in set(tuple(zip(r['response_id'], r['response_name'], map(tuple, r['response_synonyms']))))
             ],
             resources=['card_data'],
         ),
