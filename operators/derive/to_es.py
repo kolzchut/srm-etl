@@ -35,6 +35,7 @@ def data_api_es_flow():
                     'fields': [
                         {'type': 'string', 'name': 'id', 'es:keyword': True},
                         {'type': 'string', 'name': 'name'},
+                        {'type': 'string', 'name': 'synonyms'},
                     ]
                 },
             },
@@ -47,6 +48,7 @@ def data_api_es_flow():
                     'fields': [
                         {'type': 'string', 'name': 'id', 'es:keyword': True},
                         {'type': 'string', 'name': 'name'},
+                        {'type': 'string', 'name': 'synonyms'},
                     ]
                 },
             },
