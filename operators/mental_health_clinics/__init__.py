@@ -103,6 +103,7 @@ def operator(*_):
         DF.delete_fields(['orig_name', 'hmo'], resources=-1),
 
         DF.add_field('address', 'string', lambda r: f'{r["street_address"]}, {r["city"]}' if r['city'] not in r['street_address'] else r['street_address'], resources=-1),
+        DF.add_field('location', 'array', lambda r: [r['address']], resources=-1),
         DF.delete_fields(['street_address', 'city'], resources=-1),
 
         DF.set_type('phone', transform=lambda v: ','.join(phone_number.findall(str(v))) if v else None, resources=-1),
@@ -117,7 +118,7 @@ def operator(*_):
         DF.load('temp/denormalized/datapackage.json'),
         # Join by branch name
         DF.join_with_self('clinics', ['name'], dict(
-            id=None, name=None, address=None,
+            id=None, name=None, address=None, location=None,
             phone=dict(aggregate='set'),
             interventions=dict(aggregate='set'),
             expertise=dict(aggregate='set'),
@@ -176,7 +177,7 @@ def operator(*_):
     airflow_table_updater(
         settings.AIRTABLE_BRANCH_TABLE,
         DATA_SOURCE_ID,
-        ['name', 'address', 'description', 'phone_numbers', 'organization'],
+        ['name', 'address', 'location', 'description', 'phone_numbers', 'organization'],
         branches,
         update_mapper(),
     )
