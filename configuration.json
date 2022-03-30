@@ -20,6 +20,12 @@
             "admin": true
         },
         {
+            "name": "mental_health_clinics",
+            "display": "Scrape Mental Health Clinics",
+            "dgp": false,
+            "admin": true
+        },
+        {
             "name": "revaha",
             "display": "Scrape Mahlakot HaRevaha",
             "dgp": false,
