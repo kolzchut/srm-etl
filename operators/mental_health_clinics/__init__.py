@@ -145,7 +145,7 @@ def operator(*_):
             branches=dict(name='id', aggregate='set'),
             age_group=dict(aggregate='set'),
         )),
-        DF.add_field('situations', 'array', lambda r: list(set(x for g in r['age_group'] for x in SITUATIONS[g])), resources=-1),
+        DF.add_field('situations', 'array', lambda r: ['human_situations:disability:mental_illness'] + list(set(x for g in r['age_group'] for x in SITUATIONS[g])), resources=-1),
         DF.delete_fields(['age_group'], resources=-1),
 
         # Constants
