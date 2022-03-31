@@ -45,6 +45,12 @@ def normalize_address(r):
     return f'{street} {number}, {city[0]}'
 
 
+def add_newlines(s):
+    for tag in ['p', 'li']:
+        s = s.replace(f'</{tag}>', f'</{tag}>\n')
+    return s.strip()
+
+
 FIELD_MAP = {
     'id': {'source': 'ItemId', 'transform': lambda r: f'{DATA_SOURCE_ID}:{r["ItemId"]}'},
     'source': {'transform': lambda r: DATA_SOURCE_ID},
@@ -60,7 +66,7 @@ FIELD_MAP = {
     },
     'description': {
         'source': 'Description',
-        'transform': lambda r: bleach.clean(r['Description'], tags=tuple(), strip=True).replace(
+        'transform': lambda r:bleach.clean(add_newlines(r['Description']), tags=tuple(), strip=True).replace(
             '&nbsp;', ' '
         ),
     },
