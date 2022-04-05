@@ -81,7 +81,10 @@ def unwind_branches(ga:GuidestarAPI):
                     ret.update(row)
                     ret['data'] = branch
                     ret['id'] = 'guidestar:' + branch['branchId']
-                    branch['name'] = row['name'] + ' - ' + branch['cityName']
+                    if branch.get('placeNickname'):
+                        branch['name'] = branch['placeNickname']
+                    else:
+                        branch['name'] = row['name'] + ' - ' + branch['cityName']
                     yield ret
     return DF.Flow(
         DF.add_field('data', 'object', resources='orgs'),
