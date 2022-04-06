@@ -187,6 +187,7 @@ def points_flow():
                 'point_id',
                 'situation_ids',
                 'response_ids',
+                'organization_id',
             ],
             resources=['points'],
         ),
