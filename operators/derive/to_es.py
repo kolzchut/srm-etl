@@ -207,6 +207,30 @@ def load_responses_to_es_flow():
         # DF.printer()
     )
 
+def load_organizations_to_es_flow():
+    return DF.Flow(
+        DF.load(
+            f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json', resources=['organizations'],
+        ),
+        DF.update_package(title='Active Organizations', name='organizations'),
+        DF.update_resource(-1, name='orgs'),
+        DF.select_fields(['id', 'name', 'description', 'kind']),
+        DF.set_type('id', **{'es:keyword': True}),
+        DF.set_type('name', **{'es:autocomplete': True}),
+        DF.set_type('description'),
+        DF.set_type('kind', **{'es:keyword': True}),
+        DF.add_field('score', 'number', 10),
+        DF.set_primary_key(['id']),
+        dump_to_es_and_delete(
+            indexes=dict(srm__orgs=[dict(resource_name='orgs')]),
+        ),
+        dump_to_ckan(
+            settings.CKAN_HOST,
+            settings.CKAN_API_KEY,
+            settings.CKAN_OWNER_ORG,
+        ),
+    )
+
 def filter_situations(res_name):
     current = DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
@@ -285,6 +309,7 @@ def operator(*_):
     load_locations_to_es_flow().process()
     load_responses_to_es_flow().process()
     load_situations_flow().process()
+    load_organizations_to_es_flow().process()
     logger.info('Finished ES Flow')
 
 
