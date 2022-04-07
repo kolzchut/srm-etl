@@ -46,7 +46,12 @@ def geocode(session):
         else:
             resp = geocoder.google(keyword, language='he', key=settings.GOOGLE_MAPS_API_KEY)
             if resp.ok:
-                row['accuracy'] = resp.accuracy
+                accuracy = resp.accuracy
+                if accuracy == 'GEOMETRIC_CENTER':
+                    print(accuracy, resp.quality)
+                    if resp.quality in ('establishment', ):
+                        accuracy = 'POI_MID_POINT'
+                row['accuracy'] = accuracy
                 row['provider'] = 'google'
                 row['resolved_address'] = resp.address
                 row['resolved_lon'], row['resolved_lat'] = resp.lng, resp.lat
