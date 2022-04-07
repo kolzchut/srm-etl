@@ -22,11 +22,6 @@ def data_api_es_flow():
         DF.update_package(title='Card Data', name='srm_card_data'),
         DF.update_resource('card_data', name='cards'),
         DF.add_field('score', 'number', 1),
-        DF.set_type('card_id', **{'es:keyword': True}),
-        DF.set_type('branch_id', **{'es:keyword': True}),
-        DF.set_type('service_id', **{'es:keyword': True}),
-        DF.set_type('organization_id', **{'es:keyword': True}),
-        DF.set_type('response_categories', **{'es:itemType': 'string', 'es:keyword': True}),
         DF.set_type(
             'situations',
             **{

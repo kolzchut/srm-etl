@@ -478,6 +478,11 @@ def card_data_flow():
             **{'es:keyword': True},
             resources=['card_data']
         ),
+        DF.set_type('card_id', **{'es:keyword': True}),
+        DF.set_type('branch_id', **{'es:keyword': True}),
+        DF.set_type('service_id', **{'es:keyword': True}),
+        DF.set_type('organization_id', **{'es:keyword': True}),
+        DF.set_type('response_categories', **{'es:itemType': 'string', 'es:keyword': True}),
         DF.set_primary_key(['card_id'], resources=['card_data']),
         DF.delete_fields(
             [
