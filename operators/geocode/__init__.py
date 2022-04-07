@@ -17,7 +17,7 @@ from srm_tools.logger import logger
 def geocode(session):
     transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
     def func(row):
-        keyword = row.get('alternate_address', row.get('id'))
+        keyword = row.get('alternate_address') or row.get('id')
         if not keyword:
             return
         geocode_req = dict(
