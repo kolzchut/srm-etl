@@ -24,7 +24,7 @@ def geocode(session):
             keyword=keyword, type=0,
         )
         resp = session.post(settings.GOVMAP_GEOCODE_API, json=geocode_req)
-        if resp.status_code != 200:
+        if resp.status_code not in (200, 404):
             logger.error(f'{geocode_req}')
             logger.error(f'{resp.status_code}: {resp.content}')
             assert False
