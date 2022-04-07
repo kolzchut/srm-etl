@@ -28,7 +28,10 @@ def geocode(session):
             logger.error(f'{geocode_req}')
             logger.error(f'{resp.status_code}: {resp.content}')
             assert False
-        resp = resp.json()
+        try:
+            resp = resp.json()
+        except json.decoder.JSONDecodeError:
+            resp = dict(status=None, errorCode=None)
 
         row['status'] = 'VALID'
         if resp['status'] == 0 and resp['errorCode'] == 0:
