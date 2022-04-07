@@ -18,6 +18,7 @@ def geocode(session):
     transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
     def func(row):
         keyword = row.get('alternate_address') or row.get('id')
+        alternate = keyword == row.get('alternate_address')
         if not keyword:
             return
         geocode_req = dict(
@@ -47,13 +48,18 @@ def geocode(session):
             resp = geocoder.google(keyword, language='he', key=settings.GOOGLE_MAPS_API_KEY)
             if resp.ok:
                 accuracy = resp.accuracy
+                address = resp.address
                 if accuracy == 'GEOMETRIC_CENTER':
-                    print(accuracy, resp.quality)
                     if resp.quality in ('establishment', ):
                         accuracy = 'POI_MID_POINT'
+                    else:
+                        print(accuracy, resp.quality)
+                if alternate:
+                    accuracy = 'ADDR_V1'
+                    address = row.get('id')
                 row['accuracy'] = accuracy
                 row['provider'] = 'google'
-                row['resolved_address'] = resp.address
+                row['resolved_address'] = address
                 row['resolved_lon'], row['resolved_lat'] = resp.lng, resp.lat
             else:
                 row['status'] = 'NOT_FOUND'
