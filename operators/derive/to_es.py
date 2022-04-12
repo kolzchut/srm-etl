@@ -226,7 +226,6 @@ def load_organizations_to_es_flow():
         DF.set_type('kind', **{'es:keyword': True}),
         DF.add_field('score', 'number', lambda r: 10*r['count']),
         DF.set_primary_key(['id']),
-        DF.printer()
         dump_to_es_and_delete(
             indexes=dict(srm__orgs=[dict(resource_name='orgs')]),
         ),
