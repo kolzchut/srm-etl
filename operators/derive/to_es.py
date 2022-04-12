@@ -207,15 +207,26 @@ def load_organizations_to_es_flow():
         DF.load(
             f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json', resources=['organizations'],
         ),
+        DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
+        DF.join_with_self('card_data', ['organization_id'], dict(
+            id=dict(name='organization_id'),
+            count=dict(aggregate='count')
+        )),
+        DF.join(
+            'organizations', ['id'], 'card_data', ['id'],
+            dict(name=None, description=None, kind=None)
+        ),
+        DF.sort_rows('{count}'),
         DF.update_package(title='Active Organizations', name='organizations'),
         DF.update_resource(-1, name='orgs'),
-        DF.select_fields(['id', 'name', 'description', 'kind']),
+        # DF.select_fields(['id', 'name', 'description', 'kind']),
         DF.set_type('id', **{'es:keyword': True}),
         DF.set_type('name', **{'es:autocomplete': True}),
         DF.set_type('description'),
         DF.set_type('kind', **{'es:keyword': True}),
-        DF.add_field('score', 'number', 10),
+        DF.add_field('score', 'number', lambda r: 10*r['count']),
         DF.set_primary_key(['id']),
+        DF.printer()
         dump_to_es_and_delete(
             indexes=dict(srm__orgs=[dict(resource_name='orgs')]),
         ),
