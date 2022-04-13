@@ -8,7 +8,7 @@ import slugify
 from conf import settings
 from srm_tools.logger import logger
 from srm_tools.processors import ensure_fields, update_mapper
-from srm_tools.update_table import airflow_table_updater
+from srm_tools.update_table import airtable_updater
 
 
 def transform_phone_numbers(r):
@@ -128,7 +128,7 @@ def get_revaha_data():
 
 
 def revaha_organization_data_flow():
-    return airflow_table_updater(
+    return airtable_updater(
         settings.AIRTABLE_ORGANIZATION_TABLE,
         DATA_SOURCE_ID,
         list(ORGANIZATION['data'].keys()),
@@ -158,7 +158,7 @@ def revaha_fetch_branch_data_flow(data=None):
 
 
 def revaha_branch_data_flow():
-    return airflow_table_updater(
+    return airtable_updater(
         settings.AIRTABLE_BRANCH_TABLE,
         DATA_SOURCE_ID,
         list(FIELD_MAP.keys()),

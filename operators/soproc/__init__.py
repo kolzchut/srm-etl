@@ -6,7 +6,7 @@ from dataflows_airtable import dump_to_airtable, load_from_airtable
 from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
 from srm_tools.logger import logger
-from srm_tools.update_table import airflow_table_update_flow, airflow_table_updater
+from srm_tools.update_table import airtable_updater_flow, airtable_updater
 from srm_tools.situations import Situations
 
 from conf import settings
@@ -87,7 +87,7 @@ def fetchOrgData():
         if row['entity_kind'] not in ('association', None)
     ))
     print('COLLECTED {} relevant organizations'.format(len(regNums)))
-    airflow_table_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'budgetkey-entities',
+    airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'budgetkey-entities',
         ['name', 'kind', 'purpose'],
         entities(regNums),
         updateFromSourceData()
@@ -105,7 +105,7 @@ def fetchBranchData():
         if row['entity_kind'] in ('company', )
     ))
     print('COLLECTED {} relevant organizations'.format(len(regNums)))
-    airflow_table_updater(settings.AIRTABLE_BRANCH_TABLE, 'budgetkey-entities',
+    airtable_updater(settings.AIRTABLE_BRANCH_TABLE, 'budgetkey-entities',
         ['name', 'organization', 'address', 'location'],
         companyBranches(regNums),
         updateFromSourceData()
@@ -154,7 +154,7 @@ def fetchServiceData():
     '''
     social_service_activities = list(fetch_from_budgetkey(query))
     print('COLLECTED {} relevant services'.format(len(social_service_activities)))
-    airflow_table_updater(settings.AIRTABLE_SERVICE_TABLE, 'social-procurement',
+    airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'social-procurement',
         ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations'],
         soprocServices(social_service_activities),
         updateFromSourceData()

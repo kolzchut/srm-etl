@@ -6,28 +6,28 @@ from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 from conf import settings
 
 
-def airflow_table_updater(table, source_id, table_fields, fetch_data_flow, update_data_flow):
+def airtable_updater(table, source_id, table_fields, fetch_data_flow, update_data_flow):
     """
-    Updates the given airflow table with new data, maintaining status correctly.
+    Updates the given airtable table with new data, maintaining status correctly.
     :param table: The table to update.
     :param source_id: The source value to check for and use for new data.
-    :param table_fields: The fields in the airflow table that we want to update (except the id, source and status fields).
+    :param table_fields: The fields in the airtable table that we want to update (except the id, source and status fields).
     :param fetch_data_flow: Flow which will be used to fetch new data. 
         Needs to add a new resource with two fields - 'id' (unique row id) and 'data' (object with the newly fetched data).
     :param update_data_flow: Flow to use to map the 'data' field into the table standard fields.
     """
     DF.Flow(
-        airflow_table_update_flow(table, source_id, table_fields, fetch_data_flow, update_data_flow),
+        airtable_updater_flow(table, source_id, table_fields, fetch_data_flow, update_data_flow),
         DF.printer()
     ).process()
 
 
-def airflow_table_update_flow(table, source_id, table_fields, fetch_data_flow, update_data_flow):
+def airtable_updater_flow(table, source_id, table_fields, fetch_data_flow, update_data_flow):
     """
-    Updates the given airflow table with new data, maintaining status correctly.
+    Updates the given airtable table with new data, maintaining status correctly.
     :param table: The table to update.
     :param source_id: The source value to check for and use for new data.
-    :param table_fields: The fields in the airflow table that we want to update (except the id, source and status fields).
+    :param table_fields: The fields in the airtable table that we want to update (except the id, source and status fields).
     :param fetch_data_flow: Flow which will be used to fetch new data. 
         Needs to add a new resource with two fields - 'id' (unique row id) and 'data' (object with the newly fetched data).
     :param update_data_flow: Flow to use to map the 'data' field into the table standard fields.

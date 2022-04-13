@@ -22,6 +22,7 @@ GOVMAP_REQUEST_ORIGIN = 'https://www.kolzchut.org.il'
 GOVMAP_GEOCODE_API = 'https://ags.govmap.gov.il/Api/Controllers/GovmapApi/Geocode'
 
 AIRTABLE_BASE = get_env('ETL_AIRTABLE_BASE')
+AIRTABLE_ALTERNATE_BASE = get_env('ETL_AIRTABLE_ALTERNATE_BASE')
 AIRTABLE_VIEW = 'Grid view'
 AIRTABLE_LOCATION_TABLE = 'Locations'
 AIRTABLE_ORGANIZATION_TABLE = 'Organizations'

@@ -5,7 +5,7 @@ import requests
 import dataflows as DF
 
 from srm_tools.logger import logger
-from srm_tools.update_table import airflow_table_updater
+from srm_tools.update_table import airtable_updater
 
 from conf import settings
 
@@ -50,7 +50,7 @@ def fetch_taxonomy(key, languages=('he', )):
 
 
 def operator(*_):
-    airflow_table_updater(
+    airtable_updater(
         settings.AIRTABLE_SITUATION_TABLE, 'openeligibility',
         ['name', 'name_en', 'description', 'description_en', 'breadcrumbs'],
         fetch_taxonomy('human_situations'),
@@ -58,7 +58,7 @@ def operator(*_):
             lambda row: row.update(row.get('data', {})),
         )
     )
-    airflow_table_updater(
+    airtable_updater(
         settings.AIRTABLE_RESPONSE_TABLE, 'openeligibility',
         ['name', 'name_en', 'description', 'description_en', 'breadcrumbs'],
         fetch_taxonomy('human_services'),

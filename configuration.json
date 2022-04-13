@@ -60,6 +60,12 @@
             "display": "Backup Manual Airtable to CKAN",
             "dgp": false,
             "admin": true
+        },
+        {
+            "name": "deploy",
+            "display": "Copy manual tagging from staging to production",
+            "dgp": false,
+            "admin": true
         }
     ],
     "theme": {

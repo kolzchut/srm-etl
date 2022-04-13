@@ -11,7 +11,7 @@ except ImportError:
 from dataflows_airtable import dump_to_airtable, load_from_airtable
 from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
-from srm_tools.update_table import airflow_table_update_flow, airflow_table_updater
+from srm_tools.update_table import airtable_updater_flow, airtable_updater
 from srm_tools.situations import Situations
 
 from conf import settings
@@ -60,7 +60,7 @@ def fetchOrgData(ga):
     regNums = sorted(set(social_service_entity_ids + kolzchut_entity_ids))
 
     print('COLLECTED {} relevant organizations'.format(len(regNums)))
-    airflow_table_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'guidestar',
+    airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'guidestar',
         ['name', 'kind', 'urls', 'description', 'purpose'],
         ga.organizations(regNums=regNums),
         updateOrgFromSourceData()
@@ -143,7 +143,7 @@ def updateBranchFromSourceData():
 def fetchBranchData(ga):
     print('FETCHING ALL ORGANIZATION BRANCHES')
     DF.Flow(
-        airflow_table_update_flow(settings.AIRTABLE_BRANCH_TABLE, 'guidestar',
+        airtable_updater_flow(settings.AIRTABLE_BRANCH_TABLE, 'guidestar',
             ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
             DF.Flow(
                 load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
@@ -339,7 +339,7 @@ def fetchServiceData(ga):
         (r.pop('name'), r) for r in taxonomy
     )
 
-    airflow_table_updater(settings.AIRTABLE_SERVICE_TABLE, 'guidestar',
+    airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'guidestar',
         ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations', 'branches'],
         DF.Flow(
             load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),

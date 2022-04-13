@@ -5,7 +5,7 @@ from conf import settings
 from srm_tools.gov import get_gov_api
 from srm_tools.logger import logger
 from srm_tools.processors import update_mapper
-from srm_tools.update_table import airflow_table_updater
+from srm_tools.update_table import airtable_updater
 
 ITEM_URL_BASE = 'https://www.gov.il/he/departments/bureaus'
 
@@ -113,7 +113,7 @@ def get_shil_data():
 
 
 def shil_organization_data_flow():
-    return airflow_table_updater(
+    return airtable_updater(
         settings.AIRTABLE_ORGANIZATION_TABLE,
         DATA_SOURCE_ID,
         list(ORGANIZATION['data'].keys()),
@@ -123,7 +123,7 @@ def shil_organization_data_flow():
 
 
 def shil_service_data_flow():
-    return airflow_table_updater(
+    return airtable_updater(
         settings.AIRTABLE_SERVICE_TABLE,
         DATA_SOURCE_ID,
         list(SERVICE['data'].keys()),
@@ -133,7 +133,7 @@ def shil_service_data_flow():
 
 
 def shil_branch_data_flow():
-    return airflow_table_updater(
+    return airtable_updater(
         settings.AIRTABLE_BRANCH_TABLE,
         DATA_SOURCE_ID,
         list(FIELD_MAP.keys()),

@@ -4,7 +4,7 @@ from slugify import slugify
 from pathlib import Path
 
 from conf import settings
-from srm_tools.update_table import airflow_table_updater
+from srm_tools.update_table import airtable_updater
 from srm_tools.processors import update_mapper
 
 
@@ -166,7 +166,7 @@ def operator(*_):
         )
     ]
 
-    airflow_table_updater(
+    airtable_updater(
         settings.AIRTABLE_ORGANIZATION_TABLE,
         DATA_SOURCE_ID,
         ['name'],
@@ -174,7 +174,7 @@ def operator(*_):
         update_mapper(),
     )
 
-    airflow_table_updater(
+    airtable_updater(
         settings.AIRTABLE_BRANCH_TABLE,
         DATA_SOURCE_ID,
         ['name', 'address', 'location', 'description', 'phone_numbers', 'organization'],
@@ -182,7 +182,7 @@ def operator(*_):
         update_mapper(),
     )
 
-    airflow_table_updater(
+    airtable_updater(
         settings.AIRTABLE_SERVICE_TABLE,
         DATA_SOURCE_ID,
         ['name', 'branches', 'situations', 'responses'],
