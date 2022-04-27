@@ -84,7 +84,7 @@ def unwind_branches(ga:GuidestarAPI):
                     if branch.get('placeNickname'):
                         branch['name'] = branch['placeNickname']
                     else:
-                        branch['name'] = row['name'] + ' - ' + branch['cityName']
+                        branch['name'] = (row['short_name'] or row['name']) + ' - ' + branch['cityName']
                     yield ret
     return DF.Flow(
         DF.add_field('data', 'object', resources='orgs'),
@@ -153,7 +153,7 @@ def fetchBranchData(ga):
                 DF.rename_fields({
                     AIRTABLE_ID_FIELD: 'organization_id',
                 }, resources='orgs'),
-                DF.select_fields(['organization_id', 'id', 'name'], resources='orgs'),
+                DF.select_fields(['organization_id', 'id', 'name', 'short_name'], resources='orgs'),
                 unwind_branches(ga),
             ),
             DF.Flow(
