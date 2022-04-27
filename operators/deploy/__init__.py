@@ -27,6 +27,9 @@ DEPLOY_CONFIG = [
     # Taxonomy Mappings
     DeploySpec(settings.AIRTABLE_TAXONOMY_MAPPING_GUIDESTAR_TABLE,
                'name', ['response_ids:Responses', 'situation_ids:Situations'], add_missing=True),
+    # Organization Short Names
+    DeploySpec(settings.AIRTABLE_ORGANIZATION_TABLE,
+               'id', ['short_name']),
     # Service Manual Tagging
     DeploySpec(settings.AIRTABLE_SERVICE_TABLE,
                'id', ['responses_manual_ids:responses_manual']),
