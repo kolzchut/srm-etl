@@ -40,7 +40,7 @@ def updateOrgFromSourceData():
     return func
 
 def fetchKZOrgs():
-    URL = 'https://www.kolzchut.org.il/w/he/index.php?title=מיוחד:CargoExport&tables=organization&fields=organization_number&where=organization_number+is+not+null&format=json'
+    URL = 'https://www.kolzchut.org.il/w/he/index.php?title=מיוחד:CargoExport&tables=organization&fields=organization_number&where=organization_number+is+not+null&format=json&limit=1000'
     regs = requests.get(URL).json()
     regs = [str(r['organization number']) for r in regs]
     return regs
