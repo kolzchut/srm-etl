@@ -154,9 +154,6 @@ def preprocess_services(select_fields=None, validate=False):
         filter_dummy_data(),
         filter_active_data(),
         set_staging_pkey('services'),
-        # DF.filter_rows(
-        #     lambda r: r['selected'] is True or r['source'] == 'guidestar', resources=['services']
-        # ),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['services']),
         DF.set_type('name', transform=lambda v, row: row['name_manual'] or v, resources=['services']),
         DF.set_type('responses', transform=lambda _, row: row['responses_manual'] if row['source'] in ('social-procurement', 'shil') else row['responses'], resources=['services']),
