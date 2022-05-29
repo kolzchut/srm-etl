@@ -1,7 +1,7 @@
 import re
 import requests
 
-cookie_re = re.compile("document.cookie='([^=]+)=([^;]+); path=/'")
+cookie_re = re.compile("document.cookie='([^;]+); path=/'")
 
 def overcome_blocking(session: requests.Session, get_resp):
     resp = get_resp()
