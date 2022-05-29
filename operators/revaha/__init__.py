@@ -5,6 +5,8 @@ import dataflows as DF
 import requests
 import slugify
 
+from dataflows_airtable import load_from_airtable
+
 from conf import settings
 from srm_tools.logger import logger
 from srm_tools.processors import ensure_fields, update_mapper
@@ -63,19 +65,19 @@ ORGANIZATION = {
     },
 }
 
-SERVICE = {
-    'id': 'revacha-1',
-    'data': {
-        'name': 'מחלקה לשירותים חברתיים',
-        'source': DATA_SOURCE_ID,
-        'description': 'המחלקות לשירותים חברתיים פועלות במסגרת משרד הרווחה והביטחון החברתי ומעניקות שירותים חברתיים לפרטים, משפחות וקהילות, הזקוקים לסיוע בתחום הרווחה.',
-        'payment_required': 'no',
-        'urls': '',
-        # 'urls': 'https://www.gov.il/he/departments/bureaus/?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca#שירות ייעוץ לאזרח',
-        'status': 'ACTIVE',
-        'organizations': ['53a2e790-87b3-44a2-a5f2-5b826f714775'],
-    },
-}
+# SERVICE = {
+#     'id': 'revacha-1',
+#     'data': {
+#         'name': 'מחלקה לשירותים חברתיים',
+#         'source': DATA_SOURCE_ID,
+#         'description': 'המחלקות לשירותים חברתיים פועלות במסגרת משרד הרווחה והביטחון החברתי ומעניקות שירותים חברתיים לפרטים, משפחות וקהילות, הזקוקים לסיוע בתחום הרווחה.',
+#         'payment_required': 'no',
+#         'urls': '',
+#         # 'urls': 'https://www.gov.il/he/departments/bureaus/?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca#שירות ייעוץ לאזרח',
+#         'status': 'ACTIVE',
+#         'organizations': ['53a2e790-87b3-44a2-a5f2-5b826f714775'],
+#     },
+# }
 
 FIELD_MAP = {
     'id': 'id',
@@ -137,6 +139,14 @@ def get_revaha_data():
 
 
 def revaha_organization_data_flow():
+    service_ids = DF.Flow(
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.filter_rows(lambda r: r['mahlakot_revaha'] is True),
+        DF.select_fields(['id'])
+    ).results()[0][0]
+    service_ids = [s['id'] for s in service_ids]
+    ORGANIZATION['data']['services'] = service_ids
+
     return airtable_updater(
         settings.AIRTABLE_ORGANIZATION_TABLE,
         DATA_SOURCE_ID,
@@ -176,20 +186,20 @@ def revaha_branch_data_flow():
     )
 
 
-def revaha_service_data_flow():
-    return airtable_updater(
-        settings.AIRTABLE_SERVICE_TABLE,
-        DATA_SOURCE_ID,
-        list(SERVICE['data'].keys()),
-        [SERVICE],
-        update_mapper(),
-    )
+# def revaha_service_data_flow():
+#     return airtable_updater(
+#         settings.AIRTABLE_SERVICE_TABLE,
+#         DATA_SOURCE_ID,
+#         list(SERVICE['data'].keys()),
+#         [SERVICE],
+#         update_mapper(),
+#     )
 
 
 def operator(*_):
     logger.info('Starting Revaha Flow')
     revaha_organization_data_flow()
-    revaha_service_data_flow()
+    # revaha_service_data_flow()
     revaha_branch_data_flow()
     logger.info('Finished Revaha Flow')
 
