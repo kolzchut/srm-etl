@@ -11,6 +11,7 @@ from conf import settings
 from srm_tools.logger import logger
 from srm_tools.processors import ensure_fields, update_mapper
 from srm_tools.update_table import airtable_updater
+from srm_tools.scraping_utils import overcome_blocking
 
 
 def transform_phone_numbers(r):
@@ -65,6 +66,8 @@ ORGANIZATION = {
     },
 }
 
+session = requests.Session()
+
 # SERVICE = {
 #     'id': 'revacha-1',
 #     'data': {
@@ -114,11 +117,15 @@ def gov_data_proxy(template_id, skip):
         'From': skip,
     }
     timeout = 30
-    response = requests.post(
-        settings.GOV_DATA_PROXY,
-        json=data,
-        timeout=timeout,
-    ).json()
+    resp = overcome_blocking(
+        session, 
+        lambda: session.post(
+            settings.GOV_DATA_PROXY,
+            json=data,
+            timeout=timeout,
+        )
+    )
+    response = resp.json()
     total, results = response['TotalResults'], response['Results']
 
     return total, results
