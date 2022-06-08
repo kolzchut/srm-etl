@@ -3,13 +3,19 @@
     "kinds": [
         {
             "name": "guidestar",
-            "display": "Scrape Guidestar",
+            "display": "Scrape Guidestar Services",
+            "dgp": false,
+            "admin": true
+        },
+        {
+            "name": "entities",
+            "display": "Enrich Entity Data and Branches using Guidestar and BudgetKey",
             "dgp": false,
             "admin": true
         },
         {
             "name": "soproc",
-            "display": "Scrape Social Procurement Data",
+            "display": "Scrape Social Procurement and Click Data",
             "dgp": false,
             "admin": true
         },
@@ -28,6 +34,12 @@
         {
             "name": "revaha",
             "display": "Scrape Mahlakot HaRevaha",
+            "dgp": false,
+            "admin": true
+        },
+        {
+            "name": "kolzchut_orgs",
+            "display": "Scrape KolZchut Social Organizations",
             "dgp": false,
             "admin": true
         },

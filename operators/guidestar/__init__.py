@@ -1,166 +1,18 @@
-import requests
-from srm_tools.budgetkey import fetch_from_budgetkey
 import dataflows as DF
 from dataflows.base.resource_wrapper import ResourceWrapper
 
-try:
-    from .guidestar_api import GuidestarAPI
-except ImportError:
-    from guidestar_api import GuidestarAPI
-
 from dataflows_airtable import dump_to_airtable, load_from_airtable
-from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
-from srm_tools.update_table import airtable_updater_flow, airtable_updater
+from srm_tools.update_table import airtable_updater
 from srm_tools.situations import Situations
 
 from conf import settings
 from srm_tools.logger import logger
+from srm_tools.guidestar_api import GuidestarAPI
 
 
 situations = Situations()
 
-
-## ORGANIZATIONS
-def updateOrgFromSourceData():
-    def func(row):
-        data = row.get('data')
-        if data is None:
-            return
-        row['name'] = data['name'].replace(' (חל"צ)', '').replace(' (ע"ר)', '')
-        row['kind'] = data['malkarType']
-        row['description'] = None
-        row['purpose'] = data.get('orgGoal')
-        urls = []
-        if data.get('website'):
-            urls.append(data['website'] + '#אתר הבית')
-        if data.get('urlGuidestar'):
-            urls.append(data['urlGuidestar'] + '#מידע נוסף ב״גיידסטאר״')
-        row['urls'] = '\n'.join(urls)
-    return func
-
-def fetchKZOrgs():
-    URL = 'https://www.kolzchut.org.il/w/he/index.php?title=מיוחד:CargoExport&tables=organization&fields=organization_number&where=organization_number+is+not+null&format=json&limit=1000'
-    regs = requests.get(URL).json()
-    regs = [str(r['organization number']) for r in regs]
-    return regs
-
-def fetchOrgData(ga):
-    print('FETCHING ALL ORGANIZATIONS')
-    query = '''
-        with suppliers as (select jsonb_array_elements(suppliers) as supplier from activities where suppliers is not null and suppliers::text != 'null')
-        select supplier->>'entity_id' as entity_id, supplier->>'entity_kind' as entity_kind from suppliers
-    '''
-    social_service_entity_ids = fetch_from_budgetkey(query)
-    social_service_entity_ids = [
-        row['entity_id'] for row in social_service_entity_ids
-        if row['entity_kind'] == 'association'
-    ]
-    kolzchut_entity_ids = fetchKZOrgs()
-    regNums = sorted(set(social_service_entity_ids + kolzchut_entity_ids))
-
-    print('COLLECTED {} relevant organizations'.format(len(regNums)))
-    airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'guidestar',
-        ['name', 'kind', 'urls', 'description', 'purpose'],
-        ga.organizations(regNums=regNums),
-        updateOrgFromSourceData()
-    )
-
-
-## BRANCHES
-def unwind_branches(ga:GuidestarAPI):
-    def func(rows: ResourceWrapper):
-        if rows.res.name != 'orgs':
-            yield from rows        
-        else:
-            for _, row in enumerate(rows):
-                regNum = row['id']
-                branches = ga.branches(regNum)
-                for branch in branches:
-                    ret = dict()
-                    ret.update(row)
-                    ret['data'] = branch
-                    ret['id'] = 'guidestar:' + branch['branchId']
-                    if branch.get('placeNickname'):
-                        branch['name'] = branch['placeNickname']
-                    else:
-                        branch['name'] = (row['short_name'] or row['name']) + ' - ' + branch['cityName']
-                    yield ret
-    return DF.Flow(
-        DF.add_field('data', 'object', resources='orgs'),
-        func,
-    )
-
-def calc_location_key(row):
-    key = ''
-    cityName = row.get('cityName')
-    if cityName:
-        streetName = row.get('streetName')
-        if streetName:
-            key += f'{streetName} '
-            houseNum = row.get('houseNum')
-            if houseNum:
-                key += f'{houseNum} '
-            key += ', '
-        key += f'{cityName} '
-    
-    alternateAddress = row.get('alternateAddress')
-    if alternateAddress:
-        if alternateAddress not in key:
-            key += f' - {alternateAddress}'
-    key = key.strip()
-
-    return key or None
-
-def updateBranchFromSourceData():
-    def func(row):
-        data = row.get('data')
-        if data is None:
-            return
-        # print('data', data)
-        # print('row', row)
-        row['name'] = data['name']
-        row['address'] = calc_location_key(data)
-        row['location'] = [row['address']]
-        row['address_details'] = data.get('drivingInstructions')
-        row['description'] = None
-        row['urls'] = None
-        # if data.get('branchURL'):
-        #     row['urls'] = data['branchURL'] + '#הסניף בגיידסטאר'
-        row['phone_numbers'] = None
-        if data.get('phone'):
-            row['phone_numbers'] = data['phone']
-        if row.get('organization_id'):
-            row['organization'] = [row['organization_id']]
-        if data.get('language'):
-            row['situations'] = situations.convert_situation_list([
-                'human_situations:language:{}_speaking'.format(l.lower().strip()) for l in data['language'].split(';')
-            ])
-
-    return func
-
-
-def fetchBranchData(ga):
-    print('FETCHING ALL ORGANIZATION BRANCHES')
-    DF.Flow(
-        airtable_updater_flow(settings.AIRTABLE_BRANCH_TABLE, 'guidestar',
-            ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
-            DF.Flow(
-                load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
-                DF.update_resource(-1, name='orgs'),
-                DF.filter_rows(lambda r: r['source'] == 'guidestar', resources='orgs'),
-                DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
-                DF.rename_fields({
-                    AIRTABLE_ID_FIELD: 'organization_id',
-                }, resources='orgs'),
-                DF.select_fields(['organization_id', 'id', 'name', 'short_name'], resources='orgs'),
-                unwind_branches(ga),
-            ),
-            DF.Flow(
-                updateBranchFromSourceData(),
-            )
-        )
-    ).process()
 
 ## SERVICES
 def unwind_services(ga: GuidestarAPI):
@@ -178,7 +30,7 @@ def unwind_services(ga: GuidestarAPI):
                     ret = dict()
                     ret.update(row)
                     ret['data'] = service
-                    ret['data']['organization_id'] = row['id']
+                    ret['data']['organization_id'] = regNum
                     ret['data']['actual_branch_ids'] = [b['branchId'] for b in branches]
                     ret['id'] = 'guidestar:' + service['serviceId']
                     yield ret
@@ -344,12 +196,8 @@ def fetchServiceData(ga):
         DF.Flow(
             load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='orgs'),
-            DF.filter_rows(lambda r: r['source'] == 'guidestar', resources='orgs'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
-            DF.rename_fields({
-                AIRTABLE_ID_FIELD: 'organization_id',
-            }, resources='orgs'),
-            DF.select_fields(['organization_id', 'id', 'name'], resources='orgs'),
+            DF.select_fields(['id', 'name'], resources='orgs'),
             unwind_services(ga),
             # DF.checkpoint('unwind_services'),
         ),
@@ -364,8 +212,6 @@ def operator(name, params, pipeline):
     logger.info('STARTING Guidestar Scraping')
     ga = GuidestarAPI()
 
-    fetchOrgData(ga)
-    fetchBranchData(ga)
     fetchServiceData(ga)
 
 
