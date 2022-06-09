@@ -22,6 +22,8 @@ def geocode(session):
         pluscode = keyword[4] == '+'
         if not keyword:
             return
+        row['status'] = 'VALID'
+
         if pluscode:
             resp = dict(status='plus')
         else:
@@ -38,7 +40,6 @@ def geocode(session):
             except json.decoder.JSONDecodeError:
                 resp = dict(status=None, errorCode=None)
 
-            row['status'] = 'VALID'
         if resp['status'] == 0 and resp['errorCode'] == 0:
             assert 'data' in resp and len(resp['data']) > 0, str(resp)
             resp = resp['data'][0]
