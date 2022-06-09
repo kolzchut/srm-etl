@@ -19,22 +19,26 @@ def geocode(session):
     def func(row):
         keyword = row.get('alternate_address') or row.get('id')
         alternate = keyword == row.get('alternate_address')
+        pluscode = keyword[4] == '+'
         if not keyword:
             return
-        geocode_req = dict(
-            keyword=keyword, type=0,
-        )
-        resp = session.post(settings.GOVMAP_GEOCODE_API, json=geocode_req)
-        if resp.status_code not in (200, 404):
-            logger.error(f'{geocode_req}')
-            logger.error(f'{resp.status_code}: {resp.content}')
-            assert False
-        try:
-            resp = resp.json()
-        except json.decoder.JSONDecodeError:
-            resp = dict(status=None, errorCode=None)
+        if pluscode:
+            resp = dict(status='plus')
+        else:
+            geocode_req = dict(
+                keyword=keyword, type=0,
+            )
+            resp = session.post(settings.GOVMAP_GEOCODE_API, json=geocode_req)
+            if resp.status_code not in (200, 404):
+                logger.error(f'{geocode_req}')
+                logger.error(f'{resp.status_code}: {resp.content}')
+                assert False
+            try:
+                resp = resp.json()
+            except json.decoder.JSONDecodeError:
+                resp = dict(status=None, errorCode=None)
 
-        row['status'] = 'VALID'
+            row['status'] = 'VALID'
         if resp['status'] == 0 and resp['errorCode'] == 0:
             assert 'data' in resp and len(resp['data']) > 0, str(resp)
             resp = resp['data'][0]
@@ -54,7 +58,7 @@ def geocode(session):
                         accuracy = 'POI_MID_POINT'
                     else:
                         print(accuracy, resp.quality)
-                if alternate:
+                if pluscode:
                     accuracy = 'ADDR_V1'
                     address = row.get('id')
                 row['accuracy'] = accuracy
