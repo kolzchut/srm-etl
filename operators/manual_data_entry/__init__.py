@@ -154,7 +154,8 @@ def mde_service_flow():
         load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='services'),
         DF.filter_rows(lambda r: r['Org Id'] and r['Org Id'] != 'dummy' and r['Service Name']),
-        DF.select_fields(['Org Id', 'Branch Details', 'Service Name', 'Service Description', 'Service Conditions', 'Service Phone Number', 'Service Email', 'Service Website',
+        DF.select_fields(['Org Id', 'Branch Address', 'Branch GeoCode',
+                          'Service Name', 'Service Description', 'Service Conditions', 'Service Phone Number', 'Service Email', 'Service Website',
                           'responses_ids', 'situations_ids', 'Org Website', 'Branch Website']),
         DF.rename_fields({
             'Org Id': 'organization',
