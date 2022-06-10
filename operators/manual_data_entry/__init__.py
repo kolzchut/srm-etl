@@ -112,7 +112,7 @@ def mde_branch_flow():
             org_urls=r['org_urls'],
             organization=[r['organization']],
         )),
-        DF.add_field('id', 'string', lambda r: branch_id(r['organization'], r['address'], r['geocode']),
+        DF.add_field('id', 'string', lambda r: branch_id(r['organization'], r['address'], r['geocode'])),
         DF.select_fields(['id', 'data']),
     ).results()[0][0]
 
@@ -169,7 +169,7 @@ def mde_service_flow():
             'Org Website': 'org_urls',
             'Branch Website': 'branch_urls',
         }),
-        DF.add_field('branch_id', 'string', lambda r: branch_id(r['organization'], r['branch_address'], r['branch_geocode']))
+        DF.add_field('branch_id', 'string', lambda r: branch_id(r['organization'], r['branch_address'], r['branch_geocode'])),
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
             description=r['description'],
