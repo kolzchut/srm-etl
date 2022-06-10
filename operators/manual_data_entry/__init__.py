@@ -61,6 +61,9 @@ def mde_organization_flow():
     )
 
 # BRANCHES
+def branch_id(org, address, geocode):
+    return 'mde:' + org + ':' + slugify(geocode or address)
+
 def branch_updater():
     def func(row):
         if not row.get('data'):
@@ -109,7 +112,7 @@ def mde_branch_flow():
             org_urls=r['org_urls'],
             organization=[r['organization']],
         )),
-        DF.add_field('id', 'string', lambda r: 'mde:' + r['organization'] + ':' + slugify(r['name'])),
+        DF.add_field('id', 'string', lambda r: branch_id(r['organization'], r['address'], r['geocode']),
         DF.select_fields(['id', 'data']),
     ).results()[0][0]
 
@@ -155,7 +158,8 @@ def mde_service_flow():
                           'responses_ids', 'situations_ids', 'Org Website', 'Branch Website']),
         DF.rename_fields({
             'Org Id': 'organization',
-            'Branch Details': 'branch_name',
+            'Branch Address': 'branch_address',
+            'Branch Geocode': 'branch_geocode',
             'Service Name': 'name',
             'Service Description': 'description',
             'Service Conditions': 'payment_details',
@@ -165,6 +169,7 @@ def mde_service_flow():
             'Org Website': 'org_urls',
             'Branch Website': 'branch_urls',
         }),
+        DF.add_field('branch_id', 'string', lambda r: branch_id(r['organization'], r['branch_address'], r['branch_geocode']))
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
             description=r['description'],
@@ -172,11 +177,11 @@ def mde_service_flow():
             urls=r['urls'],
             org_urls=r['org_urls'],
             branch_urls=r['branch_urls'],
-            branches=['mde:' + r['organization'] + ':' + slugify(r['branch_name'])],
+            branches=[r['branch_id']],
             responses=r['responses_ids'],
             situations=r['situations_ids'],
         )),
-        DF.add_field('id', 'string', lambda r: 'mde:' + r['organization'] + ':' + slugify(r['name'])),
+        DF.add_field('id', 'string', lambda r: r['branch_id'] + ':' + slugify(r['name'])),
         DF.select_fields(['id', 'data']),
     ).results()[0][0]
 
