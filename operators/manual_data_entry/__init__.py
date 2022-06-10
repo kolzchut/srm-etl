@@ -196,8 +196,8 @@ def mde_service_flow():
 
 def operator(*_):
     logger.info('Starting Manual Data Entry Flow')
-    # mde_organization_flow()
-    # mde_branch_flow()
+    mde_organization_flow()
+    mde_branch_flow()
     mde_service_flow()
     logger.info('Finished Manual Data Entry Flow')
 
