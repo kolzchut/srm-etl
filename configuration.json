@@ -109,6 +109,10 @@
             "display": "Yearly"
         },
         {
+            "name": "@hourly",
+            "display": "Hourly"
+        },
+        {
             "name": "manual",
             "display": "Manual"
         }
