@@ -27,7 +27,7 @@ def upload_tileset(filename, tileset, name):
         mbtiles.unlink()
     mbtiles = str(mbtiles)
     layer_name = tileset.split('.')[-1].replace('-', '_')
-    cmd = ['tippecanoe', '-z10', '-o', mbtiles, '-n', name, '-l', layer_name, filename]
+    cmd = ['tippecanoe', '-B6', '-z10', '-o', mbtiles, '-n', name, '-l', layer_name, filename]
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode('utf8')
         print(out)
@@ -82,8 +82,6 @@ def preprocess_field(k, v):
         return None
     if k == 'branch_geometry':
         return (float(v[0]), float(v[1]))
-    elif k == 'service_details':
-        return None
     return v
 
 
@@ -165,7 +163,7 @@ def geo_data_flow():
         DF.set_type(
             'records',
             type='string',
-            transform=lambda v: json.dumps(v),
+            transform=lambda v: json.dumps([dict(card_id=vv['card_id']) for vv in v]),
             resources=['geo_data'],
         ),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data', format='geojson'),
