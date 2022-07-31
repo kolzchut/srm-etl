@@ -33,10 +33,12 @@ def sort_dict_by_keys(row):
 
 
 def make_unique_id_from_values(row):
+    keys = sorted(row.keys())
+    values = [row[k] for k in keys]
     input = ''.join(
         [
             slugify.slugify(str(v if v is not None else '').strip(), lowercase=True, separator='')
-            for v in row.values()
+            for v in values
         ]
     ).encode('utf-8')
     sha = hashlib.sha1()
