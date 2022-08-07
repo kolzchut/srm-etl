@@ -148,14 +148,14 @@ def get_revaha_data():
 
 
 def revaha_organization_data_flow():
-    service_ids = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-        DF.filter_rows(lambda r: r['mahlakot_revaha'] is True),
-        DF.filter_rows(lambda r: r['status'] == 'ACTIVE'),
-        DF.select_fields(['id'])
-    ).results()[0][0]
-    service_ids = [s['id'] for s in service_ids]
-    ORGANIZATION['data']['services'] = service_ids
+    # service_ids = DF.Flow(
+    #     load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+    #     DF.filter_rows(lambda r: r['mahlakot_revaha'] is True),
+    #     DF.filter_rows(lambda r: r['status'] == 'ACTIVE'),
+    #     DF.select_fields(['id'])
+    # ).results()[0][0]
+    # service_ids = [s['id'] for s in service_ids]
+    # ORGANIZATION['data']['services'] = service_ids
 
     return airtable_updater(
         settings.AIRTABLE_ORGANIZATION_TABLE,
