@@ -1,5 +1,7 @@
 import hashlib
+from pathlib import Path
 import re
+import time
 
 import dataflows as DF
 import requests
@@ -143,10 +145,14 @@ def get_revaha_data():
 
     while len(results) < total:
         skip += skip_by
-        _, batch = gov_data_proxy(template_id, skip)
-        results.extend(batch)
-        print(f'SKIPPED {skip}, GOT {len(results)}, TOTAL {total}')
-        if len(batch) == 0:
+        for _ in range(3):
+            _, batch = gov_data_proxy(template_id, skip)
+            if len(batch) > 0:
+                results.extend(batch)
+                print(f'SKIPPED {skip}, GOT {len(results)}, TOTAL {total}')
+                break
+            time.sleep(10)
+        else:
             break
     print('FETCHED {} REVAHA RECORDS'.format(len(results)))
     assert len(results) > 0
@@ -185,17 +191,19 @@ def revaha_fetch_branch_data_flow(data=None):
 
 def update_urls_from_db():
     URLS = DF.Flow(
-        DF.load('branch-urls/datapackage.json'),
-    ).results[0][0]
+        DF.load(str(Path(__file__).with_name('branch-urls') / 'datapackage.json')),
+    ).results()[0][0]
     URLS = dict((x['code'], x['urls']) for x in URLS)
 
     def func(rows):
         for row in rows:
-            urls = URLS.get(row.get(AIRTABLE_ID_FIELD))
+            id = row['id']
+            urls = URLS.get(id)
             if urls:
                 row['urls'] = urls
             else:
-                print(f'NO URL FOR {row.get("name")} ({row.get(AIRTABLE_ID_FIELD)})')
+                if id not in URLS:
+                    print(f'NO URL FOR {row.get("name")} ({id})')
             yield row
     return func
 
