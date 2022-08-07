@@ -62,3 +62,12 @@ def airtable_updater_flow(table, source_id, table_fields, fetch_data_flow, updat
             }
         }, settings.AIRTABLE_API_KEY),
     )
+
+
+def simple_row_updater():
+    def func(row):
+        data = row.get('data')
+        if data is None:
+            return
+        row.update(data)
+    return func

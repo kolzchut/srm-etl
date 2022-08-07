@@ -29,7 +29,7 @@ def org_updater():
                     if new_url not in urls and new_url.startswith('http'):
                         urls.append(new_url)
         row['urls'] = '\n'.join(urls)
-        row['last_tag_time'] = data['last_tag_time']
+        row['last_tag_date'] = data['last_tag_date']
     return func
 
 def mde_organization_flow():
@@ -52,7 +52,7 @@ def mde_organization_flow():
             name=r['name'],
             short_name=r['short_name'],
             urls=r['urls'],
-            last_tag_time=today,
+            last_tag_date=today,
         )),
         DF.select_fields(['id', 'data']),
     ).results()[0][0]
