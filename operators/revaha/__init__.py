@@ -145,6 +145,8 @@ def get_revaha_data():
         _, batch = gov_data_proxy(template_id, skip)
         results.extend(batch)
         print(f'SKIPPED {skip}, GOT {len(results)}, TOTAL {total}')
+        if len(batch) == 0:
+            break
     print('FETCHED {} REVAHA RECORDS'.format(len(results)))
     assert len(results) > 0
     return results

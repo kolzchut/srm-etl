@@ -21,8 +21,6 @@ situations = Situations()
 ## ORGANIZATIONS
 def fetchEntityFromBudgetKey(regNum):
     entity = list(fetch_from_budgetkey(f"select * from entities where id='{regNum}'"))
-    if regNum == '513847251':
-        print('513847251513847251', entity)
     if len(entity) > 0:
         entity = entity[0]
         name = entity['name']
