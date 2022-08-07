@@ -30,7 +30,7 @@ def fetchKZOrgData():
 
     print('COLLECTED {} relevant organizations'.format(len(regNums)))
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'entities',
-        [],
+        ['last_tag_date'],
         regNums, None, 
         manage_status=False
     )

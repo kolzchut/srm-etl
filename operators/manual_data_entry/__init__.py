@@ -59,7 +59,7 @@ def mde_organization_flow():
 
     print('COLLECTED {} relevant organizations'.format(len(orgs)))
     return airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'entities',
-        ['name', 'short_name', 'urls'],
+        ['name', 'short_name', 'urls', 'last_tag_date'],
         orgs,
         org_updater(), 
         manage_status=False
