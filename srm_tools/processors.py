@@ -18,7 +18,9 @@ def ensure_field(name, args, resources=None):
 
 def update_mapper():
     def func(row):
-        if 'data' in row:
-            row.update({k: v for k, v in row.get('data').items()})
+        data = row.get('data')
+        if data is None:
+            return
+        row.update(data)
 
     return func

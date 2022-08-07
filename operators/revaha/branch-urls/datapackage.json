@@ -1,0 +1,43 @@
+{
+  "bytes": 71639,
+  "count_of_rows": 327,
+  "hash": "5cbf999d69b4407af631d4925f112ad0",
+  "profile": "data-package",
+  "resources": [
+    {
+      "bytes": 71639,
+      "dialect": {
+        "caseSensitiveHeader": false,
+        "delimiter": ",",
+        "doubleQuote": true,
+        "header": true,
+        "lineTerminator": "\r\n",
+        "quoteChar": "\"",
+        "skipInitialSpace": false
+      },
+      "encoding": "utf-8",
+      "format": "csv",
+      "hash": "af3e1b790563f7c4ab7e7b2b5b78bfeb",
+      "name": "urls",
+      "path": "urls.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "format": "default",
+            "name": "code",
+            "type": "string"
+          },
+          {
+            "format": "default",
+            "name": "urls",
+            "type": "string"
+          }
+        ],
+        "missingValues": [
+          ""
+        ]
+      }
+    }
+  ]
+}

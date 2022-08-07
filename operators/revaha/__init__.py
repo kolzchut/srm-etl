@@ -6,6 +6,7 @@ import requests
 import slugify
 
 from dataflows_airtable import load_from_airtable
+from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
 from conf import settings
 from srm_tools.logger import logger
@@ -182,13 +183,33 @@ def revaha_fetch_branch_data_flow(data=None):
     )
 
 
+def update_urls_from_db():
+    URLS = DF.Flow(
+        DF.load('branch-urls/datapackage.json'),
+    ).results[0][0]
+    URLS = dict((x['code'], x['urls']) for x in URLS)
+
+    def func(rows):
+        for row in rows:
+            urls = URLS.get(row.get(AIRTABLE_ID_FIELD))
+            if urls:
+                row['urls'] = urls
+            else:
+                print(f'NO URL FOR {row.get("name")} ({row.get(AIRTABLE_ID_FIELD)})')
+            yield row
+    return func
+
+
 def revaha_branch_data_flow():
     return airtable_updater(
         settings.AIRTABLE_BRANCH_TABLE,
         DATA_SOURCE_ID,
         list(FIELD_MAP.keys()),
         revaha_fetch_branch_data_flow(),
-        update_mapper(),
+        DF.Flow(
+            update_mapper(),
+            update_urls_from_db()
+        )
     )
 
 

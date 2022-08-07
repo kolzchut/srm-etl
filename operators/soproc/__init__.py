@@ -3,7 +3,8 @@ from srm_tools.budgetkey import fetch_from_budgetkey
 import dataflows as DF
 
 from srm_tools.logger import logger
-from srm_tools.update_table import airtable_updater, simple_row_updater
+from srm_tools.processors import update_mapper
+from srm_tools.update_table import airtable_updater
 from srm_tools.situations import Situations
 
 from conf import settings
@@ -43,7 +44,7 @@ def fetchOrgData():
     print('COLLECTED {} relevant organizations'.format(len(regNums)))
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'entities',
         ['last_tag_date'],
-        regNums, simple_row_updater(), 
+        regNums, update_mapper(), 
         manage_status=False
     )
 
