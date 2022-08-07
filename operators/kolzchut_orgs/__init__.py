@@ -1,5 +1,6 @@
 import requests
 import dataflows as DF
+import datetime
 
 from srm_tools.update_table import airtable_updater
 from srm_tools.situations import Situations
@@ -21,8 +22,9 @@ def fetchKZOrgs():
 
 def fetchKZOrgData():
     print('FETCHING ALL ORGANIZATIONS')
+    today = datetime.date.today().isoformat()
     regNums = [
-        dict(id=id, data=dict(id=None))
+        dict(id=id, data=dict(id=None), last_tag_date=today)
         for id in fetchKZOrgs()
     ]
 

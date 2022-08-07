@@ -1,3 +1,5 @@
+import datetime
+
 import dataflows as DF
 from slugify import slugify
 
@@ -27,9 +29,11 @@ def org_updater():
                     if new_url not in urls and new_url.startswith('http'):
                         urls.append(new_url)
         row['urls'] = '\n'.join(urls)
+        row['last_tag_time'] = data['last_tag_time']
     return func
 
 def mde_organization_flow():
+    today = datetime.date.today().isoformat()
     orgs = DF.Flow(
         load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='orgs'),
@@ -48,6 +52,7 @@ def mde_organization_flow():
             name=r['name'],
             short_name=r['short_name'],
             urls=r['urls'],
+            last_tag_time=today,
         )),
         DF.select_fields(['id', 'data']),
     ).results()[0][0]

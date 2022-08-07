@@ -1,3 +1,4 @@
+import datetime
 from srm_tools.budgetkey import fetch_from_budgetkey
 import dataflows as DF
 
@@ -24,6 +25,7 @@ def updateFromSourceData():
 
 def fetchOrgData():
     print('FETCHING ALL ORGANIZATIONS')
+    today = datetime.date.today().isoformat()
     query = '''
         with suppliers as (select jsonb_array_elements(suppliers) as supplier from activities where suppliers is not null and suppliers::text != 'null')
         select supplier->>'entity_id' as entity_id, supplier->>'entity_kind' as entity_kind from suppliers
@@ -34,7 +36,7 @@ def fetchOrgData():
         if row['entity_id'] is not None
     ))
     regNums = [
-        dict(id=id, data=dict(id=None))
+        dict(id=id, data=dict(id=None), last_tag_date=today)
         for id in regNums
     ]
 
