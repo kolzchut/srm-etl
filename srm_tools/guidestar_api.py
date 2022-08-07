@@ -57,7 +57,7 @@ class GuidestarAPI():
                 # print(row)
                 if row.get('errorMsg') is not None:
                     errorMsg = row['errorMsg']
-                    print(f'ERROR FETCHING ORGANIZATION {regNum}: {errorMsg}')
+                    print(f'GUIDESTAR ERROR FETCHING ORGANIZATION {regNum}: {errorMsg}')
                     continue
                 yield dict(id=regNum, data=row)
                 if limit and count == limit:
