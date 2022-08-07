@@ -1,4 +1,5 @@
-from srm_tools.budgetkey import fetch_from_budgetkey
+import dateutil.parser
+
 import dataflows as DF
 from dataflows.base.resource_wrapper import ResourceWrapper
 
@@ -8,6 +9,7 @@ from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 from srm_tools.update_table import airtable_updater_flow, airtable_updater
 from srm_tools.situations import Situations
 from srm_tools.guidestar_api import GuidestarAPI
+from srm_tools.budgetkey import fetch_from_budgetkey
 
 from conf import settings
 from srm_tools.logger import logger
@@ -71,10 +73,21 @@ def updateOrgFromSourceData(ga: GuidestarAPI):
                 print('NOT FOUND', regNums)
     return func
 
+def recent_org(row):
+    ltd = row.get('last_tag_date')
+    if ltd is not None:
+        ltd = dateutil.parser.isoparse(ltd)
+        days = (ltd.now() - ltd).days
+        if days < 15:
+            return True
+    return False
+
+
 def fetchOrgData(ga):
     regNums = DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.filter_rows(lambda row: row.get('source') == 'entities'),
+        DF.filter_rows(recent_org),
         DF.select_fields(['id']),
         DF.add_field('data', 'object', dict(name='')),
     ).results()[0][0]

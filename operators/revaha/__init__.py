@@ -144,19 +144,12 @@ def get_revaha_data():
         skip += skip_by
         _, batch = gov_data_proxy(template_id, skip)
         results.extend(batch)
+    print('FETCHED {} REVAHA RECORDS'.format(len(results)))
+    assert len(results) > 0
     return results
 
 
 def revaha_organization_data_flow():
-    # service_ids = DF.Flow(
-    #     load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-    #     DF.filter_rows(lambda r: r['mahlakot_revaha'] is True),
-    #     DF.filter_rows(lambda r: r['status'] == 'ACTIVE'),
-    #     DF.select_fields(['id'])
-    # ).results()[0][0]
-    # service_ids = [s['id'] for s in service_ids]
-    # ORGANIZATION['data']['services'] = service_ids
-
     return airtable_updater(
         settings.AIRTABLE_ORGANIZATION_TABLE,
         DATA_SOURCE_ID,

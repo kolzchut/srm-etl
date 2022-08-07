@@ -24,7 +24,7 @@ def fetchKZOrgData():
     print('FETCHING ALL ORGANIZATIONS')
     today = datetime.date.today().isoformat()
     regNums = [
-        dict(id=id, data=dict(id=None, last_tag_date=today))
+        dict(id=id, data=dict(id=id, last_tag_date=today))
         for id in fetchKZOrgs()
     ]
 

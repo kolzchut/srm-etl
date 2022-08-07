@@ -36,7 +36,7 @@ def fetchOrgData():
         if row['entity_id'] is not None
     ))
     regNums = [
-        dict(id=id, data=dict(id=None, last_tag_date=today))
+        dict(id=id, data=dict(id=id, last_tag_date=today))
         for id in regNums
     ]
 
