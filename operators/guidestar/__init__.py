@@ -405,7 +405,7 @@ def operator(name, params, pipeline):
         (r.pop('name'), r) for r in taxonomy
     )
 
-    fetchServiceData(ga, taxonomy)
+    skip_orgs = fetchServiceData(ga, taxonomy)
 
     logger.info('FETCHING Org data for wild organizations')
     fetchWildOrgData(ga, skip_orgs)
