@@ -15,6 +15,8 @@ from srm_tools.guidestar_api import GuidestarAPI
 
 situations = Situations()
 
+AIRTABLE_BASE_GUIDESTAR_IMPORT = 'apptMFhlcaiA4dh09'
+
 
 ## SERVICES
 def unwind_services(ga: GuidestarAPI, source='entities', existing_orgs = set()):
@@ -241,7 +243,7 @@ def fetchWildOrgData(ga: GuidestarAPI, skip_orgs):
         ['name', 'kind', 'urls', 'description', 'purpose'],
         all_orgs,
         updateOrgFromSourceData(),
-        airtable_base='apptMFhlcaiA4dh09'
+        airtable_base=AIRTABLE_BASE_GUIDESTAR_IMPORT
     )
     return [org['id'] for org in all_orgs]
 
@@ -323,7 +325,7 @@ def fetchWildBranchData(ga):
     airtable_updater(settings.AIRTABLE_BRANCH_TABLE, 'guidestar',
         ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
         DF.Flow(
-            load_from_airtable('apptMFhlcaiA4dh09', settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
+            load_from_airtable(AIRTABLE_BASE_GUIDESTAR_IMPORT, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
             DF.update_resource(-1, name='orgs'),
             DF.filter_rows(lambda r: r['source'] == 'guidestar', resources='orgs'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
@@ -334,7 +336,7 @@ def fetchWildBranchData(ga):
             unwind_branches(ga),
         ),
         updateBranchFromSourceData(),
-        airtable_base='apptMFhlcaiA4dh09'
+        airtable_base=AIRTABLE_BASE_GUIDESTAR_IMPORT
     )
 
 ## Services
@@ -346,7 +348,7 @@ def fetchWildServiceData(ga, taxonomy):
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'guidestar',
         ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations', 'branches'],
         DF.Flow(
-            load_from_airtable('apptMFhlcaiA4dh09', settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            load_from_airtable(AIRTABLE_BASE_GUIDESTAR_IMPORT, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='orgs'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
             DF.select_fields(['id', 'name', 'source'], resources='orgs'),
@@ -354,7 +356,7 @@ def fetchWildServiceData(ga, taxonomy):
             # DF.checkpoint('unwind_services'),
         ),
         updateServiceFromSourceData(taxonomy),
-        airtable_base='apptMFhlcaiA4dh09'
+        airtable_base=AIRTABLE_BASE_GUIDESTAR_IMPORT
     )
 
     return existing_orgs
@@ -417,7 +419,7 @@ def operator(name, params, pipeline):
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'guidestar',
         ['name', 'kind', 'urls', 'description', 'purpose'],
         DF.Flow(
-            load_from_airtable('apptMFhlcaiA4dh09', settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            load_from_airtable(AIRTABLE_BASE_GUIDESTAR_IMPORT, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='orgs'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
             DF.filter_rows(lambda r: r['decision'] == 'Accepted', resources='orgs'),
@@ -433,7 +435,7 @@ def operator(name, params, pipeline):
     airtable_updater(settings.AIRTABLE_BRANCH_TABLE, 'guidestar',
         ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
         DF.Flow(
-            load_from_airtable('apptMFhlcaiA4dh09', settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            load_from_airtable(AIRTABLE_BASE_GUIDESTAR_IMPORT, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='branches'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='branches'),
             DF.filter_rows(lambda r: r['decision'] != 'Rejected', resources='branches'),
@@ -451,7 +453,7 @@ def operator(name, params, pipeline):
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'guidestar-wild',
         ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations', 'branches'],
         DF.Flow(
-            load_from_airtable('apptMFhlcaiA4dh09', settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            load_from_airtable(AIRTABLE_BASE_GUIDESTAR_IMPORT, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='services'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='services'),
             DF.filter_rows(lambda r: r['decision'] != 'Rejected', resources='services'),
