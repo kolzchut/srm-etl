@@ -1,4 +1,5 @@
 import os
+from time import time
 import requests
 from requests.api import head
 
@@ -7,7 +8,11 @@ from conf import settings
 class GuidestarAPI():
 
     BASE = settings.GUIDESTAR_API
+    TIMEOUT = 15
     _headers = None
+
+    def __init__(self):
+        self.branch_cache = dict()
 
     def login(self, username, password):
         resp = requests.post(f'{self.BASE}/login', json=dict(username=username, password=password)).json()
@@ -34,9 +39,9 @@ class GuidestarAPI():
                     includingInactiveMalkars='false',
                     isDesc='false',
                     sort='regNum',
-                    filter=f'branchCount>0;regNum>{minRegNum}'
+                    filter=f'branchCount>0;servicesCount>0;regNum>{minRegNum}'
                 )
-                resp = requests.get(f'{self.BASE}/organizations', params=params, headers=self.headers())
+                resp = requests.get(f'{self.BASE}/organizations', params=params, headers=self.headers(), timeout=self.TIMEOUT)
                 # print(resp.url)
                 resp = resp.json()
                 for row in resp:
@@ -53,7 +58,7 @@ class GuidestarAPI():
                 done = True
             for regNum in _regNums:
                 count += 1
-                row = requests.get(f'{self.BASE}/organizations/{regNum}', headers=self.headers()).json()
+                row = requests.get(f'{self.BASE}/organizations/{regNum}', headers=self.headers(), timeout=self.TIMEOUT).json()
                 # print(row)
                 if row.get('errorMsg') is not None:
                     errorMsg = row['errorMsg']
@@ -63,15 +68,18 @@ class GuidestarAPI():
                 if limit and count == limit:
                     done = True
                     break
+                if count % 25 == 0:
+                    print(f'{count} organizations fetched')
     
     def branches(self, regnum):
-        resp = requests.get(f'{self.BASE}/organizations/{regnum}/branches', headers=self.headers()).json()
-        return resp
+        if regnum not in self.branch_cache:
+            self.branch_cache[regnum] = requests.get(f'{self.BASE}/organizations/{regnum}/branches', headers=self.headers(), timeout=self.TIMEOUT).json()
+        return self.branch_cache[regnum]
 
     def services(self, regnum):
         params = dict(
             filter=f'regNum={regnum}'
         )
         # resp = requests.get(f'{self.BASE}/organizations/{regnum}/services', headers=self.headers()).json()
-        resp = requests.get(f'https://www.guidestar.org.il/services/apexrest/api/services', params=params, headers=self.headers()).json()
+        resp = requests.get(f'https://www.guidestar.org.il/services/apexrest/api/services', params=params, headers=self.headers(), timeout=self.TIMEOUT).json()
         return resp

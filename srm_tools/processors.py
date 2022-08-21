@@ -1,5 +1,6 @@
 import dataflows as DF
 
+from dataflows_airtable import AIRTABLE_ID_FIELD
 
 def ensure_fields(field_map, resources=None):
     return [ensure_field(key, args, resources=resources) for key, args in field_map.items()]
@@ -24,3 +25,23 @@ def update_mapper():
         row.update(data)
 
     return func
+
+def fetch_mapper():
+    def func(rows):
+        if rows.res.name == 'current':
+            yield from rows
+        else:
+            for row in rows:
+                id = row.pop('id')
+                row.pop(AIRTABLE_ID_FIELD, None)
+                data = row
+                yield dict(
+                    id=id,
+                    data=data,
+                )
+
+    return DF.Flow(
+        DF.add_field('data', 'object', None, resources=-1),
+        func,
+        DF.select_fields(['id', 'data'], resources=-1),
+    )

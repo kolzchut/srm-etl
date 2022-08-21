@@ -6,7 +6,7 @@ from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 from conf import settings
 
 
-def airtable_updater(table, source_id, table_fields, fetch_data_flow, update_data_flow, manage_status=True):
+def airtable_updater(table, source_id, table_fields, fetch_data_flow, update_data_flow, manage_status=True, airtable_base=None):
     """
     Updates the given airtable table with new data, maintaining status correctly.
     :param table: The table to update.
@@ -17,12 +17,12 @@ def airtable_updater(table, source_id, table_fields, fetch_data_flow, update_dat
     :param update_data_flow: Flow to use to map the 'data' field into the table standard fields.
     """
     DF.Flow(
-        airtable_updater_flow(table, source_id, table_fields, fetch_data_flow, update_data_flow, manage_status=manage_status),
+        airtable_updater_flow(table, source_id, table_fields, fetch_data_flow, update_data_flow, manage_status=manage_status, airtable_base=airtable_base),
         DF.printer()
     ).process()
 
 
-def airtable_updater_flow(table, source_id, table_fields, fetch_data_flow, update_data_flow, manage_status=True):
+def airtable_updater_flow(table, source_id, table_fields, fetch_data_flow, update_data_flow, manage_status=True, airtable_base=None):
     """
     Updates the given airtable table with new data, maintaining status correctly.
     :param table: The table to update.
@@ -33,7 +33,7 @@ def airtable_updater_flow(table, source_id, table_fields, fetch_data_flow, updat
     :param update_data_flow: Flow to use to map the 'data' field into the table standard fields.
     """
     return DF.Flow(
-        load_from_airtable(settings.AIRTABLE_BASE, table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        load_from_airtable(airtable_base or settings.AIRTABLE_BASE, table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='current'),
         DF.filter_rows(lambda r: r['source'] in (source_id, 'dummy'), resources='current'),
 
@@ -56,7 +56,7 @@ def airtable_updater_flow(table, source_id, table_fields, fetch_data_flow, updat
             resources='fetched'),
 
         dump_to_airtable({
-            (settings.AIRTABLE_BASE, table): {
+            (airtable_base or settings.AIRTABLE_BASE, table): {
                 'resource-name': 'fetched',
                 'typecast': True
             }
