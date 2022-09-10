@@ -70,7 +70,7 @@ def copy_from_curation_base(curation_base, source_id):
         ),
         update_mapper()
     )
-    print('UPDATED ORGS', updated_orgs[:10])
+    print('UPDATED ORGS', list(updated_orgs.values())[:10])
 
 
     airtable_updater(settings.AIRTABLE_BRANCH_TABLE, source_id,
@@ -89,7 +89,7 @@ def copy_from_curation_base(curation_base, source_id):
         ),
         update_mapper()
     )
-    print('UPDATED BRANCHES', updated_branches[:10])
+    print('UPDATED BRANCHES', list(updated_branches.values())[:10])
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, source_id,
         ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations', 'branches'],
@@ -110,7 +110,7 @@ def copy_from_curation_base(curation_base, source_id):
 
 def operator(*_):
     logger.info('Copying data from curation tables')
-    # copy_from_curation_base(settings.AIRTABLE_GUIDESTAR_IMPORT_BASE, 'guidestar')
+    copy_from_curation_base(settings.AIRTABLE_GUIDESTAR_IMPORT_BASE, 'guidestar')
     copy_from_curation_base(settings.AIRTABLE_ENTITIES_IMPORT_BASE, 'entities')
     logger.info('Finished Copying data from curation tables')
 
