@@ -81,8 +81,7 @@ FIELD_MAP = {
     },
     'location': {
         'source': 'address',
-        'type': 'array',
-        'transform': lambda r: [r['address']],
+        'type': 'string',
     },
     'organization': {'type': 'array', 'transform': lambda r: [ORGANIZATION['id']]},
     'services': {'type': 'array', 'transform': lambda r: [SERVICE['id']]},
@@ -119,6 +118,7 @@ def shil_organization_data_flow():
         list(ORGANIZATION['data'].keys()),
         [ORGANIZATION],
         update_mapper(),
+        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
     )
 
 
@@ -129,6 +129,7 @@ def shil_service_data_flow():
         list(SERVICE['data'].keys()),
         [SERVICE],
         update_mapper(),
+        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
     )
 
 
@@ -151,6 +152,7 @@ def shil_branch_data_flow():
             DF.select_fields(['id', 'data'], resources=['branches']),
         ),
         update_mapper(),
+        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
     )
 
 

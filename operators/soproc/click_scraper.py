@@ -92,7 +92,8 @@ def scrape_click():
     # try:
     #     docs = json.load(open('click-cache.json'))
     # except:
-    docs = requests.get(settings.CLICK_API).json().get('response').get('docs')
+    docs = requests.get(settings.CLICK_API)
+    docs = docs.json().get('response').get('docs')
     json.dump(docs, open('click-cache.json', 'w'))
 
     # print(len(docs))

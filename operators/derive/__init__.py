@@ -1,4 +1,4 @@
-from . import to_dp, to_es, to_mapbox, to_sitemap
+from . import to_dp, to_es, to_mapbox, to_sitemap, from_curation
 
 from srm_tools.logger import logger
 
@@ -7,6 +7,7 @@ def operator(*_):
 
     logger.info('Starting Derive Data Flow')
 
+    from_curation.operator()
     to_dp.operator()
     to_es.operator()
     to_mapbox.operator()

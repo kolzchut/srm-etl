@@ -6,7 +6,7 @@ from dataflows.base.resource_wrapper import ResourceWrapper
 from dataflows_airtable import dump_to_airtable, load_from_airtable
 from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
-from srm_tools.update_table import airtable_updater_flow, airtable_updater
+from srm_tools.update_table import airtable_updater
 from srm_tools.situations import Situations
 from srm_tools.guidestar_api import GuidestarAPI
 from srm_tools.budgetkey import fetch_from_budgetkey
@@ -97,6 +97,7 @@ def fetchOrgData(ga):
         ['name', 'kind', 'urls', 'description', 'purpose'],
         regNums,
         updateOrgFromSourceData(ga),
+        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
     )
 
 
@@ -191,20 +192,19 @@ def updateBranchFromSourceData():
 
 def fetchBranchData(ga):
     print('FETCHING ALL ORGANIZATION BRANCHES')
-    DF.Flow(
-        airtable_updater_flow(settings.AIRTABLE_BRANCH_TABLE, 'entities',
-            ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
-            DF.Flow(
-                load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
-                DF.update_resource(-1, name='orgs'),
-                DF.filter_rows(lambda r: r['source'] == 'entities', resources='orgs'),
-                DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
-                DF.select_fields(['id', 'name', 'short_name', 'kind'], resources='orgs'),
-                unwind_branches(ga),
-            ),
-            updateBranchFromSourceData(),
-        )
-    ).process()
+    airtable_updater(settings.AIRTABLE_BRANCH_TABLE, 'entities',
+        ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
+        DF.Flow(
+            load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
+            DF.update_resource(-1, name='orgs'),
+            DF.filter_rows(lambda r: r['source'] == 'entities', resources='orgs'),
+            DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
+            DF.select_fields(['id', 'name', 'short_name', 'kind'], resources='orgs'),
+            unwind_branches(ga),
+        ),
+        updateBranchFromSourceData(),
+        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+    )
 
 
 def operator(name, params, pipeline):

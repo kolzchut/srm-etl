@@ -6,7 +6,8 @@ from .utils import get_env
 load_dotenv()
 
 
-CLICK_API = 'https://clickrevaha-sys.molsa.gov.il/api/solr?rows=1000'
+CLICK_API = r'https://clickrevaha-sys.molsa.gov.il/api/solr?rows=1000&fq[]=lang_code_s:he&facet.limit=2000&defType=edismax&fq[]=group_id_is:1&fq[]=type_i:1&facet.field[]=group_id_is&facet.field[]={!ex=Target_Population_A_ss,Target_Population_ss}Target_Population_A_ss&facet.field[]={!ex=Target_Population_A_ss,Target_Population_ss}Target_Population_ss&facet.field[]={!ex=Domin_ss}Domin_ss&q=*&start=0&group.ngroups=true&group.field=GroupFamilyName_s&facet.pivot={!ex=Target_Population_A_ss,Target_Population_ss}Target_Population_A_ss,Target_Population_ss&mm=50%&pf[]=FamilyName_t^30 Service_Purpose_t^22 Age_Minimum_i^10 Age_Maximum_i^10 Target_Population_A_t^14  Target_Population_t^14 Domin_t^8 Naming_Outputs_t^6&qf[]=FamilyName_t^15 Service_Purpose_t^11 Age_Minimum_i^5 Age_Maximum_i^5 Target_Population_A_t^7  Target_Population_t^7 Domin_t^4 Naming_Outputs_t^3 text^1&bq[]=(product_id_i:(498 OR 198 OR 484))^0.005&bq[]=(product_id_i:(612))^200&fq[]=distribution_channel_is:1&fq[]=-group_name_s:"כתובות"'
+# https://clickrevaha-sys.molsa.gov.il/api/solr?rows=1000'
 
 SHIL_API = 'https://www.gov.il/he/api/BureausApi/Index?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca'
 
@@ -24,6 +25,9 @@ GOVMAP_GEOCODE_API = 'https://ags.govmap.gov.il/Api/Controllers/GovmapApi/Geocod
 AIRTABLE_BASE = get_env('ETL_AIRTABLE_BASE')
 AIRTABLE_ALTERNATE_BASE = get_env('ETL_AIRTABLE_ALTERNATE_BASE')
 AIRTABLE_DATAENTRY_BASE = get_env('ETL_AIRTABLE_DATAENTRY_BASE')
+AIRTABLE_GUIDESTAR_IMPORT_BASE = get_env('ETL_AIRTABLE_GUIDESTAR_IMPORT_BASE')
+AIRTABLE_ENTITIES_IMPORT_BASE = get_env('ETL_AIRTABLE_ENTITIES_IMPORT_BASE')
+
 AIRTABLE_VIEW = 'Grid view'
 AIRTABLE_LOCATION_TABLE = 'Locations'
 AIRTABLE_ORGANIZATION_TABLE = 'Organizations'

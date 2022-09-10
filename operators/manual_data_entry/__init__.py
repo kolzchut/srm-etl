@@ -62,7 +62,8 @@ def mde_organization_flow():
         ['name', 'short_name', 'urls', 'last_tag_date'],
         orgs,
         org_updater(), 
-        manage_status=False
+        manage_status=False,
+        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
     )
 
 # BRANCHES
@@ -125,7 +126,8 @@ def mde_branch_flow():
     return airtable_updater(settings.AIRTABLE_BRANCH_TABLE, 'manual-data-entry',
         ['id', 'name', 'organization', 'location', 'address', 'phone_numbers', 'email_addresses', 'urls'],
         branches,
-        branch_updater(), 
+        branch_updater(),
+        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
     )
 
 
@@ -195,7 +197,8 @@ def mde_service_flow():
     return airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'manual-data-entry',
         ['id', 'name', 'description', 'payment_details', 'urls', 'situations', 'responses', 'branches'],
         services,
-        service_updater(), 
+        service_updater(),
+        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
     )
 
 

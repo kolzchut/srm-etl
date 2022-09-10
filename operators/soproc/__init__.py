@@ -45,7 +45,8 @@ def fetchOrgData():
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'entities',
         ['last_tag_date'],
         regNums, update_mapper(), 
-        manage_status=False
+        manage_status=False,
+        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
     )
 
 def soprocServices(services):
@@ -86,7 +87,8 @@ def fetchServiceData():
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'social-procurement',
         ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'organizations'],
         soprocServices(social_service_activities),
-        updateFromSourceData()
+        updateFromSourceData(),
+        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
     )
 
 
