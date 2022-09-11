@@ -120,7 +120,7 @@ def unwind_branches(ga:GuidestarAPI):
                     else:
                         data['name'] = (ret['short_name'] or ret['name']) + ' - ' + branch['cityName']
                     data['address'] = calc_location_key(branch)
-                    data['location'] = [data['address']]
+                    data['location'] = data['address']
                     data['address_details'] = branch.get('drivingInstructions')
                     data['description'] = None
                     data['urls'] = None
