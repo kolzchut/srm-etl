@@ -75,7 +75,7 @@ def branch_updater():
         if not row.get('data'):
             return
         data = row['data']
-        data['location'] = [data['geocode'] or data['address']]
+        data['location'] = data['geocode'] or data['address']
         urls = []
         if data.get('urls'):
             urls = data['urls'].split('\n')
