@@ -85,7 +85,7 @@ def recent_org(row):
 
 def fetchOrgData(ga):
     regNums = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.filter_rows(lambda row: row.get('source') == 'entities'),
         DF.filter_rows(recent_org),
         DF.select_fields(['id']),
@@ -195,7 +195,7 @@ def fetchBranchData(ga):
     airtable_updater(settings.AIRTABLE_BRANCH_TABLE, 'entities',
         ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
         DF.Flow(
-            load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
+            load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
             DF.update_resource(-1, name='orgs'),
             DF.filter_rows(lambda r: r['source'] == 'entities', resources='orgs'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),

@@ -93,7 +93,7 @@ def fetchServiceData():
 
 
 def operator(name, params, pipeline):
-    logger.info('STARTING Entity Scraping')
+    logger.info('STARTING SoProc Scraping')
     fetchOrgData()
     fetchServiceData()
 
