@@ -18,7 +18,7 @@ def geocode(session):
     transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
     def func(row):
         keyword = row.get('alternate_address') or row.get('id')
-        pluscode = keyword[4] == '+'
+        pluscode = len(keyword) > 4 and keyword[4] == '+'
         if not keyword:
             return
         row['status'] = 'VALID'
