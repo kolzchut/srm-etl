@@ -30,7 +30,6 @@ def unwind_templates():
 def autocomplete_flow():
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
-        DF.update_package(title='AutoComplete Queries', name='autocomplete'),
         DF.update_resource(-1, name='autocomplete'),
         DF.add_field('query', 'string'),
         DF.add_field('response', 'string'),
