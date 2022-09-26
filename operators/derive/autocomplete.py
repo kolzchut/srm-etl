@@ -14,15 +14,15 @@ def unwind_templates():
         for row in rows:
             # print(row)
             for template in TEMPLATES:
-                responses = [(r['name'], r['synonyms']) for r in row['responses']] if '{response}' in template else [(None, None)]
-                situations = [(s['name'], s['synonyms']) for s in row['situations']] if '{situation}' in template else [(None, None)]
-                for response, rsyn in responses:
-                    for situation, ssyn in situations:
+                responses = [r for r in row['responses']] if '{response}' in template else [dict()]
+                situations = [s for s in row['situations']] if '{situation}' in template else [dict()]
+                for response in responses:
+                    for situation in situations:
                         yield {
-                            'query': template.format(response=response, situation=situation),
-                            'response': response,
-                            'situation': situation,
-                            'synonyms': rsyn + ssyn if rsyn and ssyn else rsyn or ssyn,
+                            'query': template.format(response=response.get('name'), situation=situation.get('name')),
+                            'response': response.get('id'),
+                            'situation': situation.get('id'),
+                            'synonyms': response.get('synonyms', []) + situation.get('synonyms', [])
                         }
     return func
 
