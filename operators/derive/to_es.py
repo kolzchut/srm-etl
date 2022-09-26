@@ -307,6 +307,18 @@ def load_situations_flow():
         DF.printer()
     )
 
+def load_autocomplete_to_es_flow():
+    return DF.Flow(
+        DF.load(f'{settings.DATA_DUMP_DIR}/autocomplete/datapackage.json'),
+        dump_to_es_and_delete(
+            indexes=dict(srm__autocomplete=[dict(resource_name='autocomplete')]),
+        ),
+        dump_to_ckan(
+            settings.CKAN_HOST,
+            settings.CKAN_API_KEY,
+            settings.CKAN_OWNER_ORG,
+        ),
+    )
 
 def operator(*_):
     logger.info('Starting ES Flow')
@@ -315,6 +327,7 @@ def operator(*_):
     load_responses_to_es_flow().process()
     load_situations_flow().process()
     load_organizations_to_es_flow().process()
+    load_autocomplete_to_es_flow().process()
     logger.info('Finished ES Flow')
 
 

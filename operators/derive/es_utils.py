@@ -28,7 +28,7 @@ class SRMMappingGenerator(MappingGenerator):
         if keyword:
             prop['type'] = 'keyword'
         if autocomplete:
-            prop['index_prefixes'] = {}
+            prop['type'] = 'search_as_you_type'
         if boost:
             prop['boost'] = boost
         if schema_type in ('number', 'integer', 'geopoint'):
