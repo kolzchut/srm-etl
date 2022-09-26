@@ -27,7 +27,7 @@ def unwind_templates():
     return func
 
 
-def autocomplete_flow(name):
+def autocomplete_flow():
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
         DF.update_package(title='AutoComplete Queries', name='autocomplete'),
@@ -48,9 +48,9 @@ def autocomplete_flow(name):
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/autocomplete'),
     )
 
-def operator(name, *_):
+def operator(*_):
     logger.info('Starting AC Flow')
-    autocomplete_flow(name).process()
+    autocomplete_flow().process()
     logger.info('Finished AC Flow')
 
 
