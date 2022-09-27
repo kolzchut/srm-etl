@@ -25,7 +25,7 @@ def unwind_templates():
                     for situation in situations:
                         if situation.get('id') in IGNORE_SITUATIONS:
                             continue
-                        query = template.format(response=response.get('name'), situation=situation.get('name')),
+                        query = template.format(response=response.get('name'), situation=situation.get('name'))
                         yield {
                             'query': query,
                             'query_heb': query,
