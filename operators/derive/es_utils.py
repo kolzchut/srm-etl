@@ -33,7 +33,7 @@ class SRMMappingGenerator(MappingGenerator):
             prop['boost'] = boost
         if schema_type in ('number', 'integer', 'geopoint'):
             prop['index'] = True
-        if field['name'].split('_')[-1] in ('name', 'purpose', 'description', 'details', 'synonyms'):
+        if field['name'].split('_')[-1] in ('name', 'purpose', 'description', 'details', 'synonyms', 'query_heb'):
             prop['fields'] = {
                 'hebrew': {
                     'type': 'text',

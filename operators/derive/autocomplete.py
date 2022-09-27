@@ -9,6 +9,11 @@ TEMPLATES = [
     '{response}', '{situation}', '{response} עבור {situation}'
 ]
 
+IGNORE_SITUATIONS = {
+    'human-situations:languages:hebrew',
+    'human-situations:age-groups:adults',
+}
+
 def unwind_templates():
     def func(rows):
         for row in rows:
@@ -18,8 +23,12 @@ def unwind_templates():
                 situations = [s for s in row['situations']] if '{situation}' in template else [dict()]
                 for response in responses:
                     for situation in situations:
+                        if situation.get('id') in IGNORE_SITUATIONS:
+                            continue
+                        query = template.format(response=response.get('name'), situation=situation.get('name')),
                         yield {
-                            'query': template.format(response=response.get('name'), situation=situation.get('name')),
+                            'query': query,
+                            'query_heb': query,
                             'response': response.get('id'),
                             'situation': situation.get('id'),
                             'synonyms': response.get('synonyms', []) + situation.get('synonyms', [])
@@ -32,15 +41,17 @@ def autocomplete_flow():
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
         DF.update_resource(-1, name='autocomplete'),
         DF.add_field('query', 'string'),
+        DF.add_field('query_heb', 'string'),
         DF.add_field('response', 'string'),
         DF.add_field('situation', 'string'),
         DF.add_field('synonyms', 'array'),
         unwind_templates(),
         DF.join_with_self('autocomplete', ['query'], fields=dict(
             score=dict(aggregate='count'),
-            query=None, response=None, situation=None, synonyms=None
+            query=None, query_heb=None, response=None, situation=None, synonyms=None
         )),
         DF.set_type('query', **{'es:autocomplete': True, 'es:title': True}),
+        DF.set_type('query_heb', **{'es:title': True}),
         DF.set_type('response', **{'es:keyword': True}),
         DF.set_type('situation', **{'es:keyword': True}),
         DF.set_type('synonyms', **{'es:itemType': 'string'}),
