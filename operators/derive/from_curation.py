@@ -26,18 +26,19 @@ def filter_by_items(mapping, fields):
     return func
 
 
-def collect_ids(mapping):
+def collect_ids(mapping, ignore_ids=set()):
     def func(rows):
         if rows.res.name == 'current':
             yield from rows
         else:
             for row in rows:
-                mapping[row.get(AIRTABLE_ID_FIELD)] = row['id']
-                yield row
+                if row['id'] not in ignore_ids:
+                    mapping[row.get(AIRTABLE_ID_FIELD)] = row['id']
+                    yield row
     return func
 
 
-def copy_from_curation_base(curation_base, source_id):
+def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
     logger.info(f'COPYING Data from {curation_base}')
     updated_orgs = dict()
     updated_branches = dict()
@@ -58,13 +59,13 @@ def copy_from_curation_base(curation_base, source_id):
         ).process()
 
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, source_id,
-        ['name', 'kind', 'urls', 'description', 'purpose'],
+        ['name', 'short_name', 'kind', 'urls', 'description', 'purpose'],
         DF.Flow(
             load_from_airtable(curation_base, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='orgs'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
             DF.filter_rows(lambda r: r['decision'] not in ('Rejected', 'Suspended'), resources='orgs'),
-            collect_ids(updated_orgs),
+            collect_ids(updated_orgs, ignore_orgs),
             DF.delete_fields(['source', 'status'], resources=-1),
             fetch_mapper(),
         ),
@@ -106,12 +107,13 @@ def copy_from_curation_base(curation_base, source_id):
         ),
         update_mapper()
     )
+    return set(updated_orgs.values())
     
 
 def operator(*_):
     logger.info('Copying data from curation tables')
-    copy_from_curation_base(settings.AIRTABLE_GUIDESTAR_IMPORT_BASE, 'guidestar')
-    copy_from_curation_base(settings.AIRTABLE_ENTITIES_IMPORT_BASE, 'entities')
+    entities_ids = copy_from_curation_base(settings.AIRTABLE_ENTITIES_IMPORT_BASE, 'entities')
+    copy_from_curation_base(settings.AIRTABLE_GUIDESTAR_IMPORT_BASE, 'guidestar', entities_ids)
     logger.info('Finished Copying data from curation tables')
 
 
