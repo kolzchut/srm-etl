@@ -93,7 +93,8 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
     print('UPDATED BRANCHES', list(updated_branches.values())[:10])
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, source_id,
-        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations', 'branches'],
+        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls',
+         'situations', 'responses', 'organizations', 'branches', 'responses_manual', 'situations_manual'],
         DF.Flow(
             load_from_airtable(curation_base, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='services'),
@@ -112,8 +113,8 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
 
 def operator(*_):
     logger.info('Copying data from curation tables')
-    entities_ids = copy_from_curation_base(settings.AIRTABLE_ENTITIES_IMPORT_BASE, 'entities')
-    copy_from_curation_base(settings.AIRTABLE_GUIDESTAR_IMPORT_BASE, 'guidestar', entities_ids)
+    entity_ids = copy_from_curation_base(settings.AIRTABLE_ENTITIES_IMPORT_BASE, 'entities')
+    copy_from_curation_base(settings.AIRTABLE_GUIDESTAR_IMPORT_BASE, 'guidestar', entity_ids)
     logger.info('Finished Copying data from curation tables')
 
 
