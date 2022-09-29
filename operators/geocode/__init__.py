@@ -53,6 +53,7 @@ def geocode(session):
 
         if any(row.get(f) is None for f in ('resolved_lat', 'resolved_lon', 'resolved_address')) \
             or row.get('accuracy') not in ACCURATE_TYPES:
+            print('ROW', row)
             resp = geocoder.google(keyword, language='he', key=settings.GOOGLE_MAPS_API_KEY)
             if resp.ok:
                 accuracy = resp.accuracy
