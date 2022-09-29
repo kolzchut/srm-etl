@@ -50,7 +50,7 @@ def geocode(session):
             row['resolved_address'] = resp['ResultLable']
             row['resolved_lon'], row['resolved_lat'] = transformer.transform(resp['X'], resp['Y'])
 
-        if any(row.get(f) is None for f in ('resolved_lat', 'resolved_lon', 'resolved_address', 'resolved_city')):
+        if any(row.get(f) is None for f in ('resolved_lat', 'resolved_lon', 'resolved_address')):
             resp = geocoder.google(keyword, language='he', key=settings.GOOGLE_MAPS_API_KEY)
             if resp.ok:
                 accuracy = resp.accuracy
@@ -70,6 +70,18 @@ def geocode(session):
                 row['resolved_lon'], row['resolved_lat'] = resp.lng, resp.lat
             else:
                 row['status'] = 'NOT_FOUND'
+
+        if row.get('resolved_lat') and row.get('resolved_lon') and not row.get('resolved_city'):
+            resp = geocoder.google('{}, {}'.format(row['resolved_lat'], row['resolved_lon']), language='he', key=settings.GOOGLE_MAPS_API_KEY)
+            if resp.ok:
+                row['resolved_city'] = resp.raw.get('locality', {}).get('long_name') or resp.city
+            else:
+                row['resolved_city'] = 'unknown'
+
+        if row.get('resolved_address'):
+            if row['resolved_address'].endswith(', ישראל'):
+                row['resolved_address'] = row['resolved_address'][:-7]
+            row['resolved_address'] = row['resolved_address'].replace(' | ', ', ')
     return func
 
 def get_session():
