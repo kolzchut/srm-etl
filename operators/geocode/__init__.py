@@ -11,6 +11,7 @@ from pyproj import Transformer
 import geocoder
 
 from conf import settings
+from operators.derive.helpers import ACCURATE_TYPES
 from srm_tools.logger import logger
 
 
@@ -50,7 +51,8 @@ def geocode(session):
             row['resolved_address'] = resp['ResultLable']
             row['resolved_lon'], row['resolved_lat'] = transformer.transform(resp['X'], resp['Y'])
 
-        if any(row.get(f) is None for f in ('resolved_lat', 'resolved_lon', 'resolved_address')):
+        if any(row.get(f) is None for f in ('resolved_lat', 'resolved_lon', 'resolved_address')) \
+            or row.get('accuracy') not in ACCURATE_TYPES:
             resp = geocoder.google(keyword, language='he', key=settings.GOOGLE_MAPS_API_KEY)
             if resp.ok:
                 accuracy = resp.accuracy
@@ -66,7 +68,11 @@ def geocode(session):
                 row['accuracy'] = accuracy
                 row['provider'] = 'google'
                 row['resolved_address'] = address
-                row['resolved_city'] = resp.raw.get('locality', {}).get('long_name') or resp.city
+                row['resolved_city'] = (
+                    resp.raw.get('locality', {}).get('long_name') or 
+                    resp.raw.get('administrative_area_level_2', {}).get('long_name') or 
+                    resp.city
+                )
                 row['resolved_lon'], row['resolved_lat'] = resp.lng, resp.lat
             else:
                 row['status'] = 'NOT_FOUND'
@@ -74,8 +80,12 @@ def geocode(session):
         if row.get('resolved_lat') and row.get('resolved_lon') and not row.get('resolved_city'):
             resp = geocoder.google('{}, {}'.format(row['resolved_lat'], row['resolved_lon']), language='he', key=settings.GOOGLE_MAPS_API_KEY)
             if resp.ok:
-                row['resolved_city'] = resp.raw.get('locality', {}).get('long_name') or resp.city
-            else:
+                row['resolved_city'] = (
+                    resp.raw.get('locality', {}).get('long_name') or 
+                    resp.raw.get('administrative_area_level_2', {}).get('long_name') or 
+                    resp.city
+                )
+            if not row.get('resolved_city'):
                 row['resolved_city'] = 'unknown'
 
         if row.get('resolved_address'):

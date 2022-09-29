@@ -3,6 +3,8 @@ import dataflows as DF
 from dataflows.helpers.resource_matcher import ResourceMatcher
 
 
+ACCURATE_TYPES = ('ROOFTOP', 'RANGE_INTERPOLATED', 'STREET_MID_POINT', 'POI_MID_POINT', 'ADDR_V1')
+
 def transform_urls(urls):
     def transformer(s):
         href, title = s.rsplit('#', 1)
@@ -215,7 +217,7 @@ def preprocess_locations(select_fields=None, validate=False):
             resources=['locations'],
         ),
         DF.filter_rows(
-            lambda r: (r['accuracy'] in ('ROOFTOP', 'RANGE_INTERPOLATED', 'STREET_MID_POINT', 'POI_MID_POINT', 'ADDR_V1')) or (r.get('fixed_lat') and r['fixed_lon']),
+            lambda r: (r['accuracy'] in ACCURATE_TYPES) or (r.get('fixed_lat') and r['fixed_lon']),
             resources=['locations'],
         ),
         DF.add_field(
