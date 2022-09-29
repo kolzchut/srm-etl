@@ -66,7 +66,7 @@ def geocode(session):
                 row['accuracy'] = accuracy
                 row['provider'] = 'google'
                 row['resolved_address'] = address
-                row['resolved_city'] = resp.city
+                row['resolved_city'] = resp.raw.get('locality', {}).get('long_name') or resp.city
                 row['resolved_lon'], row['resolved_lat'] = resp.lng, resp.lat
             else:
                 row['status'] = 'NOT_FOUND'
