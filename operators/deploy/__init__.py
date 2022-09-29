@@ -35,7 +35,7 @@ DEPLOY_CONFIG = [
                'id', ['responses_manual_ids:responses_manual', 'situations_manual_ids:situations_manual']),
     # Manual Location Geo-Tagging
     DeploySpec(settings.AIRTABLE_LOCATION_TABLE,
-               'id', ['alternate_address', 'resolved_lat', 'resolved_lon', 'resolved_address', 'fixed_lat', 'fixed_lon']),
+               'id', ['alternate_address', 'resolved_lat', 'resolved_lon', 'resolved_address', 'resolved_city', 'fixed_lat', 'fixed_lon']),
 ]
 
 def update_from_source(spec, source_index):

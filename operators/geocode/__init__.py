@@ -22,6 +22,7 @@ def geocode(session):
         if not keyword:
             return
         row['status'] = 'VALID'
+        row['resolved_lat'] = row['resolved_lon'] = None
 
         if pluscode:
             resp = dict(status='plus')
@@ -48,7 +49,8 @@ def geocode(session):
             row['provider'] = 'govmap'
             row['resolved_address'] = resp['ResultLable']
             row['resolved_lon'], row['resolved_lat'] = transformer.transform(resp['X'], resp['Y'])
-        else:
+
+        if any(row.get(f) is None for f in ('resolved_lat', 'resolved_lon', 'resolved_address', 'resolved_city')):
             resp = geocoder.google(keyword, language='he', key=settings.GOOGLE_MAPS_API_KEY)
             if resp.ok:
                 accuracy = resp.accuracy
@@ -64,6 +66,7 @@ def geocode(session):
                 row['accuracy'] = accuracy
                 row['provider'] = 'google'
                 row['resolved_address'] = address
+                row['resolved_city'] = resp.city
                 row['resolved_lon'], row['resolved_lat'] = resp.lng, resp.lat
             else:
                 row['status'] = 'NOT_FOUND'
@@ -105,9 +108,9 @@ def operator(*_):
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='locations'),
-        DF.filter_rows(lambda r: any((not r.get(f)) for f in ('resolved_lat', 'resolved_lon'))),
+        DF.filter_rows(lambda r: any((not r.get(f)) for f in ('resolved_lat', 'resolved_lon', 'resolved_city'))),
         DF.filter_rows(lambda r: r['status'] not in ('NOT_FOUND', )),
-        DF.select_fields([AIRTABLE_ID_FIELD, 'id', 'status', 'provider', 'alternate_address', 'accuracy', 'resolved_lat', 'resolved_lon', 'resolved_address']),
+        DF.select_fields([AIRTABLE_ID_FIELD, 'id', 'status', 'provider', 'alternate_address', 'accuracy', 'resolved_lat', 'resolved_lon', 'resolved_address', 'resolved_city']),
         DF.set_type('resolved_l.+', type='number', transform=lambda v: float(v) if v is not None else None),
         geocode(get_session()),
         dump_to_airtable({
