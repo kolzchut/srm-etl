@@ -183,7 +183,6 @@ def preprocess_organizations(select_fields=None, validate=False):
         filter_active_data(),
         set_staging_pkey('organizations'),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['organizations']),
-        DF.set_type('name', transform=lambda v, row: row.get('short_name') or v, resources=['organizations']),
         DF.select_fields(select_fields, resources=['organizations']) if select_fields else None,
         DF.validate() if validate else None,
     )
