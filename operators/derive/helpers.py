@@ -25,6 +25,15 @@ def calc_point_id(geometry):
     return ''.join('{:08.5f}'.format(c) for c in geometry).replace('.','')
 
 
+def calculate_branch_short_name(row):
+    bn = row['branch_name']
+    ct = row['branch_city']
+    on = row['organization_short_name']
+    if on and ct:
+        return f'{on} - {ct}'
+    return bn
+
+
 def validate_geometry(geometry):
     if geometry:
         if len(geometry) == 2:

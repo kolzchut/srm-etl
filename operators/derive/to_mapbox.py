@@ -69,7 +69,7 @@ def upload_tileset(filename, tileset, name):
 def point_title(r):
     records = r.get('records')
     if len(records) > 1:
-        branch = list(set([f['branch_name'] for f in records]))
+        branch = list(set([f['branch_short_name'] for f in records]))
         if len(branch) == 1:
             return branch[0]
         return '{} שירותים'.format(len(records))  # TODO - multilingual
