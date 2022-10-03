@@ -30,7 +30,7 @@ def calculate_branch_short_name(row):
     ct = row['branch_city']
     on = row['organization_short_name']
     if on and ct:
-        return f'{on} - {ct}'
+        return f'{on} / {ct}'
     return bn
 
 
