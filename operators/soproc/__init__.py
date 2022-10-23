@@ -70,8 +70,13 @@ def soprocServices(services):
             name=service['name'],
             description=service['description'],
             organizations=[s['entity_id'] for s in (service['suppliers'] or [])],
+            urls=None,
         )
         data.update(extra_data)
+        if service['office'] == 'משרד הרווחה':
+            data['phone_numbers'] = '118'
+        elif service['office'] == 'משרד הבריאות':
+            data['phone_numbers'] = '*5400'
 
         yield dict(
             id=id,
@@ -86,9 +91,10 @@ def fetchServiceData():
         select * from activities
     '''
     social_service_activities = list(fetch_from_budgetkey(query))
+    print(social_service_activities[0])
     print('COLLECTED {} relevant services'.format(len(social_service_activities)))
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'social-procurement',
-        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'organizations'],
+        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers', 'organizations', 'data_sources'],
         soprocServices(social_service_activities),
         updateFromSourceData(),
         airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE

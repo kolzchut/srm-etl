@@ -1,13 +1,15 @@
 from collections import Counter
 import dataflows as DF
 from dataflows.helpers.resource_matcher import ResourceMatcher
-
+import re
 
 ACCURATE_TYPES = ('ROOFTOP', 'RANGE_INTERPOLATED', 'STREET_MID_POINT', 'POI_MID_POINT', 'ADDR_V1')
+DIGIT = re.compile('\d')
 
 def transform_urls(urls):
     def transformer(s):
-        href, title = s.rsplit('#', 1)
+        href, *title = s.rsplit('#', 1)
+        title = title[0] if title else 'קישור'
         return {'href': href, 'title': title}
 
     return list(map(transformer, urls.split('\n'))) if urls else None
@@ -18,7 +20,28 @@ def transform_email_addresses(email_addresses):
 
 
 def transform_phone_numbers(phone_numbers):
-    return phone_numbers.split(',') if phone_numbers else None
+    phone_numbers = phone_numbers.split('\n') if phone_numbers else []
+    ret = []
+    for number in phone_numbers:
+        number = number.strip()
+        digits = ''.join(DIGIT.findall(number))
+        if len(digits) > 10 and digits.startswith('972'):
+            digits = digits[3:]
+            if len(digits) < 10 and not digits.startswith('0'):
+                digits = '0' + digits
+        if len(digits) == 9 and digits.startswith('0'):
+            digits = [digits[0:2], digits[2:5], digits[5:]]
+        elif len(digits) == 10 and digits.startswith('0'):
+            digits = [digits[0:3], digits[3:6], digits[6:]]
+        elif len(digits) == 10 and digits.startswith('1'):
+            digits = [digits[:1], digits[1:4], digits[4:]]
+        else:
+            digits = None
+        if digits:
+            number = '-'.join(digits)
+        if number:
+            ret.append(number)
+    return ret
 
 
 def calc_point_id(geometry):
@@ -170,6 +193,18 @@ def preprocess_services(select_fields=None, validate=False):
         DF.set_type('responses', transform=lambda _, row: row['responses_manual'] if row['source'] in ('social-procurement', 'shil') else row['responses'], resources=['services']),
         DF.set_type('situations', transform=lambda _, row: row['situations_manual'] if row['source'] in ('social-procurement', 'shil') else row['situations'], resources=['services']),
         DF.add_field('response_ids', 'array', default=lambda row: row['responses_manual_ids'] if row['source'] in ('social-procurement', 'shil') else row['responses_ids'], resources=['services']),
+        DF.set_type(
+            'phone_numbers',
+            type='array',
+            transform=transform_phone_numbers,
+            resources=['services'],
+        ),
+        DF.set_type(
+            'data_sources',
+            type='array',
+            transform=lambda v: v.split('\n') if v else [],
+            resources=['services'],
+        ),
         DF.delete_fields(['situations_manual', 'responses_manual', 'name_manual', 'responses_manual_ids', 'responses_ids'], resources=['services']),
         DF.select_fields(select_fields, resources=['services']) if select_fields else None,
         DF.validate() if validate else None,
@@ -183,6 +218,12 @@ def preprocess_organizations(select_fields=None, validate=False):
         filter_active_data(),
         set_staging_pkey('organizations'),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['organizations']),
+        DF.set_type(
+            'phone_numbers',
+            type='array',
+            transform=transform_phone_numbers,
+            resources=['organizations'],
+        ),
         DF.select_fields(select_fields, resources=['organizations']) if select_fields else None,
         DF.validate() if validate else None,
     )

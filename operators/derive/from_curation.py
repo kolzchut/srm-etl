@@ -59,7 +59,7 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
         ).process()
 
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, source_id,
-        ['name', 'short_name', 'kind', 'urls', 'description', 'purpose'],
+        ['name', 'short_name', 'kind', 'urls', 'phone_numbers', 'description', 'purpose'],
         DF.Flow(
             load_from_airtable(curation_base, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='orgs'),
@@ -93,8 +93,8 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
     print('UPDATED BRANCHES', list(updated_branches.values())[:10])
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, source_id,
-        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls',
-         'situations', 'responses', 'organizations', 'branches', 'responses_manual', 'situations_manual'],
+        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers',
+         'situations', 'responses', 'organizations', 'branches', 'responses_manual', 'situations_manual', 'data_sources'],
         DF.Flow(
             load_from_airtable(curation_base, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='services'),

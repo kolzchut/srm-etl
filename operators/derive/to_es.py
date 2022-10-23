@@ -95,7 +95,28 @@ def data_api_es_flow():
             },
         ),
         DF.set_type(
+            'organization_phone_numbers',
+            **{
+                'es:itemType': 'string',
+                'es:index': False,
+            },
+        ),
+        DF.set_type(
             'branch_phone_numbers',
+            **{
+                'es:itemType': 'string',
+                'es:index': False,
+            },
+        ),
+        DF.set_type(
+            'service_phone_numbers',
+            **{
+                'es:itemType': 'string',
+                'es:index': False,
+            },
+        ),
+        DF.set_type(
+            'data_sources',
             **{
                 'es:itemType': 'string',
                 'es:index': False,

@@ -14,6 +14,7 @@ NO_LISTS = ['Short_Description']
 SELECT_FIELDS = {
     'id': 'catalog_number',
     'data_sources': 'data_sources',
+    'urls': 'urls',
 
     # 'DisplayName': '',
 
@@ -146,6 +147,7 @@ def scrape_click():
         decode_and_clean(),
         filter_results(),
         DF.add_field('data_sources', 'string', lambda r: 'https://clickrevaha.molsa.gov.il/product-page/{product_id}#השירות בהרחבה ב״קליק לרווחה״'.format(**r)),
+        DF.add_field('urls', 'string', lambda r: r['data_sources']),
         DF.select_fields(list(SELECT_FIELDS.keys())),
         DF.rename_fields(SELECT_FIELDS),
         DF.set_type('details',
@@ -167,7 +169,7 @@ def scrape_click():
         DF.set_type('payment_required', type='string', transform=lambda v: DEDUCTIBLE_TYPE.get(v)),
         DF.add_field('situations', 'array', []), # fetch_from_taxonomy(taxonomy, 'situation_ids')),
         DF.add_field('responses', 'array', []), # fetch_from_taxonomy(taxonomy, 'response_ids')),
-        DF.select_fields(['catalog_number', 'name', 'description', 'details', 'payment_required', 'payment_details', 'data_sources', 'situations', 'responses']),
+        DF.select_fields(['catalog_number', 'name', 'description', 'details', 'payment_required', 'payment_details', 'data_sources', 'urls', 'situations', 'responses']),
         # DF.printer()
     ).results()[0][0]
     return dict((r['catalog_number'], r) for r in records)
