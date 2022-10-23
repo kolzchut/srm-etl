@@ -53,9 +53,12 @@ def soprocServices(services):
     click_data = scrape_click()
     for service in services:
         catalog_number = str(service['catalog_number']) if service['catalog_number'] is not None else None
-        extra_data = click_data.get(catalog_number) or dict(
-            urls='https://www.socialpro.org.il/i/activities/gov_social_service/{}#דף השירות ב״מפתח לרכש החברתי״'.format(service['id']),
-        )
+        extra_data = click_data.get(catalog_number) or dict()
+        data_sources = extra_data.get('data_sources') or []
+        if data_sources:
+            data_sources = [data_sources]
+        data_sources.append('https://www.socialpro.org.il/i/activities/gov_social_service/{}#דף השירות ב״מפתח לרכש החברתי״'.format(service['id']))
+        extra_data['data_sources'] = '\n'.join(data_sources)
         id = 'soproc:' + service['id']
         tags = (
             (service['intervention'] or []) +

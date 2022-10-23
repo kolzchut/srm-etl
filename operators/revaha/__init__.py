@@ -1,4 +1,5 @@
 import hashlib
+from http.client import PAYMENT_REQUIRED
 from pathlib import Path
 import re
 import time
@@ -18,10 +19,10 @@ from srm_tools.scraping_utils import overcome_blocking
 
 
 def transform_phone_numbers(r):
-    phone_numbers = r['authority_phone'] or ''
-    machlaka_phone = r['machlaka_phone'] or ''
-    if machlaka_phone:
-        phone_numbers = f'{phone_numbers},{machlaka_phone}'
+    phone_numbers = (r['authority_phone'] or '').split(',')
+    machlaka_phone = (r['machlaka_phone'] or '').split(',')
+    phone_numbers = [*phone_numbers, *machlaka_phone]
+    phone_numbers = '\n'.join(phone_numbers)
     return phone_numbers.replace(' ', '')
 
 
@@ -54,6 +55,8 @@ BASE_URL = (
 )
 
 DATA_SOURCE_ID = 'revaha'
+DATA_SOURCES = f'המידע מ<a href="{BASE_URL}" target="_blank">אתר משרד הרווחה</a>'
+PAYMENT_DETAILS = 'נדרש תיאום מראש'
 
 BRANCH_NAME_PREFIX = 'מחלקה לשירותים חברתיים'
 
@@ -64,10 +67,10 @@ ORGANIZATION = {
         'name': 'משרד הרווחה והביטחון החברתי',
         'source': DATA_SOURCE_ID,
         'kind': 'משרד ממשלתי',
+        'phone_numbers': '118',
         'urls': f'{BASE_URL}#{BRANCH_NAME_PREFIX}',
         'description': '',
         'purpose': '',
-        'status': 'ACTIVE',
     },
 }
 
@@ -83,6 +86,8 @@ SERVICES = [
             'payment_required': 'no',
             'urls': '',
             'organizations': ['53a2e790-87b3-44a2-a5f2-5b826f714775'],
+            'payment_details': PAYMENT_DETAILS,
+            'data_sources': DATA_SOURCES
         },
     },
     {
@@ -94,6 +99,8 @@ SERVICES = [
             'payment_required': 'no',
             'urls': '',
             'organizations': ['53a2e790-87b3-44a2-a5f2-5b826f714775'],
+            'payment_details': PAYMENT_DETAILS,
+            'data_sources': DATA_SOURCES
         },
     },
     {
@@ -105,6 +112,8 @@ SERVICES = [
             'payment_required': 'no',
             'urls': '',
             'organizations': ['53a2e790-87b3-44a2-a5f2-5b826f714775'],
+            'payment_details': PAYMENT_DETAILS,
+            'data_sources': DATA_SOURCES
         },
     },
 ]

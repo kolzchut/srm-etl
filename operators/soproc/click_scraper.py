@@ -1,6 +1,8 @@
 import json
 import requests
+import codecs
 
+import bleach
 import dataflows as DF
 from dataflows_airtable import load_from_airtable
 
@@ -8,9 +10,10 @@ from conf import settings
 
 KEEP_FIELDS = ['cat', 'Name']
 DT_SUFFIXES = dict((k, i) for i, k in enumerate(['', 'i', 'ss', 't', 's', 'base64', 'f', 'is']))
+NO_LISTS = ['Short_Description']
 SELECT_FIELDS = {
     'id': 'catalog_number',
-    'urls': 'urls',
+    'data_sources': 'data_sources',
 
     # 'DisplayName': '',
 
@@ -57,13 +60,18 @@ DEDUCTIBLE_TYPE = {
 }
 
 
-def remove_nbsp():
+def decode_and_clean():
     def func(row):
         for k, v in row.items():
             if isinstance(v, str):
-                row[k] = v.strip().replace('&nbsp;', ' ').replace('\xa0', ' ').replace('\r', '')
+                try:
+                    v = codecs.decode(v.encode('ascii'), 'base64').decode('utf8')
+                except:
+                    pass
+                v = bleach.clean(v, strip=True).replace('&nbsp;', ' ').replace('\xa0', ' ').replace('\r', '')
                 if v == 'NULL':
-                    row[k] = None
+                    v = None
+                row[k] = v
     return func
 
 
@@ -89,12 +97,12 @@ def fetch_from_taxonomy(taxonomy, field):
 
 
 def scrape_click():
-    # try:
-    #     docs = json.load(open('click-cache.json'))
-    # except:
-    docs = requests.get(settings.CLICK_API)
-    docs = docs.json().get('response').get('docs')
-    json.dump(docs, open('click-cache.json', 'w'))
+    try:
+        docs = json.load(open('click-cache.json'))
+    except:
+        docs = requests.get(settings.CLICK_API)
+        docs = docs.json().get('response').get('docs')
+        json.dump(docs, open('click-cache.json', 'w'))
 
     # print(len(docs))
     all_keys = set()
@@ -111,7 +119,10 @@ def scrape_click():
                 config.setdefault(prefix, []).append((prefix, k, suffix))
     concat_fields = dict()
     for k, suffixes in config.items():
-        prefix, k, _ = sorted(suffixes, key=lambda s: DT_SUFFIXES[s[2]])[0]
+        suffixes = sorted(suffixes, key=lambda s: DT_SUFFIXES[s[2]])
+        while k in NO_LISTS and DT_SUFFIXES[suffixes[0][2]] < 3:
+            suffixes.pop(0)
+        prefix, k, _ = suffixes[0]
         # prefix = prefix.lower()
         concat_fields[prefix] = [k] if prefix != k else []
 
@@ -121,20 +132,20 @@ def scrape_click():
     )
     # print(next(docs))
     
-    taxonomy = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_CLICK_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-    ).results()[0][0]
-    taxonomy = dict(
-        (r.pop('name'), r) for r in taxonomy
-    )
+    # taxonomy = DF.Flow(
+    #     load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_CLICK_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+    # ).results()[0][0]
+    # taxonomy = dict(
+    #     (r.pop('name'), r) for r in taxonomy
+    # )
 
     records = DF.Flow(
         docs,
         DF.concatenate(concat_fields),
         DF.update_resource(-1, name='click'),
-        remove_nbsp(),
+        decode_and_clean(),
         filter_results(),
-        DF.add_field('urls', 'string', lambda r: 'https://clickrevaha.molsa.gov.il/product-page/{product_id}#השירות בהרחבה ב״קליק לרווחה״'.format(**r)),
+        DF.add_field('data_sources', 'string', lambda r: 'https://clickrevaha.molsa.gov.il/product-page/{product_id}#השירות בהרחבה ב״קליק לרווחה״'.format(**r)),
         DF.select_fields(list(SELECT_FIELDS.keys())),
         DF.rename_fields(SELECT_FIELDS),
         DF.set_type('details',
@@ -156,7 +167,7 @@ def scrape_click():
         DF.set_type('payment_required', type='string', transform=lambda v: DEDUCTIBLE_TYPE.get(v)),
         DF.add_field('situations', 'array', []), # fetch_from_taxonomy(taxonomy, 'situation_ids')),
         DF.add_field('responses', 'array', []), # fetch_from_taxonomy(taxonomy, 'response_ids')),
-        DF.select_fields(['catalog_number', 'name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses']),
+        DF.select_fields(['catalog_number', 'name', 'description', 'details', 'payment_required', 'payment_details', 'data_sources', 'situations', 'responses']),
         # DF.printer()
     ).results()[0][0]
     return dict((r['catalog_number'], r) for r in records)
@@ -166,7 +177,9 @@ if __name__ == '__main__':
     sc = scrape_click()
     print(len(sc))
     import pprint
-    pprint.pprint(sc.keys())
+    # pprint.pprint(sc.keys())
+    # docs = json.load(open('click-cache.json'))
+    # pprint.pprint([d for d in docs if d.get('product_id_i')==143][0])
     pprint.pprint(sc['143'])
     # all_tags = [t for v in sc.values() for t in v['tags']]
     # with open('tags', 'w') as t:

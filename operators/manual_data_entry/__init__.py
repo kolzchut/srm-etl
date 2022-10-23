@@ -38,20 +38,22 @@ def mde_organization_flow():
         load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='orgs'),
         DF.filter_rows(lambda r: r['Org Id'] and r['Org Id'] != 'dummy'),
-        DF.select_fields(['Org Id', 'Org Name', 'Org Short Name', 'Org Website']),
+        DF.select_fields(['Org Id', 'Org Name', 'Org Short Name', 'Org Phone Number', 'Org Website']),
         DF.rename_fields({
             'Org Id': 'id',
             'Org Name': 'name',
             'Org Short Name': 'short_name',
+            'Org Phone Number': 'phone_numbers',
             'Org Website': 'urls',
         }),
         DF.join_with_self('orgs', ['id'], dict(
-            id=None, name=None, short_name=None, urls=None,
+            id=None, name=None, short_name=None, urls=None, phone_numbers=None
         )),
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
             short_name=r['short_name'],
             urls=r['urls'],
+            phone_numbers=r['phone_numbers'],
             last_tag_date=today,
         )),
         DF.select_fields(['id', 'data']),
@@ -59,7 +61,7 @@ def mde_organization_flow():
 
     print('COLLECTED {} relevant organizations'.format(len(orgs)))
     return airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'entities',
-        ['name', 'short_name', 'urls', 'last_tag_date'],
+        ['name', 'short_name', 'urls', 'phone_numbers', 'last_tag_date'],
         orgs,
         org_updater(), 
         manage_status=False,
@@ -77,18 +79,14 @@ def branch_updater():
         data = row['data']
         data['location'] = data['geocode'] or data['address']
         urls = []
+        combined = []
         if data.get('urls'):
             urls = data['urls'].split('\n')
-        org_urls = []
-        if data.get('org_urls'):
-            org_urls = data['org_urls'].split('\n')
-        combined = []
         for url in urls:
-            if url and url not in org_urls and url.startswith('http'):
+            if url and url.startswith('http'):
                 combined.append(url + '#אתר הסניף')
         data['urls'] = '\n'.join(combined)
         row.update(data)
-
 
     return func
 
@@ -133,39 +131,46 @@ def mde_branch_flow():
 
 # SERVICES
 def service_updater():
+
+    data_sources = DF.Flow(
+        load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, 'DataReferences', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+    ).results()[0][0]
+    data_sources = dict((r['name'], r['reference']) for r in data_sources)
+
     def func(row):
         if not row.get('data'):
             return
         data = row['data']
         urls = []
+        combined = []
         if data.get('urls'):
             urls = data['urls'].split('\n')
-        org_urls = []
-        if data.get('org_urls'):
-            org_urls = data['org_urls'].split('\n')
-        branch_urls = []
-        if data.get('branch_urls'):
-            branch_urls = data['branch_urls'].split('\n')
-        combined = []
         for url in urls:
-            if url and url not in org_urls and url not in branch_urls and url.startswith('http'):
-                combined.append(url + '#אתר הסניף')
+            if url and url.startswith('http'):
+                combined.append(url + '#אתר השירות')
         data['urls'] = '\n'.join(combined)
+        data['data_sources'] = data_sources.get(data['data_source'], '')
         row.update(data)
-
 
     return func
 
 def mde_service_flow():
+
+    data_sources = DF.Flow(
+        load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, 'DataReferences', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+    ).results()[0][0]
+    data_sources = dict((r['name'], r['reference']) for r in data_sources)
+
     services = DF.Flow(
         load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='services'),
         DF.filter_rows(lambda r: r['Org Id'] and r['Org Id'] != 'dummy' and r['Service Name']),
-        DF.select_fields(['Org Id', 'Branch Address', 'Branch Geocode',
+        DF.select_fields(['Org Id', 'Branch Address', 'Branch Geocode', 'Data Source',
                           'Service Name', 'Service Description', 'Service Conditions', 'Service Phone Number', 'Service Email', 'Service Website',
-                          'responses_ids', 'situations_ids', 'Org Website', 'Branch Website']),
+                          'responses_ids', 'situations_ids']),
         DF.rename_fields({
             'Org Id': 'organization',
+            'Data Source': 'data_source',
             'Branch Address': 'branch_address',
             'Branch Geocode': 'branch_geocode',
             'Service Name': 'name',
@@ -174,8 +179,6 @@ def mde_service_flow():
             'Service Phone Number': 'phone_numbers',
             'Service Email': 'email_addresses',
             'Service Website': 'urls',
-            'Org Website': 'org_urls',
-            'Branch Website': 'branch_urls',
         }),
         DF.add_field('branch_id', 'string', lambda r: branch_id(r['organization'], r['branch_address'], r['branch_geocode'])),
         DF.add_field('data', 'object', lambda r: dict(
@@ -183,11 +186,11 @@ def mde_service_flow():
             description=r['description'],
             payment_details=r['payment_details'],
             urls=r['urls'],
-            org_urls=r['org_urls'],
-            branch_urls=r['branch_urls'],
             branches=[r['branch_id']],
             responses=r['responses_ids'],
             situations=r['situations_ids'],
+            phone_numbers=r['phone_numbers'],
+            data_source=r['data_source'],
         )),
         DF.add_field('id', 'string', lambda r: r['branch_id'] + ':' + slugify(r['name'])),
         DF.select_fields(['id', 'data']),
@@ -195,7 +198,7 @@ def mde_service_flow():
 
     print('COLLECTED {} relevant branches'.format(len(services)))
     return airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'manual-data-entry',
-        ['id', 'name', 'description', 'payment_details', 'urls', 'situations', 'responses', 'branches'],
+        ['id', 'name', 'description', 'payment_details', 'phone_numbers', 'urls', 'situations', 'responses', 'branches', 'data_sources'],
         services,
         service_updater(),
         airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE

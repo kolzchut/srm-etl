@@ -8,7 +8,7 @@ from conf import settings
 class GuidestarAPI():
 
     BASE = settings.GUIDESTAR_API
-    TIMEOUT = 15
+    TIMEOUT = 30
     _headers = None
 
     def __init__(self):

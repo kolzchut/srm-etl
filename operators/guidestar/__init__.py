@@ -81,6 +81,8 @@ def updateServiceFromSourceData(taxonomies):
 
         row['name'] = data.pop('serviceName')
         row['description'] = data.pop('description')
+        data_source_url = f'https://www.guidestar.org.il/organization/{data["organization_id"]}/services'
+        row['data_sources'] = f'מידע נוסף אפשר למצוא ב<a href="{data_source_url}">גיידסטאר - אתר העמותות של ישראל</a>'
         row['organizations'] = [data.pop('organization_id')]
         actual_branch_ids = data.pop('actual_branch_ids')
         row['branches'] = ['guidestar:' + b['branchId'] for b in (data.pop('branches') or []) if b['branchId'] in actual_branch_ids]
@@ -194,7 +196,7 @@ def fetchServiceData(ga, taxonomy):
     existing_orgs = set()
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'guidestar',
-        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations', 'branches'],
+        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations', 'branches', 'data_sources'],
         DF.Flow(
             load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='orgs'),
@@ -227,9 +229,13 @@ def updateOrgFromSourceData():
         urls = []
         if data.get('website'):
             urls.append(data['website'] + '#אתר הבית')
-        if data.get('urlGuidestar'):
-            urls.append(data['urlGuidestar'] + '#מידע נוסף ב״גיידסטאר״')
         row['urls'] = '\n'.join(urls)
+        phone_numbers = []
+        if data.get('tel1'):
+            phone_numbers.append(data['tel1'])
+        if data.get('tel2'):
+            phone_numbers.append(data['tel2'])
+        row['phone_numbers'] = '\n'.join(phone_numbers)
     return func
 
 def fetchWildOrgData(ga: GuidestarAPI, skip_orgs):
@@ -238,7 +244,7 @@ def fetchWildOrgData(ga: GuidestarAPI, skip_orgs):
     ]        
     print('COLLECTED {} relevant organizations'.format(len(all_orgs)))
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'guidestar',
-        ['name', 'kind', 'urls', 'description', 'purpose'],
+        ['name', 'kind', 'urls', 'description', 'purpose', 'phone_numbers'],
         all_orgs,
         updateOrgFromSourceData(),
         airtable_base=settings.AIRTABLE_GUIDESTAR_IMPORT_BASE
@@ -344,7 +350,7 @@ def fetchWildServiceData(ga, taxonomy):
     existing_orgs = set()
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'guidestar',
-        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations', 'branches'],
+        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations', 'branches', 'data_sources'],
         DF.Flow(
             load_from_airtable(settings.AIRTABLE_GUIDESTAR_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='orgs'),

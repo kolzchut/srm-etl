@@ -59,9 +59,13 @@ def updateOrgFromSourceData(ga: GuidestarAPI):
                 urls = []
                 if data.get('website'):
                     urls.append(data['website'] + '#אתר הבית')
-                if data.get('urlGuidestar'):
-                    urls.append(data['urlGuidestar'] + '#מידע נוסף ב״גיידסטאר״')
                 row['urls'] = '\n'.join(urls)
+                phone_numbers = []
+                if data.get('tel1'):
+                    phone_numbers.append(data['tel1'])
+                if data.get('tel2'):
+                    phone_numbers.append(data['tel2'])
+                row['phone_numbers'] = '\n'.join(phone_numbers)
                 break
             except Exception as e:
                 print('BAD DATA RECEIVED', str(e), regNums, data)
@@ -94,7 +98,7 @@ def fetchOrgData(ga):
 
     print('COLLECTED {} relevant organizations'.format(len(regNums)))
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'entities',
-        ['name', 'kind', 'urls', 'description', 'purpose'],
+        ['name', 'kind', 'urls', 'description', 'purpose', 'phone_numbers'],
         regNums,
         updateOrgFromSourceData(ga),
         airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE

@@ -11,17 +11,19 @@ ITEM_URL_BASE = 'https://www.gov.il/he/departments/bureaus'
 
 DATA_SOURCE_ID = 'shil'
 
+SHIL_URL = 'https://www.gov.il/he/Departments/Guides/molsa-shill-guide'
+
 ORGANIZATION = {
     'id': '7cbc48b1-bf90-4136-8c16-749e77d1ecca',
     'data': {
         'name': 'תחנות שירות ייעוץ לאזרח (שי"ל)',
         'source': DATA_SOURCE_ID,
         'kind': 'משרד ממשלתי',
-        'urls': '',
+        'urls': SHIL_URL,
+        'phone_numbers': '118',
         # 'urls': 'https://www.gov.il/he/departments/bureaus/?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca#תחנות שירות ייעוץ לאזרח',
         'description': '',
         'purpose': '',
-        'status': 'ACTIVE',
     },
 }
 
@@ -34,8 +36,8 @@ SERVICE = {
         'payment_required': 'no',
         'urls': '',
         # 'urls': 'https://www.gov.il/he/departments/bureaus/?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca#שירות ייעוץ לאזרח',
-        'status': 'ACTIVE',
         'organizations': ['7cbc48b1-bf90-4136-8c16-749e77d1ecca'],
+        'data_sources': f'המידע התקבל מ<a href="{SHIL_URL}" target="_blank">האתר של שי״ל</a>'
     },
 }
 
@@ -58,7 +60,7 @@ FIELD_MAP = {
     'phone_numbers': {
         'source': 'PhoneNumber',
         'type': 'string',
-        'transform': lambda r: ','.join(filter(None, [r['PhoneNumber'], r['PhoneNumber2']])),
+        'transform': lambda r: '\n'.join(filter(None, [r['PhoneNumber'], r['PhoneNumber2']])),
     },
     'email_addresses': 'Email',
     'address_details': {
@@ -112,7 +114,7 @@ def get_shil_data():
 
 
 def shil_organization_data_flow():
-    return airtable_updater(
+    airtable_updater(
         settings.AIRTABLE_ORGANIZATION_TABLE,
         DATA_SOURCE_ID,
         list(ORGANIZATION['data'].keys()),
@@ -134,7 +136,7 @@ def shil_service_data_flow():
 
 
 def shil_branch_data_flow():
-    return airtable_updater(
+    airtable_updater(
         settings.AIRTABLE_BRANCH_TABLE,
         DATA_SOURCE_ID,
         list(FIELD_MAP.keys()),
