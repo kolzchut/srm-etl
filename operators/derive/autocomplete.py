@@ -52,7 +52,7 @@ def autocomplete_flow():
             score=dict(aggregate='count'),
             query=None, query_heb=None, response=None, situation=None, synonyms=None
         )),
-        DF.set_type('score', transform=lambda v: (math.log(v) + 1)**2),
+        DF.set_type('score', type='number', transform=lambda v: (math.log(v) + 1)**2),
         DF.set_type('query', **{'es:autocomplete': True, 'es:title': True}),
         DF.set_type('query_heb', **{'es:title': True}),
         DF.set_type('response', **{'es:keyword': True}),
