@@ -27,7 +27,7 @@ class GuidestarAPI():
             self._headers = self.login(settings.GUIDESTAR_USERNAME, settings.GUIDESTAR_PASSWORD)
         return self._headers
 
-    def organizations(self, limit=None, regNums=None):
+    def organizations(self, limit=None, regNums=None, filter=True):
         minRegNum = '0'
         done = False
         count = 0
