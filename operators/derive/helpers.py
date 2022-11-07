@@ -5,6 +5,7 @@ import re
 
 ACCURATE_TYPES = ('ROOFTOP', 'RANGE_INTERPOLATED', 'STREET_MID_POINT', 'POI_MID_POINT', 'ADDR_V1')
 DIGIT = re.compile('\d')
+ENGLISH = re.compile('[a-zA-Z+]')
 
 def transform_urls(urls):
     def transformer(s):
@@ -65,6 +66,14 @@ def validate_geometry(geometry):
             if 33 < geometry[0] < 37 and 29.3 < geometry[1] < 33.3:
                 return True
     return False
+
+
+def validate_address(address):
+    if address:
+        if len(ENGLISH.findall(address)) == 0:
+            return True        
+    return False
+
 
 def unwind(
     from_key, to_key, to_key_type='string',

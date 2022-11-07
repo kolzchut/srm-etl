@@ -63,6 +63,15 @@ def srm_data_pull_flow():
     )
 
 
+def select_address(address_fields):
+    def func(row):
+        for f in address_fields:
+            v = row.get(f)
+            if helpers.validate_address(v):
+                row['address'] = row[f]
+                break
+    return func
+
 def flat_branches_flow():
     """Produce a denormalized view of branch-related data."""
 
@@ -73,6 +82,7 @@ def flat_branches_flow():
         ),
         DF.update_package(name='Flat Branches'),
         DF.update_resource(['branches'], name='flat_branches', path='flat_branches.csv'),
+        DF.rename_fields({'address': 'branch_address'}, resources=['flat_branches']),
         # location onto branches
         DF.filter_rows(
             lambda r: r['location'] and len(r['location']) > 0, resources=['flat_branches']
@@ -90,6 +100,8 @@ def flat_branches_flow():
             ['location_key'],
             fields=dict(geometry=None, address=None, resolved_city=None),
         ),
+        select_address(['address', 'branch_address', 'resolved_city']),
+        DF.delete_fields(['branch_address']),
         # organizations onto branches
         DF.add_field(
             'organization_key',

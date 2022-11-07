@@ -58,6 +58,10 @@ def soprocServices(services):
         if data_sources:
             data_sources = [data_sources]
         data_sources.append('https://www.socialpro.org.il/i/activities/gov_social_service/{}#דף השירות ב״מפתח לרכש החברתי״'.format(service['id']))
+        data_sources = [
+            '<a href="{}" target="_blank">{}</a>'.format(*ds.split('#', 1))
+            for ds in data_sources
+        ]
         extra_data['data_sources'] = '\n'.join(data_sources)
         id = 'soproc:' + service['id']
         tags = (
