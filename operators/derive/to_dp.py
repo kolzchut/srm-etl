@@ -518,7 +518,18 @@ def card_data_flow():
             resources=['card_data']
         ),
         DF.add_field(
-            'address_parts', 'object', helpers.address_parts
+            'address_parts', 'object', helpers.address_parts,
+            **{'es:schema': dict(fields=[
+                dict(name='primary', type='string'),
+                dict(name='secondary', type='string'),
+            ])}
+        ),
+        DF.add_field(
+            'organization_name_parts', 'object', helpers.org_name_parts,
+            **{'es:schema': dict(fields=[
+                dict(name='primary', type='string'),
+                dict(name='secondary', type='string'),
+            ])}
         ),
         DF.set_type('card_id', **{'es:keyword': True}),
         DF.set_type('branch_id', **{'es:keyword': True}),

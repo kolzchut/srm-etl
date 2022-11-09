@@ -366,3 +366,20 @@ def address_parts(row):
         return dict(
             primary=address, secondary=None
         )
+
+
+def org_name_parts(row):
+    name: str = row['organization_name']
+    short_name: str = row['organization_short_name']
+    cc = regex.compile('\m(%s){e<2}' % short_name)
+    m = cc.search(name)
+    if m:
+        prefix = name[: m.start()].strip(' -,\n\t')
+        suffix = name[m.end() :].strip(' -,\n\t')
+        return dict(
+            primary=short_name, secondary=prefix + ' ' + suffix
+        )
+    else:
+        return dict(
+            primary=name, secondary=None
+        )
