@@ -1,6 +1,7 @@
 import datetime
 from srm_tools.budgetkey import fetch_from_budgetkey
 import dataflows as DF
+from copy import deepcopy
 
 from srm_tools.logger import logger
 from srm_tools.processors import update_mapper
@@ -53,13 +54,13 @@ def soprocServices(services):
     click_data = scrape_click()
     for service in services:
         catalog_number = str(service['catalog_number']) if service['catalog_number'] is not None else None
-        extra_data = click_data.get(catalog_number) or dict()
+        extra_data = deepcopy(click_data.get(catalog_number)) or dict()
         data_sources = extra_data.get('data_sources') or []
         if data_sources:
             data_sources = [data_sources]
         data_sources.append('https://www.socialpro.org.il/i/activities/gov_social_service/{}#דף השירות ב״מפתח לרכש החברתי״'.format(service['id']))
         data_sources = [
-            '<a href="{}" target="_blank">{}</a>'.format(*ds.split('#', 1))
+            '<a href="{}" target="_blank">{}</a>'.format(*ds.split('#', 1))# if 'href' not in ds else ds
             for ds in data_sources
         ]
         extra_data['data_sources'] = '\n'.join(data_sources)
