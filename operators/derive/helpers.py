@@ -2,6 +2,7 @@ from collections import Counter
 import dataflows as DF
 from dataflows.helpers.resource_matcher import ResourceMatcher
 import re
+import regex
 
 ACCURATE_TYPES = ('ROOFTOP', 'RANGE_INTERPOLATED', 'STREET_MID_POINT', 'POI_MID_POINT', 'ADDR_V1')
 DIGIT = re.compile('\d')
@@ -343,3 +344,25 @@ def most_common_category(row):
         print('ERROR: no response categories', repr(row))
         return None
     return Counter(response_categories).most_common(1)[0][0]
+
+
+def address_parts(row):
+    address: str = row['branch_address']
+    city: str = row['branch_city']
+    cc = regex.compile('\m(%s){e<3}' % city)
+    m = cc.search(address)
+    if m:
+        prefix = address[: m.start()].strip(' -,\n\t')
+        suffix = address[m.end() :].strip(' -,\n\t')
+        if len(suffix) < 4:
+            return dict(
+                primary=city, secondary=prefix
+            )
+        else:
+            return dict(
+                primary=city, secondary=prefix + ', ' + suffix
+            )
+    else:
+        return dict(
+            primary=address, secondary=None
+        )

@@ -517,6 +517,9 @@ def card_data_flow():
             **{'es:keyword': True},
             resources=['card_data']
         ),
+        DF.add_field(
+            'address_parts', 'object', helpers.address_parts
+        ),
         DF.set_type('card_id', **{'es:keyword': True}),
         DF.set_type('branch_id', **{'es:keyword': True}),
         DF.set_type('service_id', **{'es:keyword': True}),
