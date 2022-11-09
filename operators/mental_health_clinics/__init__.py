@@ -1,7 +1,8 @@
-import dataflows as DF
+import hashlib
 import re
 from slugify import slugify
 from pathlib import Path
+import dataflows as DF
 
 from conf import settings
 from operators.shil import ORGANIZATION
@@ -135,6 +136,17 @@ def description(row):
 FILENAME = Path(__file__).resolve().with_name('mentalhealthclinics.xlsx')
 
 
+def clinic_hash(row):
+    items = [
+        row['name'],
+        row['phone_numbers'],
+        row['address'],
+        row['hmo']
+    ]
+    items = '|'.join(filter(None, items))
+    return 'mhclinic-' + hashlib.sha1(items.encode('utf-8')).hexdigest()[:8]
+
+
 def operator(*_):
     # Prepare data
     DF.Flow(
@@ -156,8 +168,8 @@ def operator(*_):
         DF.add_field('location', 'string', lambda r: r['address'], resources=-1),
         DF.delete_fields(['street_address', 'city'], resources=-1),
 
+        DF.add_field('id', 'string', clinic_hash, resources=-1),
 
-        DF.add_field('id', 'string', lambda r: 'mhclinic-' + slugify(r['name'] + '-' + slugify(r['age_group'])), resources=-1),
         DF.dump_to_path('temp/denormalized'),
         DF.printer()
     ).process()
