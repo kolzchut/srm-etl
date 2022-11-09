@@ -51,12 +51,11 @@ def calc_point_id(geometry):
 
 
 def calculate_branch_short_name(row):
-    bn = row['branch_name']
-    ct = row['branch_city']
-    on = row['organization_short_name']
-    if on and ct:
-        return f'{on} / {ct}'
-    return bn
+    on = row['organization_name']
+    osn = row['organization_short_name']
+    if osn:
+        return f'{osn}'
+    return on
 
 
 def validate_geometry(geometry):
