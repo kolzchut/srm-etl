@@ -189,7 +189,7 @@ def load_responses_to_es_flow():
         DF.add_field('response_ids', 'array', lambda r: [r['id'] for r in r['responses']]),
         DF.set_type('response_ids', transform=lambda v: helpers.update_taxonomy_with_parents(v)),
         DF.select_fields(['response_ids']),
-        helpers.unwind('response_ids', 'id', 'object'),
+        unwind('response_ids', 'id', 'object'),
         DF.join_with_self('card_data', ['id'], dict(
             id=None,
             count=dict(aggregate='count')
@@ -236,7 +236,7 @@ def load_situations_to_es_flow():
         DF.add_field('situation_ids', 'array', lambda r: [r['id'] for r in r['situations']]),
         DF.set_type('situation_ids', transform=lambda v: helpers.update_taxonomy_with_parents(v)),
         DF.select_fields(['situation_ids']),
-        helpers.unwind('situation_ids', 'id', 'object'),
+        unwind('situation_ids', 'id', 'object'),
         DF.join_with_self('card_data', ['id'], dict(
             id=None,
             count=dict(aggregate='count')

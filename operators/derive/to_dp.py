@@ -9,6 +9,7 @@ from . import helpers
 from .manual_fixes import ManualFixes
 
 from srm_tools.logger import logger
+from srm_tools.unwind import unwind
 
 from operators.derive import manual_fixes
 
@@ -200,7 +201,7 @@ def flat_services_flow():
         DF.update_package(name='Flat Services'),
         DF.update_resource(['services'], name='flat_services', path='flat_services.csv'),
         # responses onto services
-        helpers.unwind('response_ids', 'response_id', resources=['flat_services']),
+        unwind('response_ids', 'response_id', resources=['flat_services']),
         DF.join(
             'responses',
             ['id'],
@@ -214,7 +215,7 @@ def flat_services_flow():
             ),
         ),
         # branches onto services, through organizations (we already have direct branches)
-        helpers.unwind('organizations', 'organization_key', resources=['flat_services']),
+        unwind('organizations', 'organization_key', resources=['flat_services']),
         DF.join(
             'flat_branches',
             ['organization_key'],
@@ -231,7 +232,7 @@ def flat_services_flow():
             merge_array_fields(['branches', 'organization_branches']),
             resources=['flat_services'],
         ),
-        helpers.unwind('merge_branches', 'branch_key', resources=['flat_services']),
+        unwind('merge_branches', 'branch_key', resources=['flat_services']),
         # merge multiple situation fields into a single field
         DF.add_field(
             'merged_situations',
@@ -346,7 +347,7 @@ def flat_table_flow():
             resources=['flat_table'],
         ),
         # situations onto table records
-        helpers.unwind('situations', 'situation_key', resources=['flat_table'], allow_empty=True),
+        unwind('situations', 'situation_key', resources=['flat_table'], allow_empty=True),
         DF.join(
             'situations',
             ['key'],
