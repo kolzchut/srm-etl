@@ -10,6 +10,7 @@ from .manual_fixes import ManualFixes
 
 from srm_tools.logger import logger
 from srm_tools.unwind import unwind
+from srm_tools.hash import hasher
 
 from operators.derive import manual_fixes
 
@@ -422,7 +423,7 @@ def card_data_flow():
         DF.add_field(
             'card_id',
             'string',
-            lambda r: f'{r["branch_id"]}:{r["service_id"]}',
+            lambda r: hasher(r['branch_id'], r['service_id']),
             resources=['card_data'],
         ),
         DF.join_with_self(
