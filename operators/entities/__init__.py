@@ -144,19 +144,19 @@ def unwind_branches(ga:GuidestarAPI):
                 if len(branches) == 0:
                     print('FETCHING FROM GUIDESTAR', regNum)
                     ret = list(ga.organizations(regNums=[regNum]))
-                    if len(ret) > 0 and ret[0].get('fullAddress'):
-                        ret = ret[0]
+                    if len(ret) > 0 and ret[0]['data'].get('fullAddress'):
+                        data = ret[0]['data']
                         yield dict(
-                            id='guidestar:' + row['id'],
+                            id='guidestar:' + regNum,
                             data=dict(
                                 name=row['name'],
                                 address=data['fullAddress'],
                                 location=data['fullAddress'],
-                                organization=[row['id']]
+                                organization=[regNum]
                             )
                         )
                     else:
-                        print('FETCHING FROM BUDGETKEY', regNum, branches)
+                        print('FETCHING FROM BUDGETKEY', regNum, ret)
                         if row['kind'] not in ('עמותה', 'חל"צ'):
                             ret = dict()
                             ret.update(row)
@@ -217,11 +217,13 @@ def fetchBranchData(ga):
             DF.update_resource(-1, name='orgs'),
             DF.filter_rows(lambda r: r['source'] == 'entities', resources='orgs'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
+            DF.filter_rows(lambda r: len(r.get('branches') or []) == 0, resources='orgs'),
             DF.select_fields(['id', 'name', 'short_name', 'kind'], resources='orgs'),
             unwind_branches(ga),
         ),
         updateBranchFromSourceData(),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE,
+        manage_status=False
     )
 
 
