@@ -70,8 +70,8 @@ def mde_organization_flow():
     )
 
 # BRANCHES
-def branch_id(org, address, geocode):
-    return 'mde:' + hasher(org, geocode, address)
+def mde_id(*args):
+    return 'mde:' + hasher(*map(str, args))
 
 def branch_updater():
     def func(row):
@@ -96,7 +96,7 @@ def mde_branch_flow():
         load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='branches'),
         DF.filter_rows(lambda r: r['Org Id'] and r['Org Id'] != 'dummy' and r['Branch Details']),
-        DF.select_fields(['Org Id', 'Branch Details', 'Branch Address', 'Branch Geocode', 'Branch Phone Number', 'Branch Email', 'Branch Website', 'Org Website']),
+        DF.select_fields(['Org Id', 'Branch Details', 'Branch Address', 'Branch Geocode', 'Branch Phone Number', 'Branch Email', 'Branch Website', 'Org Website', 'Service Name']),
         DF.rename_fields({
             'Org Id': 'organization',
             'Branch Details': 'name',
@@ -106,6 +106,7 @@ def mde_branch_flow():
             'Branch Email': 'email_addresses',
             'Branch Website': 'urls',
             'Org Website': 'org_urls',
+            'Service Name': 'service_name',
         }),
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
@@ -117,7 +118,7 @@ def mde_branch_flow():
             org_urls=r['org_urls'],
             organization=[r['organization']],
         )),
-        DF.add_field('id', 'string', lambda r: hasher(r['name'], r['organization'], r['address'], r['geocode'])),
+        DF.add_field('id', 'string', lambda r: mde_id(r['service_name'], r['organization'], r['address'], r['geocode'])),
         DF.select_fields(['id', 'data']),
     ).results()[0][0]
 
@@ -181,7 +182,7 @@ def mde_service_flow():
             'Service Email': 'email_addresses',
             'Service Website': 'urls',
         }),
-        DF.add_field('branch_id', 'string', lambda r: branch_id(r['organization'], r['branch_address'], r['branch_geocode'])),
+        DF.add_field('branch_id', 'string', lambda r: mde_id(r['name'], r['organization'], r['branch_address'], r['branch_geocode'])),
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
             description=r['description'],
@@ -193,7 +194,7 @@ def mde_service_flow():
             phone_numbers=r['phone_numbers'],
             data_source=r['data_source'],
         )),
-        DF.add_field('id', 'string', lambda r: r['branch_id'] + ':' + slugify(r['name'])),
+        DF.add_field('id', 'string', lambda r: mde_id(r['branch_id'], r['name'])),
         DF.select_fields(['id', 'data']),
     ).results()[0][0]
 
