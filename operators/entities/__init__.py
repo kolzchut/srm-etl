@@ -44,7 +44,7 @@ def fetchEntityFromBudgetKey(regNum):
         return rec
 
 
-def updateOrgFromSourceData(ga: GuidestarAPI, savedBranches):
+def updateOrgFromSourceData(ga: GuidestarAPI):
     def func(rows):
         for row in rows:
             regNums = [row['id']]
@@ -67,16 +67,6 @@ def updateOrgFromSourceData(ga: GuidestarAPI, savedBranches):
                     if data.get('tel2'):
                         phone_numbers.append(data['tel2'])
                     row['phone_numbers'] = '\n'.join(phone_numbers)
-                    if data['branchCount'] == 0 and data.get('fullAddress'):
-                        savedBranches.append(dict(
-                            id='guidestar:' + row['id'],
-                            data=dict(
-                                name=row['name'],
-                                address=data['fullAddress'],
-                                location=data['fullAddress'],
-                                organization=[row['id']]
-                            )
-                        ))
                     break
                 except Exception as e:
                     print('BAD DATA RECEIVED', str(e), regNums, data)
@@ -99,13 +89,13 @@ def recent_org(row):
     return False
 
 
-def fetchOrgData(ga, savedBranches):
+def fetchOrgData(ga):
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='orgs'),
         DF.filter_rows(lambda row: row.get('source') == 'entities'),
         DF.select_fields([AIRTABLE_ID_FIELD, 'id', 'kind']),
-        updateOrgFromSourceData(ga, savedBranches),
+        updateOrgFromSourceData(ga),
         dump_to_airtable({
             (settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE): {
                 'resource-name': 'orgs',
@@ -115,7 +105,7 @@ def fetchOrgData(ga, savedBranches):
 
 
 ## BRANCHES
-def unwind_branches(ga:GuidestarAPI, savedBranches):
+def unwind_branches(ga:GuidestarAPI):
     def func(rows: ResourceWrapper):
         if rows.res.name != 'orgs':
             yield from rows        
@@ -152,22 +142,35 @@ def unwind_branches(ga:GuidestarAPI, savedBranches):
                     ret['id'] = 'guidestar:' + branch['branchId']
                     yield ret
                 if len(branches) == 0:
-                    print('FETCHING FROM BUDGETKEY', regNum, branches)
-                    if row['kind'] not in ('עמותה', 'חל"צ'):
-                        ret = dict()
-                        ret.update(row)
-                        name = row['name']
-                        ret.update(dict(
-                            id='budgetkey:' + regNum,
+                    print('FETCHING FROM GUIDESTAR', regNum)
+                    ret = list(ga.organizations(regNums=[regNum]))
+                    if len(ret) > 0 and ret[0].get('fullAddress'):
+                        ret = ret[0]
+                        yield dict(
+                            id='guidestar:' + row['id'],
                             data=dict(
-                                name=name,
-                                address=name,
-                                location=name,
-                                organization=[regNum]
+                                name=row['name'],
+                                address=data['fullAddress'],
+                                location=data['fullAddress'],
+                                organization=[row['id']]
                             )
-                        ))
-                        yield ret
-            yield from savedBranches
+                        )
+                    else:
+                        print('FETCHING FROM BUDGETKEY', regNum, branches)
+                        if row['kind'] not in ('עמותה', 'חל"צ'):
+                            ret = dict()
+                            ret.update(row)
+                            name = row['name']
+                            ret.update(dict(
+                                id='budgetkey:' + regNum,
+                                data=dict(
+                                    name=name,
+                                    address=name,
+                                    location=name,
+                                    organization=[regNum]
+                                )
+                            ))
+                            yield ret
     return DF.Flow(
         DF.add_field('data', 'object', resources='orgs'),
         func,
@@ -205,7 +208,7 @@ def updateBranchFromSourceData():
     return func
 
 
-def fetchBranchData(ga, savedBranches):
+def fetchBranchData(ga):
     print('FETCHING ALL ORGANIZATION BRANCHES')
     airtable_updater(settings.AIRTABLE_BRANCH_TABLE, 'entities',
         ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
@@ -215,7 +218,7 @@ def fetchBranchData(ga, savedBranches):
             DF.filter_rows(lambda r: r['source'] == 'entities', resources='orgs'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
             DF.select_fields(['id', 'name', 'short_name', 'kind'], resources='orgs'),
-            unwind_branches(ga, savedBranches),
+            unwind_branches(ga),
         ),
         updateBranchFromSourceData(),
         airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
@@ -225,9 +228,8 @@ def fetchBranchData(ga, savedBranches):
 def operator(name, params, pipeline):
     logger.info('STARTING Entity Scraping')
     ga = GuidestarAPI()
-    savedBranches = []
-    fetchOrgData(ga, savedBranches)
-    fetchBranchData(ga, savedBranches)
+    fetchOrgData(ga)
+    fetchBranchData(ga)
 
 
 if __name__ == '__main__':
