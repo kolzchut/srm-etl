@@ -11,14 +11,12 @@ from srm_tools.processors import update_mapper
 from srm_tools.logger import logger
 from srm_tools.update_table import airtable_updater
 from srm_tools.unwind import unwind
+from srm_tools.hash import hasher
 
 from conf import settings
 
 FILENAME = Path(__file__).resolve().with_name('data.csv')
 transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
-
-def hash(*args):
-    return hashlib.sha1(''.join(filter(None, args)).encode('utf-8')).hexdigest()[:8]
 
 
 def alternate_address(row):
@@ -73,7 +71,7 @@ def operator(*_):
         DF.add_field('phone_numbers', 'string', lambda r: '0' + r['Telephone'] if r['Telephone'] and r['Telephone'][0] != '0' else r['Telephone'] or None),
 
         # Combining same services
-        DF.add_field('service_id', 'string', lambda r: 'meser-' + hash(r['service_name'], r['phone_numbers'], r['address'], r['organization_id'], r['branch_id'])),
+        DF.add_field('service_id', 'string', lambda r: 'meser-' + hasher(r['service_name'], r['phone_numbers'], r['address'], r['organization_id'], r['branch_id'])),
         DF.join_with_self('meser', ['service_id'], fields=dict(
             service_id=None,
             service_name=None,

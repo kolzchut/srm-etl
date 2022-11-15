@@ -6,6 +6,7 @@ from slugify import slugify
 from dataflows_airtable import load_from_airtable
 
 from conf import settings
+from srm_tools.hash import hasher
 from srm_tools.logger import logger
 from srm_tools.update_table import airtable_updater
 
@@ -70,7 +71,7 @@ def mde_organization_flow():
 
 # BRANCHES
 def branch_id(org, address, geocode):
-    return 'mde:' + org + ':' + slugify(geocode or address)
+    return 'mde:' + hasher(org, geocode, address)
 
 def branch_updater():
     def func(row):
@@ -116,7 +117,7 @@ def mde_branch_flow():
             org_urls=r['org_urls'],
             organization=[r['organization']],
         )),
-        DF.add_field('id', 'string', lambda r: branch_id(r['organization'], r['address'], r['geocode'])),
+        DF.add_field('id', 'string', lambda r: hasher(r['name'], r['organization'], r['address'], r['geocode'])),
         DF.select_fields(['id', 'data']),
     ).results()[0][0]
 
