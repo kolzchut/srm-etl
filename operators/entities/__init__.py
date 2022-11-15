@@ -45,46 +45,47 @@ def fetchEntityFromBudgetKey(regNum):
 
 
 def updateOrgFromSourceData(ga: GuidestarAPI, savedBranches):
-    def func(row):
-        regNums = [row['id']]
-        if row['kind'] is not None:
-            return
-        for data in ga.organizations(regNums=regNums):
-            try:
-                data = data['data']
-                row['name'] = data['name'].replace(' (חל"צ)', '').replace(' (ע"ר)', '')
-                row['kind'] = data['malkarType']
-                row['description'] = None
-                row['purpose'] = data.get('orgGoal')
-                urls = []
-                if data.get('website'):
-                    urls.append(data['website'] + '#אתר הבית')
-                row['urls'] = '\n'.join(urls)
-                phone_numbers = []
-                if data.get('tel1'):
-                    phone_numbers.append(data['tel1'])
-                if data.get('tel2'):
-                    phone_numbers.append(data['tel2'])
-                row['phone_numbers'] = '\n'.join(phone_numbers)
-                if data['branchCount'] == 0 and data.get('fullAddress'):
-                    savedBranches.append(dict(
-                        id='guidestar:' + row['id'],
-                        data=dict(
-                            name=row['name'],
-                            address=data['fullAddress'],
-                            location=data['fullAddress'],
-                            organization=[row['id']]
-                        )
-                    ))
-                break
-            except Exception as e:
-                print('BAD DATA RECEIVED', str(e), regNums, data)
-        else:
-            data = fetchEntityFromBudgetKey(row['id'])
-            if data is not None:
-                row.update(data['data'])
+    def func(rows):
+        for row in rows:
+            regNums = [row['id']]
+            if row['kind'] is not None:
+                continue
+            for data in ga.organizations(regNums=regNums):
+                try:
+                    data = data['data']
+                    row['name'] = data['name'].replace(' (חל"צ)', '').replace(' (ע"ר)', '')
+                    row['kind'] = data['malkarType']
+                    row['description'] = None
+                    row['purpose'] = data.get('orgGoal')
+                    urls = []
+                    if data.get('website'):
+                        urls.append(data['website'] + '#אתר הבית')
+                    row['urls'] = '\n'.join(urls)
+                    phone_numbers = []
+                    if data.get('tel1'):
+                        phone_numbers.append(data['tel1'])
+                    if data.get('tel2'):
+                        phone_numbers.append(data['tel2'])
+                    row['phone_numbers'] = '\n'.join(phone_numbers)
+                    if data['branchCount'] == 0 and data.get('fullAddress'):
+                        savedBranches.append(dict(
+                            id='guidestar:' + row['id'],
+                            data=dict(
+                                name=row['name'],
+                                address=data['fullAddress'],
+                                location=data['fullAddress'],
+                                organization=[row['id']]
+                            )
+                        ))
+                    break
+                except Exception as e:
+                    print('BAD DATA RECEIVED', str(e), regNums, data)
             else:
-                print('NOT FOUND', regNums)
+                data = fetchEntityFromBudgetKey(row['id'])
+                if data is not None:
+                    row.update(data['data'])
+                else:
+                    print('NOT FOUND', regNums)
     return func
 
 def recent_org(row):
@@ -98,21 +99,18 @@ def recent_org(row):
 
 
 def fetchOrgData(ga, savedBranches):
-    regNums = DF.Flow(
+    DF.Flow(
         load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.update_resource(-1, name='orgs'),
         DF.filter_rows(lambda row: row.get('source') == 'entities'),
-        DF.filter_rows(recent_org),
-        DF.select_fields(['id']),
-        DF.add_field('data', 'object', dict(name='')),
-    ).results()[0][0]
-
-    print('COLLECTED {} relevant organizations'.format(len(regNums)))
-    airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'entities',
-        ['name', 'kind', 'urls', 'description', 'purpose', 'phone_numbers'],
-        regNums,
+        DF.select_fields([AIRTABLE_ID_FIELD, 'id', 'kind']),
         updateOrgFromSourceData(ga, savedBranches),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
-    )
+        dump_to_airtable({
+            (settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE): {
+                'resource-name': 'orgs',
+            }
+        }, settings.AIRTABLE_API_KEY)
+    ).process()
 
 
 ## BRANCHES
