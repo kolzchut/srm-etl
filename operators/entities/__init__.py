@@ -47,7 +47,7 @@ def fetchEntityFromBudgetKey(regNum):
 def updateOrgFromSourceData(ga: GuidestarAPI, savedBranches):
     def func(row):
         regNums = [row['id']]
-        if row['status'] != 'ACTIVE':
+        if row['kind'] is not None:
             return
         for data in ga.organizations(regNums=regNums):
             try:
