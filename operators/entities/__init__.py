@@ -86,6 +86,7 @@ def updateOrgFromSourceData(ga: GuidestarAPI, savedBranches):
                     row.update(data['data'])
                 else:
                     print('NOT FOUND', regNums)
+            yield row
     return func
 
 def recent_org(row):
