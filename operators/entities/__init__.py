@@ -218,13 +218,13 @@ def fetchBranchData(ga):
         DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
         # DF.filter_rows(lambda r: len(r.get('branches') or []) == 0, resources='orgs'),
         DF.select_fields(['id', 'name', 'short_name', 'kind'], resources='orgs'),
-        DF.checkpoint('entities-orgs')
+        DF.dump_to_path('temp/entities-orgs')
     ).process()
 
     airtable_updater(settings.AIRTABLE_BRANCH_TABLE, 'entities',
         ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
         DF.Flow(
-            DF.checkpoint('entities-orgs'),
+            DF.load('temp/entities-orgs/datapackage.json'),
             unwind_branches(ga),
         ),
         updateBranchFromSourceData(),
