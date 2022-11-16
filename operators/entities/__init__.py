@@ -224,7 +224,7 @@ def fetchBranchData(ga):
     airtable_updater(settings.AIRTABLE_BRANCH_TABLE, 'entities',
         ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
         DF.Flow(
-            DF.checkpoint('entities-orgs')
+            DF.checkpoint('entities-orgs'),
             unwind_branches(ga),
         ),
         updateBranchFromSourceData(),
