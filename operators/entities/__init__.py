@@ -210,15 +210,21 @@ def updateBranchFromSourceData():
 
 def fetchBranchData(ga):
     print('FETCHING ALL ORGANIZATION BRANCHES')
+
+    DF.Flow(
+        load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
+        DF.update_resource(-1, name='orgs'),
+        DF.filter_rows(lambda r: r['source'] == 'entities', resources='orgs'),
+        DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
+        # DF.filter_rows(lambda r: len(r.get('branches') or []) == 0, resources='orgs'),
+        DF.select_fields(['id', 'name', 'short_name', 'kind'], resources='orgs'),
+        DF.checkpoint('entities-orgs')
+    ).process()
+
     airtable_updater(settings.AIRTABLE_BRANCH_TABLE, 'entities',
         ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
         DF.Flow(
-            load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
-            DF.update_resource(-1, name='orgs'),
-            DF.filter_rows(lambda r: r['source'] == 'entities', resources='orgs'),
-            DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
-            # DF.filter_rows(lambda r: len(r.get('branches') or []) == 0, resources='orgs'),
-            DF.select_fields(['id', 'name', 'short_name', 'kind'], resources='orgs'),
+            DF.checkpoint('entities-orgs')
             unwind_branches(ga),
         ),
         updateBranchFromSourceData(),
