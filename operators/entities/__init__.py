@@ -217,7 +217,7 @@ def fetchBranchData(ga):
             DF.update_resource(-1, name='orgs'),
             DF.filter_rows(lambda r: r['source'] == 'entities', resources='orgs'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
-            DF.filter_rows(lambda r: len(r.get('branches') or []) == 0, resources='orgs'),
+            # DF.filter_rows(lambda r: len(r.get('branches') or []) == 0, resources='orgs'),
             DF.select_fields(['id', 'name', 'short_name', 'kind'], resources='orgs'),
             unwind_branches(ga),
         ),
