@@ -168,7 +168,7 @@ def preprocess_organizations(select_fields=None, validate=False):
         DF.update_resource(['Organizations'], name='organizations', path='organizations.csv'),
         filter_dummy_data(),
         filter_active_data(),
-        DF.filter_rows(lambda r: bool(r.get('name'))),
+        DF.filter_rows(lambda r: bool(r.get('name')), resources=['organizations']),
         set_staging_pkey('organizations'),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['organizations']),
         DF.set_type(
