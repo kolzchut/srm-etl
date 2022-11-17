@@ -69,7 +69,7 @@ def upload_tileset(filename, tileset, name):
 def point_title(r):
     max_len = 20
     records = r.get('records')
-    branch = list([f['organization_short_name'] for f in records])
+    branch = list([f['organization_short_name'] or f['organization_name'] for f in records])
     branch = Counter(branch)
     bn = branch.most_common(1)[0][0]
     if len(bn) > max_len:

@@ -72,7 +72,18 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
         update_mapper()
     )
     print('UPDATED ORGS', list(updated_orgs.values())[:10])
+    conversion = dict()
+    DF.Flow(
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        lambda row: conversion.setdefault(row['id'], row.get(AIRTABLE_ID_FIELD)),
+    ).process()
+    updated_orgs = {k: conversion.get(v) for k, v in updated_orgs.items()}
 
+    updated_locations = dict()
+    DF.Flow(
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        lambda row: updated_locations.setdefault(row['id'], row.get(AIRTABLE_ID_FIELD)),
+    ).process()
 
     airtable_updater(settings.AIRTABLE_BRANCH_TABLE, source_id,
         ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
@@ -81,7 +92,7 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
             DF.update_resource(-1, name='branches'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='branches'),
             DF.filter_rows(lambda r: r['decision'] not in ('Rejected', 'Suspended'), resources='branches'),
-            DF.set_type('location', type='array', transform=lambda v: [v]),
+            DF.set_type('location', type='array', transform=lambda v: [updated_locations.get(v, v)]),
             filter_by_items(updated_orgs, ['organization']),
             DF.filter_rows(lambda r: len(r['organization'] or []) > 0),
             collect_ids(updated_branches),
@@ -91,6 +102,12 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
         update_mapper()
     )
     print('UPDATED BRANCHES', list(updated_branches.values())[:10])
+    conversion = dict()
+    DF.Flow(
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        lambda row: conversion.setdefault(row['id'], row.get(AIRTABLE_ID_FIELD)),
+    ).process()
+    updated_branches = {k: conversion.get(v) for k, v in updated_branches.items()}
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, source_id,
         ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers',
