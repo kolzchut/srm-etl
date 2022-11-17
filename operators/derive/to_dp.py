@@ -65,14 +65,11 @@ def srm_data_pull_flow():
     )
 
 
-def select_address(address_fields):
-    def func(row):
-        for f in address_fields:
-            v = row.get(f)
-            if helpers.validate_address(v):
-                row['address'] = row[f]
-                break
-    return func
+def select_address(row, address_fields):
+    for f in address_fields:
+        v = row.get(f)
+        if helpers.validate_address(v):
+            return row[f]
 
 def flat_branches_flow():
     """Produce a denormalized view of branch-related data."""
@@ -102,8 +99,8 @@ def flat_branches_flow():
             ['location_key'],
             fields=dict(geometry=None, address=None, resolved_city=None),
         ),
-        select_address(['address', 'branch_address', 'resolved_city']),
-        DF.delete_fields(['branch_address']),
+        DF.set_type('address', transform=lambda v, row: select_address(row, ['address', 'branch_address', 'resolved_city'])),
+        DF.delete_fields(['branch_address'], resources=['flat_branches']),
         # organizations onto branches
         DF.add_field(
             'organization_key',
