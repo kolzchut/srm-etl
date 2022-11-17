@@ -69,19 +69,14 @@ def upload_tileset(filename, tileset, name):
 def point_title(r):
     max_len = 20
     records = r.get('records')
-    if len(records) > 1 or True:  # TODO: Always showing branch name for now
-        branch = list(set([f['branch_short_name'] for f in records]))
-        if len(branch) == 1:
-            bn = branch[0]
-            if len(bn) > max_len:
-                bn = bn[:max_len] + '…'
-            return bn
-        return '{} שירותים'.format(len(records))  # TODO - multilingual
-    else:
-        sn = records[0]['service_name']
-        if len(sn) > max_len:
-            sn = sn[:max_len] + '…'
-        return sn
+    branch = list([f['organization_short_name'] for f in records])
+    branch = Counter(branch)
+    bn = branch.most_common(1)[0][0]
+    if len(bn) > max_len:
+        bn = bn[:max_len] + '…'
+    if len(branch) > 1:
+        bn += '  +{}'.format(len(branch) - 1)
+    return bn
 
 
 def preprocess_field(k, v):
