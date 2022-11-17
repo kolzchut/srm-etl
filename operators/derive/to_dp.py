@@ -556,7 +556,6 @@ def card_data_flow():
 
 
 def operator(*_):
-
     logger.info('Starting Data Package Flow')
 
     srm_data_pull_flow().process()
