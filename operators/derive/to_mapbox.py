@@ -166,13 +166,14 @@ def geo_data_flow():
             settings.CKAN_OWNER_ORG,
             force_format=False
         ),
-        DF.delete_fields(['score'], resources=['geo_data']),
-        DF.set_type(
-            'records',
-            type='string',
-            transform=lambda v: json.dumps([dict(card_id=vv['card_id']) for vv in v]),
-            resources=['geo_data'],
-        ),
+        DF.delete_fields(['score', 'records'], resources=['geo_data']),
+        DF.add_field('id', 'string', lambda r: r['point_id'], resources=['geo_data']),
+        # DF.set_type(
+        #     'records',
+        #     type='string',
+        #     transform=lambda v: json.dumps([dict(card_id=vv['card_id']) for vv in v]),
+        #     resources=['geo_data'],
+        # ),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data', format='geojson'),
     )
 
