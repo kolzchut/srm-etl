@@ -128,11 +128,11 @@ def geo_data_flow():
         DF.add_field(
             'title', 'string', point_title, resources=['geo_data']
         ),
-        DF.set_type(
-            'records',
-            transform=lambda v, row: helpers.reorder_records_by_category(v, row['response_category']),
-            **{'es:index': False, 'es:itemType': 'object'},
-        ),
+        # DF.set_type(
+        #     'records',
+        #     transform=lambda v, row: helpers.reorder_records_by_category(v, row['response_category']),
+        #     **{'es:index': False, 'es:itemType': 'object'},
+        # ),
         DF.add_field(
             'service_count',
             'integer',
@@ -143,7 +143,7 @@ def geo_data_flow():
             [
                 'branch_geometry',
                 'response_category',
-                'records',
+                # 'records',
                 'title',
                 'point_id',
                 'service_count',

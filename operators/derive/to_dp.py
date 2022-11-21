@@ -30,6 +30,15 @@ def merge_array_fields(fieldnames):
     return func
 
 
+def fix_situations(situations):
+    if situations:
+        ids = [s['id'] for s in situations]
+        both_genders = ['human_situations:gender:women', 'human_situations:gender:men']
+        if all(s in ids for s in both_genders):
+            situations = [s for s in situations if s['id'] not in both_genders]
+    return situations
+
+
 def srm_data_pull_flow():
     """Pull curated data from the data staging area."""
     manual_fixes = ManualFixes()
@@ -70,6 +79,7 @@ def select_address(row, address_fields):
         v = row.get(f)
         if helpers.validate_address(v):
             return row[f]
+
 
 def flat_branches_flow():
     """Produce a denormalized view of branch-related data."""
@@ -473,6 +483,7 @@ def card_data_flow():
             ],
             resources=['card_data'],
         ),
+        DF.set_type('situations', transform=fix_situations, resources=['card_data']),
         DF.add_field(
             'responses',
             'array',
@@ -490,7 +501,7 @@ def card_data_flow():
         ),
         DF.add_field(
             'situation_ids', 'array',
-            lambda r: helpers.update_taxonomy_with_parents(r['situation_id']),
+            lambda r: helpers.update_taxonomy_with_parents([s['id'] for s in r['situations']]),
             **{'es:itemType': 'string', 'es:keyword': True},
             resources=['card_data']
         ),
