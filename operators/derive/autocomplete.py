@@ -8,7 +8,7 @@ from conf import settings
 from srm_tools.logger import logger
 
 TEMPLATES = [
-    '{response}', '{situation}', '{response} עבור {situation}', '{org_name}', '{response} של {org_name}'
+    '{response}', '{situation}', '{response} עבור {situation}', '{org_name}', '{response} של {org_name}', '{org_id}'
 ]
 
 IGNORE_SITUATIONS = {
@@ -23,26 +23,26 @@ def unwind_templates():
             for template in TEMPLATES:
                 responses = [r for r in row['responses']] if '{response}' in template else [dict()]
                 situations = [s for s in row['situations']] if '{situation}' in template else [dict()]
-                org_names = row.get('organization_short_name') or row.get('organization_name')
-                if org_names:
-                    org_names = [org_names]
-                else:
-                    org_names = [] if '{org_name}' in template else [None]
+                org_name = row.get('organization_short_name') or row.get('organization_name')
+                org_names = [org_name] if org_name and '{org_name}' in template else [None]
+                org_id = row.get('organization_id')
+                org_ids = [org_id] if org_id and '{org_id}' in template else [None]
                 for response in responses:
                     for situation in situations:
                         for org_name in org_names:
-                            if situation.get('id') in IGNORE_SITUATIONS:
-                                continue
-                            query = template.format(response=response.get('name'), situation=situation.get('name'), org_name=org_name)
-                            yield {
-                                'query': query,
-                                'query_heb': query,
-                                'response': response.get('id'),
-                                'situation': situation.get('id'),
-                                'org_id': row['organization_id'],
-                                'org_name': org_name,
-                                'synonyms': response.get('synonyms', []) + situation.get('synonyms', [])
-                            }
+                            for org_id in org_ids:
+                                if situation.get('id') in IGNORE_SITUATIONS:
+                                    continue
+                                query = template.format(response=response.get('name'), situation=situation.get('name'), org_name=org_name, org_id=org_id)
+                                yield {
+                                    'query': query,
+                                    'query_heb': query,
+                                    'response': response.get('id'),
+                                    'situation': situation.get('id'),
+                                    'org_id': row['organization_id'],
+                                    'org_name': org_name,
+                                    'synonyms': response.get('synonyms', []) + situation.get('synonyms', [])
+                                }
 
 
     return func
