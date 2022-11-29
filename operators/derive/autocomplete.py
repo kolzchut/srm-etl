@@ -39,7 +39,7 @@ def unwind_templates():
                                     'query_heb': query,
                                     'response': response.get('id'),
                                     'situation': situation.get('id'),
-                                    'org_id': row['organization_id'],
+                                    'org_id': org_id,
                                     'org_name': org_name,
                                     'synonyms': response.get('synonyms', []) + situation.get('synonyms', [])
                                 }
