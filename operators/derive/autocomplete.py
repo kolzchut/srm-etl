@@ -23,10 +23,10 @@ def unwind_templates():
             for template in TEMPLATES:
                 responses = [r for r in row['responses']] if '{response}' in template else [dict()]
                 situations = [s for s in row['situations']] if '{situation}' in template else [dict()]
-                org_name = row.get('organization_short_name') or row.get('organization_name')
-                org_names = [org_name] if org_name and '{org_name}' in template else [None]
-                org_id = row.get('organization_id')
-                org_ids = [org_id] if org_id and '{org_id}' in template else [None]
+                org_name = row.get('organization_short_name') or row.get('organization_name') if '{org_name}' in template or '{org_id}' in template else None
+                org_names = [org_name]
+                org_id = row.get('organization_id') if org_name else None
+                org_ids = [org_id]
                 for response in responses:
                     for situation in situations:
                         for org_name in org_names:
