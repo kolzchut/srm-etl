@@ -1,4 +1,5 @@
 import math
+import re
 
 import dataflows as DF
 from dataflows_ckan import dump_to_ckan
@@ -15,6 +16,9 @@ IGNORE_SITUATIONS = {
     'human-situations:languages:hebrew',
     'human-situations:age-groups:adults',
 }
+
+PKRE = re.compile('[0-9a-zA-Zא-ת]+')
+
 
 def unwind_templates():
     def func(rows):
@@ -71,6 +75,7 @@ def autocomplete_flow():
         DF.set_type('situation', **{'es:keyword': True}),
         DF.set_type('org_id', **{'es:keyword': True}),
         DF.set_type('synonyms', **{'es:itemType': 'string'}),
+        DF.add_field('id', 'string', lambda r: '_'.join(PKRE.findall(r['query']))),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/autocomplete'),
     )
 

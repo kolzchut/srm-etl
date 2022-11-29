@@ -309,7 +309,7 @@ def load_autocomplete_to_es_flow():
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/autocomplete/datapackage.json'),
         DF.update_package(title='AutoComplete Queries', name='autocomplete'),
-        DF.set_primary_key(['query']),
+        DF.set_primary_key(['id']),
         dump_to_es_and_delete(
             indexes=dict(srm__autocomplete=[dict(resource_name='autocomplete')]),
         ),
