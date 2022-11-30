@@ -528,6 +528,12 @@ def card_data_flow():
             resources=['card_data']
         ),
         DF.add_field(
+            'collapse_key', 'string',
+            lambda r: r['organization_id'] + ':' + r['service_name'],
+            **{'es:keyword': True},
+            resources=['card_data']
+        ),
+        DF.add_field(
             'address_parts', 'object', helpers.address_parts,
             **{'es:schema': dict(fields=[
                 dict(name='primary', type='string'),
