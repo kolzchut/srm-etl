@@ -118,7 +118,7 @@ def mde_branch_flow():
             org_urls=r['org_urls'],
             organization=[r['organization']],
         )),
-        DF.add_field('id', 'string', lambda r: mde_id(r['service_name'], r['organization'], r['name'], r['address'], r['geocode'])),
+        DF.add_field('id', 'string', lambda r: mde_id(r['service_name'], r['organization'], r['address'], r['geocode'])),
         DF.select_fields(['id', 'data']),
     ).results()[0][0]
 
@@ -167,7 +167,7 @@ def mde_service_flow():
         load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='services'),
         DF.filter_rows(lambda r: r['Org Id'] and r['Org Id'] != 'dummy' and r['Service Name']),
-        DF.select_fields(['Org Id', 'Branch Address', 'Branch Geocode', 'Branch Details', 'Data Source',
+        DF.select_fields(['Org Id', 'Branch Address', 'Branch Geocode', 'Data Source',
                           'Service Name', 'Service Description', 'Service Conditions', 'Service Phone Number', 'Service Email', 'Service Website',
                           'responses_ids', 'situations_ids']),
         DF.rename_fields({
@@ -175,7 +175,6 @@ def mde_service_flow():
             'Data Source': 'data_source',
             'Branch Address': 'branch_address',
             'Branch Geocode': 'branch_geocode',
-            'Branch Details': 'branch_name',
             'Service Name': 'name',
             'Service Description': 'description',
             'Service Conditions': 'payment_details',
@@ -183,7 +182,7 @@ def mde_service_flow():
             'Service Email': 'email_addresses',
             'Service Website': 'urls',
         }),
-        DF.add_field('branch_id', 'string', lambda r: mde_id(r['name'], r['organization'], r['branch_name'], r['branch_address'], r['branch_geocode'])),
+        DF.add_field('branch_id', 'string', lambda r: mde_id(r['name'], r['organization'], r['branch_address'], r['branch_geocode'])),
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
             description=r['description'],
