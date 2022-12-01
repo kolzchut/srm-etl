@@ -1,5 +1,6 @@
 import math
 import re
+from itertools import product
 
 import dataflows as DF
 from dataflows_ckan import dump_to_ckan
@@ -9,7 +10,20 @@ from conf import settings
 from srm_tools.logger import logger
 
 TEMPLATES = [
-    '{response}', '{situation}', '{response} עבור {situation}', '{org_name}', '{response} של {org_name}', '{org_id}'
+    '{response}',
+    '{situation}',
+    '{response} עבור {situation}',
+    '{org_name}',
+    '{response} של {org_name}',
+    '{org_id}',
+    '{response} באיזור {city_name}',
+    '{response} עבור {situation} באיזור {city_name}',
+    '{response} של {org_name} באיזור {city_name}',
+]
+STOP_WORDS = [
+    'עבור',
+    'של',
+    'באיזור',
 ]
 
 IGNORE_SITUATIONS = {
@@ -18,7 +32,11 @@ IGNORE_SITUATIONS = {
 }
 
 PKRE = re.compile('[0-9a-zA-Zא-ת]+')
+VERIFY_ORG_ID = re.compile('^[0-9]+$')
+VERIFY_CITY_NAME = re.compile('''^[א-ת-`"' ]+$''')
 
+def remove_stop_words(s):
+    return ' '.join([w for w in s.split() if w not in STOP_WORDS])
 
 def unwind_templates():
     def func(rows):
@@ -31,22 +49,37 @@ def unwind_templates():
                 org_names = [org_name]
                 org_id = row.get('organization_id') if org_name else None
                 org_ids = [org_id]
-                for response in responses:
-                    for situation in situations:
-                        for org_name in org_names:
-                            for org_id in org_ids:
-                                if situation.get('id') in IGNORE_SITUATIONS:
-                                    continue
-                                query = template.format(response=response.get('name'), situation=situation.get('name'), org_name=org_name, org_id=org_id)
-                                yield {
-                                    'query': query,
-                                    'query_heb': query,
-                                    'response': response.get('id'),
-                                    'situation': situation.get('id'),
-                                    'org_id': org_id,
-                                    'org_name': org_name,
-                                    'synonyms': response.get('synonyms', []) + situation.get('synonyms', [])
-                                }
+                city_name = row.get('branch_city') if '{city_name}' in template else None
+                city_names = [city_name]
+                for response, situation, org_name, org_id, city_name in product(responses, situations, org_names, org_ids, city_names):
+                    if situation.get('id') in IGNORE_SITUATIONS:
+                        continue
+                    if org_id and VERIFY_ORG_ID.match(org_id) is None:
+                        continue
+                    if city_name and VERIFY_CITY_NAME.match(city_name) is None:
+                        continue
+                    query = template.format(response=response.get('name'), situation=situation.get('name'), org_name=org_name, org_id=org_id, city_name=city_name)
+                    structured_query = set([
+                        response.get('name'),
+                        situation.get('name'),
+                        city_name,
+                        *response.get('synonyms', []),
+                        *situation.get('synonyms', [])
+                    ])
+                    structured_query = ' '.join(remove_stop_words(x.strip()) for x in structured_query if x)
+                    yield {
+                        'query': query,
+                        'query_heb': query,
+                        'response': response.get('id'),
+                        'situation': situation.get('id'),
+                        'org_id': org_id,
+                        'org_name': org_name,
+                        'city_name': city_name,
+                        'synonyms': response.get('synonyms', []) + situation.get('synonyms', []),
+                        'response_name': response.get('name'),
+                        'situation_name': situation.get('name'),
+                        'structured_query': structured_query
+                    }
 
 
     return func
@@ -63,10 +96,16 @@ def autocomplete_flow():
         DF.add_field('synonyms', 'array'),
         DF.add_field('org_id', 'string'),
         DF.add_field('org_name', 'string'),
+        DF.add_field('city_name', 'string'),
+        DF.add_field('response_name', 'string'),
+        DF.add_field('situation_name', 'string'),
+        DF.add_field('structured_query', 'string'),
         unwind_templates(),
         DF.join_with_self('autocomplete', ['query'], fields=dict(
             score=dict(aggregate='count'),
-            query=None, query_heb=None, response=None, situation=None, synonyms=None, org_id=None, org_name=None
+            query=None, query_heb=None, response=None, situation=None, synonyms=None, 
+            org_id=None, org_name=None, city_name=None,
+            response_name=None, situation_name=None, structured_query=None
         )),
         DF.set_type('score', type='number', transform=lambda v: (math.log(v) + 1)**2),
         DF.set_type('query', **{'es:autocomplete': True, 'es:title': True}),
