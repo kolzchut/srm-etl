@@ -96,7 +96,7 @@ def mde_branch_flow():
         load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='branches'),
         DF.filter_rows(lambda r: r['Org Id'] and r['Org Id'] != 'dummy' and r['Branch Details']),
-        DF.select_fields(['Org Id', 'Branch Details', 'Branch Address', 'Branch Geocode', 'Branch Phone Number', 'Branch Email', 'Branch Website', 'Org Website', 'Service Name']),
+        DF.select_fields(['Org Id', 'Branch Details', 'Branch Address', 'Branch Geocode', 'Branch Phone Number', 'Branch Email', 'Branch Website', 'Org Website']),
         DF.rename_fields({
             'Org Id': 'organization',
             'Branch Details': 'name',
@@ -106,8 +106,19 @@ def mde_branch_flow():
             'Branch Email': 'email_addresses',
             'Branch Website': 'urls',
             'Org Website': 'org_urls',
-            'Service Name': 'service_name',
         }),
+        DF.add_field('id', 'string', lambda r: mde_id(r['organization'], r['address'], r['geocode'])),
+        DF.join_with_self('branches', ['id'], dict(
+            id=None, 
+            name=None, 
+            address=None,
+            geocode=None, 
+            phone_numbers=None,
+            email_addresses=None,
+            urls=None,
+            org_urls=None,
+            organization=None,
+        ),
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
             address=r['address'],
@@ -118,7 +129,6 @@ def mde_branch_flow():
             org_urls=r['org_urls'],
             organization=[r['organization']],
         )),
-        DF.add_field('id', 'string', lambda r: mde_id(r['service_name'], r['organization'], r['address'], r['geocode'])),
         DF.select_fields(['id', 'data']),
     ).results()[0][0]
 
@@ -182,7 +192,7 @@ def mde_service_flow():
             'Service Email': 'email_addresses',
             'Service Website': 'urls',
         }),
-        DF.add_field('branch_id', 'string', lambda r: mde_id(r['name'], r['organization'], r['branch_address'], r['branch_geocode'])),
+        DF.add_field('branch_id', 'string', lambda r: mde_id(r['organization'], r['branch_address'], r['branch_geocode'])),
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
             description=r['description'],
