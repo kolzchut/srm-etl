@@ -118,7 +118,7 @@ def mde_branch_flow():
             org_urls=r['org_urls'],
             organization=[r['organization']],
         )),
-        DF.add_field('id', 'string', lambda r: mde_id(r['service_name'], r['organization'], r['address'], r['geocode'])),
+        DF.add_field('id', 'string', lambda r: mde_id(r['service_name'], r['organization'], r['name'], r['address'], r['geocode'])),
         DF.select_fields(['id', 'data']),
     ).results()[0][0]
 
@@ -175,6 +175,7 @@ def mde_service_flow():
             'Data Source': 'data_source',
             'Branch Address': 'branch_address',
             'Branch Geocode': 'branch_geocode',
+            'Branch Details': 'branch_name',
             'Service Name': 'name',
             'Service Description': 'description',
             'Service Conditions': 'payment_details',
@@ -182,7 +183,7 @@ def mde_service_flow():
             'Service Email': 'email_addresses',
             'Service Website': 'urls',
         }),
-        DF.add_field('branch_id', 'string', lambda r: mde_id(r['name'], r['organization'], r['branch_address'], r['branch_geocode'])),
+        DF.add_field('branch_id', 'string', lambda r: mde_id(r['name'], r['organization'], r['branch_name'], r['branch_address'], r['branch_geocode'])),
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
             description=r['description'],
