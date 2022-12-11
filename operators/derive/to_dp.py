@@ -44,9 +44,10 @@ def possible_autocomplete(row):
     autocompletes = set()
     for r in row['responses']:
         for s in row['situations']:
+            autocompletes.add(r['name'])
             if s['id'] not in IGNORE_SITUATIONS:
-                autocompletes.add(r['name'])
-                autocompletes.add(s['name'])
+                if s['id'].split(':')[1] not in ('age-groups', 'languages'):
+                    autocompletes.add(s['name'])
                 autocompletes.add('{} עבור {}'.format(r['name'], s['name']))
     return sorted(autocompletes)
 
