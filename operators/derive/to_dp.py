@@ -4,6 +4,7 @@ import dataflows as DF
 from dataflows_airtable import load_from_airtable
 
 from conf import settings
+from .autocomplete import IGNORE_SITUATIONS
 
 from . import helpers
 from .manual_fixes import ManualFixes
@@ -37,6 +38,17 @@ def fix_situations(situations):
         if all(s in ids for s in both_genders):
             situations = [s for s in situations if s['id'] not in both_genders]
     return situations
+
+
+def possible_autocomplete(row):
+    autocompletes = set()
+    for r in row['responses']:
+        for s in row['situations']:
+            if s['id'] not in IGNORE_SITUATIONS:
+                autocompletes.add(r['name'])
+                autocompletes.add(s['name'])
+                autocompletes.add('{} עבור {}'.format(r['name'], s['name']))
+    return sorted(autocompletes)
 
 
 def srm_data_pull_flow():
@@ -521,6 +533,7 @@ def card_data_flow():
         ),
         DF.set_type('responses', transform=lambda v, row: helpers.reorder_responses_by_category(v, row['response_category'])),
         DF.filter_rows(lambda r: helpers.validate_geometry(r['branch_geometry']), resources=['card_data']),
+        DF.add_field('possible_autocomplete', 'array', default=possible_autocomplete, resources=['card_data'], **{'es:itemType': 'string', 'es:keyword': True}),
         DF.add_field(
             'point_id', 'string',
             lambda r: helpers.calc_point_id(r['branch_geometry']),
