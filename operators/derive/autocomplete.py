@@ -27,8 +27,8 @@ STOP_WORDS = [
 ]
 
 IGNORE_SITUATIONS = {
-    'human-situations:languages:hebrew',
-    'human-situations:age-groups:adults',
+    'human_situations:language:hebrew_speaking',
+    'human_situations:age_group:adults',
 }
 
 PKRE = re.compile('[0-9a-zA-Zא-ת]+')
