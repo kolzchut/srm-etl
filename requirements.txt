@@ -10,3 +10,4 @@ bleach
 python-dotenv
 regex
 openlocationcode
+thefuzz

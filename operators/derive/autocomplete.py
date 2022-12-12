@@ -1,6 +1,11 @@
 import math
 import re
+import tempfile
+import requests
+import shutil
 from itertools import product
+
+from thefuzz import process
 
 import dataflows as DF
 from dataflows_ckan import dump_to_ckan
@@ -34,6 +39,20 @@ IGNORE_SITUATIONS = {
 PKRE = re.compile('[0-9a-zA-Zא-ת]+')
 VERIFY_ORG_ID = re.compile('^[0-9]+$')
 VERIFY_CITY_NAME = re.compile('''^[א-ת-`"' ]+$''')
+
+def prepare_locations():
+    url = settings.LOCATION_BOUNDS_SOURCE_URL
+    all_places = []
+    with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmpfile:
+        src = requests.get(url, stream=True).raw
+        shutil.copyfileobj(src, tmpfile)
+        tmpfile.close()
+        all_places = DF.Flow(
+            DF.load(tmpfile.name, format='datapackage'),
+        ).results()[0][0]
+        keys = [n for rec in all_places for n in rec['name']]
+        mapping = dict((n ,rec['bounds']) for rec in all_places for n in rec['name'])
+        return keys, mapping
 
 def remove_stop_words(s):
     return ' '.join([w for w in s.split() if w not in STOP_WORDS])
@@ -85,7 +104,32 @@ def unwind_templates():
     return func
 
 
+def get_bounds():
+    location_keys, location_mapping = prepare_locations()
+    cache = dict()
+    def func(rows):
+        for row in rows:
+            city_name = row['city_name']
+            if city_name:
+                if city_name in cache:
+                    row['bounds'] = cache[city_name]
+                    yield row
+                    continue
+                match = process.extractOne(city_name, location_keys, score_cutoff=80)
+                if match:
+                    cache[city_name] = location_mapping[match[0]]
+                    row['bounds'] = cache[city_name]
+                    yield row
+                else:
+                    cache[city_name] = None
+                    print('UNKNOWN CITY', city_name)
+            else:
+                yield row
+    return func
+
+
 def autocomplete_flow():
+
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
         DF.update_resource(-1, name='autocomplete'),
@@ -107,6 +151,8 @@ def autocomplete_flow():
             org_id=None, org_name=None, city_name=None,
             response_name=None, situation_name=None, structured_query=None
         )),
+        DF.add_field('bounds', 'array', **{'es:itemType': 'number', 'es:index': False}),
+        get_bounds(),
         DF.set_type('score', type='number', transform=lambda v: (math.log(v) + 1)**2),
         DF.set_type('query', **{'es:autocomplete': True, 'es:title': True}),
         DF.set_type('query_heb', **{'es:title': True}),
