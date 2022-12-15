@@ -75,7 +75,10 @@ def point_title(r):
     if len(bn) > max_len:
         bn = bn[:max_len] + '…'
     if len(branch) > 1:
-        bn += '  +{}'.format(len(branch) - 1)
+        if r.get('branch_location_accurate', True):            
+            bn += '  +{}'.format(len(branch) - 1)
+        else:
+            bn = 'במיקום לא מדויק'
     return bn
 
 
@@ -107,7 +110,7 @@ def geo_data_flow():
             ['point_id'],
             fields=dict(
                 branch_geometry=None,
-                branch_location_accurate=None,
+                branch_location_accurate=dict(aggregate='max'),
                 point_id=None,
                 records={'name': 'record', 'aggregate': 'array'},
             ),
