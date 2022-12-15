@@ -218,7 +218,8 @@ def preprocess_locations(select_fields=None, validate=False):
             ),
             resources=['locations'],
         ),
-        DF.filter_rows(
+        DF.add_field(
+            'location_accurate', 'boolean',
             lambda r: (r['accuracy'] in ACCURATE_TYPES) or (r.get('fixed_lat') and r['fixed_lon']),
             resources=['locations'],
         ),
