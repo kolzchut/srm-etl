@@ -163,7 +163,7 @@ def geo_data_flow():
         ),
         DF.delete_fields(['score', 'records'], resources=['geo_data']),
         DF.add_field('id', 'string', lambda r: r['point_id'], resources=['geo_data']),
-        DF.duplicate('geo_data', 'geo_data_inaccurate', path='geo_data_inaccurate.csv'),
+        DF.duplicate('geo_data', target_name='geo_data_inaccurate', target_path='geo_data_inaccurate.csv'),
         DF.filter_rows(lambda r: r['branch_location_accurate'] is True, resources=['geo_data']),
         DF.filter_rows(lambda r: r['branch_location_accurate'] is False, resources=['geo_data_inaccurate']),        
         # DF.set_type(
