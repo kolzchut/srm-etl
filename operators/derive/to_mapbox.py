@@ -106,8 +106,9 @@ def geo_data_flow():
             'geo_data',
             ['point_id'],
             fields=dict(
-                branch_geometry={'name': 'branch_geometry'},
-                point_id={'name': 'point_id'},
+                branch_geometry=None,
+                branch_location_accurate=None,
+                point_id=None,
                 records={'name': 'record', 'aggregate': 'array'},
             ),
         ),
@@ -142,6 +143,7 @@ def geo_data_flow():
         DF.select_fields(
             [
                 'branch_geometry',
+                'branch_location_accurate',
                 'response_category',
                 # 'records',
                 'title',
@@ -161,7 +163,7 @@ def geo_data_flow():
             settings.CKAN_OWNER_ORG,
             force_format=False
         ),
-        DF.delete_fields(['score', 'records'], resources=['geo_data']),
+        DF.delete_fields(['score'], resources=['geo_data']),
         DF.add_field('id', 'string', lambda r: r['point_id'], resources=['geo_data']),
         DF.duplicate('geo_data', target_name='geo_data_inaccurate', target_path='geo_data_inaccurate.csv'),
         DF.filter_rows(lambda r: r['branch_location_accurate'] is True, resources=['geo_data']),
