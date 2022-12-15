@@ -220,9 +220,11 @@ def preprocess_locations(select_fields=None, validate=False):
         ),
         DF.add_field(
             'location_accurate', 'boolean',
-            lambda r: (r['accuracy'] in ACCURATE_TYPES) or (r.get('fixed_lat') and r['fixed_lon']),
+            lambda r: (r['accuracy'] in ACCURATE_TYPES) or (r.get('fixed_lat') and r['fixed_lon']) or False,
             resources=['locations'],
         ),
+        DF.filter_rows(lambda r: any(r[x] for x in ('fixed_lat', 'resolved_lat')), resources=['locations']),
+        DF.filter_rows(lambda r: any(r[x] for x in ('fixed_lon', 'resolved_lon')), resources=['locations']),
         DF.add_field(
             'lat',
             'number',
@@ -292,25 +294,29 @@ def most_common_category(row):
 
 def address_parts(row):
     address: str = row['branch_address']
+    accurate: bool = row['branch_location_accurate']
     city: str = row['branch_city']
     cc = regex.compile('\m(%s){e<3}' % city)
     m = cc.search(address)
     if m:
-        prefix = address[: m.start()].strip(' -,\n\t')
-        suffix = address[m.end() :].strip(' -,\n\t')
+        prefix = address[:m.start()].strip(' -,\n\t')
+        suffix = address[m.end():].strip(' -,\n\t')
         if len(suffix) < 4:
-            return dict(
-                primary=city, secondary=prefix
-            )
+            street_address = prefix
         else:
-            return dict(
-                primary=city, secondary=prefix + ', ' + suffix
-            )
-    else:
+            street_address = prefix + ', ' + suffix
+        if not accurate:
+            street_address + ' (במיקום לא מדויק)'
         return dict(
-            primary=address, secondary=None
+            primary=city, secondary=street_address
         )
 
+    else:
+        return dict(
+            primary=address, secondary=None if accurate else '(במיקום לא מדויק)'
+        )
+
+STOPWORDS = ['עמותת ', 'העמותה ל']
 
 def org_name_parts(row):
     name: str = row['organization_name']
@@ -320,8 +326,12 @@ def org_name_parts(row):
     if m:
         prefix = name[: m.start()].strip(' -,\n\t')
         suffix = name[m.end() :].strip(' -,\n\t')
+        name = prefix + ' ' + suffix
+        for word in STOPWORDS:
+            name = name.replace(word, '')
+        name = name.strip(' -,\n\t')
         return dict(
-            primary=short_name, secondary=prefix + ' ' + suffix
+            primary=short_name, secondary=name
         )
     else:
         return dict(

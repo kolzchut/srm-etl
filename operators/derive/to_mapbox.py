@@ -75,7 +75,7 @@ def point_title(r):
     if len(bn) > max_len:
         bn = bn[:max_len] + '…'
     if len(branch) > 1:
-        if r.get('branch_location_accurate', True):            
+        if r.get('branch_location_accurate', True):
             bn += '  +{}'.format(len(branch) - 1)
         else:
             bn = 'במיקום לא מדויק'
@@ -156,16 +156,16 @@ def geo_data_flow():
             resources=['geo_data'],
         ),
         DF.add_field('score', 'number', 10, resources=['geo_data']),
-        dump_to_es_and_delete(
-            indexes=dict(srm__geo_data=[dict(resource_name='geo_data')]),
-        ),
+        # dump_to_es_and_delete(
+        #     indexes=dict(srm__geo_data=[dict(resource_name='geo_data')]),
+        # ),
         DF.update_resource(['geo_data'], path='geo_data.csv'),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
-            force_format=False
-        ),
+        # dump_to_ckan(
+        #     settings.CKAN_HOST,
+        #     settings.CKAN_API_KEY,
+        #     settings.CKAN_OWNER_ORG,
+        #     force_format=False
+        # ),
         DF.delete_fields(['score'], resources=['geo_data']),
         DF.add_field('id', 'string', lambda r: r['point_id'], resources=['geo_data']),
         DF.duplicate('geo_data', target_name='geo_data_inaccurate', target_path='geo_data_inaccurate.csv'),
