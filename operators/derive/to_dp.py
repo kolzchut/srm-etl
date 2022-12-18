@@ -548,7 +548,7 @@ def card_data_flow():
         ),
         DF.add_field(
             'coords', 'string',
-            lambda r: r['branch_geometry'],
+            lambda r: '[{},{}]'.format(*r['branch_geometry']),
             **{'es:keyword': True},
             resources=['card_data']
         ),
