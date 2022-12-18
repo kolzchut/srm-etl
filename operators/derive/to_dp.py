@@ -1,3 +1,4 @@
+import json
 from itertools import chain
 
 import dataflows as DF
@@ -543,6 +544,12 @@ def card_data_flow():
         DF.add_field(
             'point_id', 'string',
             lambda r: helpers.calc_point_id(r['branch_geometry']),
+            **{'es:keyword': True},
+            resources=['card_data']
+        ),
+        DF.add_field(
+            'coords', 'string',
+            lambda r: json.dumps(r['branch_geometry']['coordinates']),
             **{'es:keyword': True},
             resources=['card_data']
         ),
