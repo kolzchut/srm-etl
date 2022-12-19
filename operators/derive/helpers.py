@@ -306,7 +306,8 @@ def address_parts(row):
         else:
             street_address = prefix + ', ' + suffix
         if not accurate:
-            street_address + ' (במיקום לא מדויק)'
+            street_address += ' (במיקום לא מדויק)'
+        street_address = street_address.strip(' -,\n\t')
         return dict(
             primary=city, secondary=street_address
         )
