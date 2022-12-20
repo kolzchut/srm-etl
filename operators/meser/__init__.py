@@ -63,9 +63,9 @@ def operator(*_):
         # Adding fields
         DF.add_field('service_name', 'string', lambda r: r['NAME'].strip()),
         DF.add_field('service_description', 'string', lambda r: r['Type'].strip() + (' עבור ' + r['Target_Population'].strip()) if r['Target_Population'] else ''),
-        DF.add_field('branch_id', 'string', lambda r: 'meser-' + r['Misgeret_Id']),
         DF.add_field('organization_id', 'string', lambda r: r['ORGANIZATIONS_BUSINES_NUM'] or r['Registered_Business_Id'] or '53a2e790-87b3-44a2-a5f2-5b826f714775'),
         DF.add_field('address', 'string', lambda r: ' '.join(filter(None, [r['Street'], r['House_Num'], r['City']])).replace(' - ', '-')),
+        DF.add_field('branch_id', 'string', lambda r: 'meser-' + hasher(r['address'], r['organization_id'])),
         DF.add_field('location', 'string', alternate_address),
         DF.add_field('tagging', 'array', lambda r: list(filter(None, [r['Type'], r['Target_Population'], r['Second_Classific'], r['Gender_Descr']]))),
         DF.add_field('phone_numbers', 'string', lambda r: '0' + r['Telephone'] if r['Telephone'] and r['Telephone'][0] != '0' else r['Telephone'] or None),
