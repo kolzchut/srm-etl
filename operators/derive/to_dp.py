@@ -122,7 +122,7 @@ def flat_branches_flow():
             ['location_key'],
             fields=dict(geometry=None, address=None, resolved_city=None, location_accurate=None),
         ),
-        DF.add_field('address', 'string', lambda row: select_address(row, ['address', 'orig_address', 'resolved_city']), resources=['flat_branches']),
+        DF.set_type('address', transform=lambda v, row: select_address(row, ['address', 'orig_address', 'resolved_city']), resources=['flat_branches']),
         # organizations onto branches
         DF.add_field(
             'organization_key',
