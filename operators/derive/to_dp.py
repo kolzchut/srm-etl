@@ -104,7 +104,7 @@ def flat_branches_flow():
         ),
         DF.update_package(name='Flat Branches'),
         DF.update_resource(['branches'], name='flat_branches', path='flat_branches.csv'),
-        DF.rename_fields({'address': 'branch_address'}, resources=['flat_branches']),
+        DF.rename_fields({'address': 'orig_address'}, resources=['flat_branches']),
         # location onto branches
         DF.filter_rows(
             lambda r: r['location'] and len(r['location']) > 0, resources=['flat_branches']
@@ -122,8 +122,7 @@ def flat_branches_flow():
             ['location_key'],
             fields=dict(geometry=None, address=None, resolved_city=None, location_accurate=None),
         ),
-        DF.set_type('address', transform=lambda v, row: select_address(row, ['address', 'branch_address', 'resolved_city'])),
-        DF.delete_fields(['branch_address'], resources=['flat_branches']),
+        DF.set_type('address', transform=lambda v, row: select_address(row, ['address', 'orig_address', 'resolved_city'])),
         # organizations onto branches
         DF.add_field(
             'organization_key',
@@ -168,6 +167,7 @@ def flat_branches_flow():
                 'phone_numbers': 'branch_phone_numbers',
                 'email_addresses': 'branch_email_addresses',
                 'address': 'branch_address',
+                'orig_address': 'branch_orig_address',
                 'resolved_city': 'branch_city',
                 'geometry': 'branch_geometry',
                 'location_accurate': 'branch_location_accurate',
@@ -186,6 +186,7 @@ def flat_branches_flow():
                 'branch_phone_numbers',
                 'branch_email_addresses',
                 'branch_address',
+                'branch_orig_address',
                 'branch_city',
                 'branch_geometry',
                 'branch_location_accurate',
@@ -339,6 +340,7 @@ def flat_table_flow():
                 branch_geometry=None,
                 branch_location_accurate=None,
                 branch_address=None,
+                branch_orig_address=None,
                 branch_city=None,
                 organization_key=None,
                 organization_id=None,
@@ -425,6 +427,7 @@ def flat_table_flow():
                 'branch_phone_numbers',
                 'branch_email_addresses',
                 'branch_address',
+                'branch_orig_address',
                 'branch_city',
                 'branch_geometry',
                 'branch_location_accurate',
@@ -484,6 +487,7 @@ def card_data_flow():
                 branch_phone_numbers=None,
                 branch_email_addresses=None,
                 branch_address=None,
+                branch_orig_address=None,
                 branch_city=None,
                 branch_geometry=None,
                 branch_location_accurate=None,

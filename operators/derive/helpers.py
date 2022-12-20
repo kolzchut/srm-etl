@@ -293,8 +293,10 @@ def most_common_category(row):
 
 
 def address_parts(row):
-    address: str = row['branch_address']
+    resolved_address: str = row['branch_address']
+    orig_address: str = row['branch_orig_address']
     accurate: bool = row['branch_location_accurate']
+    address = (resolved_address if accurate else orig_address) or orig_address
     city: str = row['branch_city']
     cc = regex.compile('\m(%s){e<3}' % city)
     m = cc.search(address)
@@ -311,11 +313,15 @@ def address_parts(row):
         return dict(
             primary=city, secondary=street_address
         )
-
     else:
-        return dict(
-            primary=address, secondary=None if accurate else '(במיקום לא מדויק)'
-        )
+        if accurate:
+            return dict(
+                primary=address, secondary=None
+            )
+        else:
+            return dict(
+                primary=address, secondary='(במיקום לא מדויק)'
+            )
 
 STOPWORDS = ['עמותת ', 'העמותה ל']
 
