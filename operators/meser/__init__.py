@@ -93,6 +93,8 @@ def operator(*_):
             r for t in r['tagging'] for r in (tags.get(t, {}).get('situation_ids') or [])
         ))),
 
+        DF.filter_rows(good_company),
+
         DF.dump_to_path('temp/meser/denormalized'),
     ).process()
 
@@ -101,7 +103,6 @@ def operator(*_):
         'entities', ['id'],
         DF.Flow(
             DF.load('temp/meser/denormalized/datapackage.json'),
-            DF.filter_rows(good_company, resources='meser'),
             DF.join_with_self('meser', ['organization_id'], fields=dict(organization_id=None)),
             DF.rename_fields({'organization_id': 'id'}, resources='meser'),
             DF.add_field('data', 'object', lambda r: dict(id=r['id'])),
@@ -117,7 +118,6 @@ def operator(*_):
         'meser', ['id', 'name', 'organization', 'location', 'address', 'phone_numbers'],
         DF.Flow(
             DF.load('temp/meser/denormalized/datapackage.json'),
-            DF.filter_rows(good_company, resources='meser'),
             DF.join_with_self('meser', ['branch_id'], fields=dict(branch_id=None, organization_id=None, address=None, location=None, phone_numbers=None)),
             DF.rename_fields({
                 'branch_id': 'id',
