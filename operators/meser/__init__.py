@@ -62,6 +62,7 @@ def operator(*_):
 
         # Adding fields
         DF.add_field('service_name', 'string', lambda r: r['NAME'].strip()),
+        DF.add_field('branch_name', 'string', lambda r: r['Type'].strip()),
         DF.add_field('service_description', 'string', lambda r: r['Type'].strip() + (' עבור ' + r['Target_Population'].strip()) if r['Target_Population'] else ''),
         DF.add_field('organization_id', 'string', lambda r: r['ORGANIZATIONS_BUSINES_NUM'] or r['Registered_Business_Id'] or '53a2e790-87b3-44a2-a5f2-5b826f714775'),
         DF.add_field('address', 'string', lambda r: ' '.join(filter(None, [r['Street'], r['House_Num'], r['City']])).replace(' - ', '-')),
@@ -77,6 +78,7 @@ def operator(*_):
             service_name=None,
             service_description=None,
             branch_id=None,
+            branch_name=None,
             organization_id=None,
             address=None,
             location=None,
@@ -118,9 +120,12 @@ def operator(*_):
         'meser', ['id', 'name', 'organization', 'location', 'address', 'phone_numbers'],
         DF.Flow(
             DF.load('temp/meser/denormalized/datapackage.json'),
-            DF.join_with_self('meser', ['branch_id'], fields=dict(branch_id=None, organization_id=None, address=None, location=None, phone_numbers=None)),
+            DF.join_with_self('meser', ['branch_id'], fields=dict(
+                branch_id=None, branch_name=None, organization_id=None, address=None, location=None, phone_numbers=None)
+            ),
             DF.rename_fields({
                 'branch_id': 'id',
+                'branch_name': 'name',
             }, resources='meser'),
             DF.add_field('organization', 'array', lambda r: [r['organization_id']], resources='meser'),
             DF.add_field('data', 'object', lambda r: dict((k,v) for k,v in r.items() if k!='id'), resources='meser'),

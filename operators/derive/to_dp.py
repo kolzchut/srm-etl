@@ -2,6 +2,7 @@ from itertools import chain
 
 import dataflows as DF
 from dataflows_airtable import load_from_airtable
+from fuzzywuzzy import fuzz
 
 from conf import settings
 from .autocomplete import IGNORE_SITUATIONS
@@ -93,8 +94,47 @@ def select_address(row, address_fields):
         if helpers.validate_address(v):
             return row[f]
 
+def merge_duplicate_branches(branch_mapping):
+    found = dict()
+    def func(rows):
+        count = 0
+        for row in rows:
+            count += 1
 
-def flat_branches_flow():
+            geom = row['branch_geometry'] or [row['branch_id']]
+            new_key = hasher(row['organization_id'], row['branch_name'], ';'.join(map(str, geom)))
+            old_key = row['branch_key']
+            branch_mapping[old_key] = new_key
+
+            if new_key in found:
+                prev_rec = found[new_key]
+                for k, v in row.items():
+                    if k not in ('branch_id', 'branch_key', 'branch_orig_address'):
+                        prev_v = prev_rec.get(k)
+                        if prev_rec.get(k) != v:
+                            if None in (prev_v, v):
+                                prev_rec[k] = prev_v or v
+                            elif isinstance(v, list):
+                                for ll in v:
+                                    if ll not in prev_v:
+                                        prev_v.append(ll)
+                            elif isinstance(v, str):
+                                if ratio := fuzz.ratio(prev_v, v) < 80:
+                                    print('DUPLICATE BRANCH FOR {}, {}: Too different in {} ({} != {} - ratio {})'.format(
+                                        row['branch_id'], prev_rec['branch_id'], k, v, prev_rec.get(k), ratio
+                                    ))
+                            else:
+                                print('DUPLICATE BRANCH FOR {}, {}: Differs in {} ({} != {})'.format(
+                                    row['branch_id'], prev_rec['branch_id'], k, v, prev_rec.get(k)
+                                ))
+            else:
+                row['branch_key'] = new_key
+                found[new_key] = row
+        print('DEDUPLICATION: {} rows, {} unique'.format(count, len(found)))
+        yield from found.values()
+    return func
+
+def flat_branches_flow(branch_mapping):
     """Produce a denormalized view of branch-related data."""
 
     return DF.Flow(
@@ -206,11 +246,12 @@ def flat_branches_flow():
             resources=['flat_branches'],
         ),
         DF.validate(),
+        merge_duplicate_branches(branch_mapping),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/flat_branches'),
     )
 
 
-def flat_services_flow():
+def flat_services_flow(branch_mapping):
     """Produce a denormalized view of service-related data."""
 
     return DF.Flow(
@@ -250,6 +291,7 @@ def flat_services_flow():
             ),
         ),
         # merge multiple branch fields into a single field
+        DF.set_type('branches', transform=lambda v: list(set(filter(None, map(lambda i: branch_mapping.get(i), v or [])))), resources=['flat_services']),
         DF.add_field(
             'merge_branches',
             'array',
@@ -604,9 +646,10 @@ def card_data_flow():
 def operator(*_):
     logger.info('Starting Data Package Flow')
 
+    branch_mapping = dict()
     srm_data_pull_flow().process()
-    flat_branches_flow().process()
-    flat_services_flow().process()
+    flat_branches_flow(branch_mapping).process()
+    flat_services_flow(branch_mapping).process()
     flat_table_flow().process()
     card_data_flow().process()
 

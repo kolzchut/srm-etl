@@ -4,7 +4,7 @@ from dataflows.helpers.resource_matcher import ResourceMatcher
 import re
 import regex
 
-ACCURATE_TYPES = ('ROOFTOP', 'RANGE_INTERPOLATED', 'STREET_MID_POINT', 'POI_MID_POINT', 'ADDR_V1')
+ACCURATE_TYPES = ('ROOFTOP', 'RANGE_INTERPOLATED', 'STREET_MID_POINT', 'ADDR_V1') #'POI_MID_POINT')
 DIGIT = re.compile('\d')
 ENGLISH = re.compile('[a-zA-Z+]')
 
@@ -220,7 +220,7 @@ def preprocess_locations(select_fields=None, validate=False):
         ),
         DF.add_field(
             'location_accurate', 'boolean',
-            lambda r: (r['accuracy'] in ACCURATE_TYPES) or (r.get('fixed_lat') and r['fixed_lon']) or False,
+            lambda r: (r['accuracy'] in ACCURATE_TYPES) or all((r.get('fixed_lat'), r['fixed_lon'])) or False,
             resources=['locations'],
         ),
         DF.filter_rows(lambda r: any(r[x] for x in ('fixed_lat', 'resolved_lat')), resources=['locations']),
