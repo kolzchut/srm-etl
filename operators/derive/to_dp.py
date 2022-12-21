@@ -2,7 +2,7 @@ from itertools import chain
 
 import dataflows as DF
 from dataflows_airtable import load_from_airtable
-from fuzzywuzzy import fuzz
+from thefuzz import fuzz
 
 from conf import settings
 from .autocomplete import IGNORE_SITUATIONS
