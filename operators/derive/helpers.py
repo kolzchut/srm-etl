@@ -177,6 +177,8 @@ def preprocess_organizations(select_fields=None, validate=False):
             transform=transform_phone_numbers,
             resources=['organizations'],
         ),
+        remove_whitespaces('organizations', 'name'),
+        remove_whitespaces('organizations', 'short_name'),
         DF.select_fields(select_fields, resources=['organizations']) if select_fields else None,
         DF.validate() if validate else None,
     )
@@ -344,3 +346,16 @@ def org_name_parts(row):
         return dict(
             primary=name, secondary=None
         )
+
+def remove_whitespaces(resource, field):
+
+    whitespace_re = re.compile(r'\s+', re.UNICODE | re.MULTILINE)
+
+    def func(value):
+        if isinstance(value, str):
+            return whitespace_re.sub(' ', value).strip(' \t()\n-')
+        return value
+
+    return DF.Flow(
+        DF.set_type(field, resources=resource, transform=func),
+    )
