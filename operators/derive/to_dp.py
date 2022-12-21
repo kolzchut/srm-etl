@@ -102,14 +102,14 @@ def merge_duplicate_branches(branch_mapping):
             count += 1
 
             geom = row['branch_geometry'] or [row['branch_id']]
-            new_key = hasher(row['organization_id'], row['branch_name'], ';'.join(map(str, geom)))
+            new_key = hasher(row['organization_id'], ';'.join(map(str, geom)))
             old_key = row['branch_key']
             branch_mapping[old_key] = new_key
 
             if new_key in found:
                 prev_rec = found[new_key]
                 for k, v in row.items():
-                    if k not in ('branch_id', 'branch_key', 'branch_orig_address'):
+                    if k not in ('branch_id', 'branch_key', 'branch_orig_address', 'branch_name'):
                         prev_v = prev_rec.get(k)
                         if prev_rec.get(k) != v:
                             if None in (prev_v, v):
@@ -119,7 +119,7 @@ def merge_duplicate_branches(branch_mapping):
                                     if ll not in prev_v:
                                         prev_v.append(ll)
                             elif isinstance(v, str):
-                                if ratio := fuzz.ratio(prev_v, v) < 80:
+                                if (ratio := fuzz.ratio(prev_v, v)) < 80:
                                     print('DUPLICATE BRANCH FOR {}, {}: Too different in {} ({} != {} - ratio {})'.format(
                                         row['branch_id'], prev_rec['branch_id'], k, v, prev_rec.get(k), ratio
                                     ))

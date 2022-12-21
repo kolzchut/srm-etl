@@ -203,6 +203,7 @@ def preprocess_branches(select_fields=None, validate=False):
             transform=transform_email_addresses,
             resources=['branches'],
         ),
+        remove_whitespaces('branches', 'name'),
         DF.select_fields(select_fields, resources=['branches']) if select_fields else None,
         DF.validate() if validate else None,
     )
