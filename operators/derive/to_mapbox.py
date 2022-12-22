@@ -147,7 +147,7 @@ def geo_data_flow():
         DF.add_field(
             'service_count',
             'integer',
-            lambda r: len(set(branches(r)))
+            lambda r: len(set(branches(r))),
             resources=['geo_data'],
         ),
         DF.select_fields(
