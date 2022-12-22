@@ -66,10 +66,14 @@ def upload_tileset(filename, tileset, name):
         time.sleep(10)
 
 
+def branches(r):
+    records = r.get('records')
+    return list([f['organization_short_name'] or f['organization_name'] for f in records])
+
+
 def point_title(r):
     max_len = 20
-    records = r.get('records')
-    branch = list([f['organization_short_name'] or f['organization_name'] for f in records])
+    branch = branches(r)
     branch = Counter(branch)
     bn = branch.most_common(1)[0][0]
     if len(bn) > max_len:
@@ -79,6 +83,9 @@ def point_title(r):
             bn += '  +{}'.format(len(branch) - 1)
         else:
             bn = 'במיקום לא מדויק'
+    else:
+        if not r.get('branch_location_accurate', True):
+            bn += '*'
     return bn
 
 
@@ -140,7 +147,7 @@ def geo_data_flow():
         DF.add_field(
             'service_count',
             'integer',
-            lambda r: len(r['records']),
+            lambda r: len(set(branches(r)))
             resources=['geo_data'],
         ),
         DF.select_fields(
