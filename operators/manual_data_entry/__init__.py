@@ -1,3 +1,4 @@
+import shutil
 import datetime
 
 import dataflows as DF
@@ -234,8 +235,8 @@ def mde_service_flow():
         DF.select_fields(['id', 'data']),
     ).results()[0][0]
 
-    print('COLLECTED {} relevant branches'.format(len(services)))
-    return airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'manual-data-entry',
+    print('COLLECTED {} relevant services'.format(len(services)))
+    airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'manual-data-entry',
         ['id', 'name', 'description', 'payment_details', 'phone_numbers', 'urls', 'situations', 'responses', 'branches', 'data_sources'],
         services,
         service_updater(),
@@ -249,6 +250,8 @@ def operator(*_):
     mde_organization_flow()
     mde_branch_flow()
     mde_service_flow()
+
+    shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
     logger.info('Finished Manual Data Entry Flow')
 
 

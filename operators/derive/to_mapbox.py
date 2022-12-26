@@ -102,6 +102,7 @@ def geo_data_flow():
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
         DF.update_package(title='Full Point Data', name='geo_data'),
         DF.update_resource(['card_data'], name='geo_data', path='geo_data.csv'),
+        DF.filter_rows(lambda r: r['branch_geometry'] is not None),
         DF.add_field(
             'record',
             'object',
@@ -194,6 +195,7 @@ def points_flow():
         DF.update_package(title='Points Data', name='points_data'),
         DF.update_resource(['card_data'], name='points', path='points.csv'),
         DF.set_primary_key(['card_id']),
+        DF.filter_rows(lambda r: r['branch_geometry'] is not None),
         DF.select_fields(
             [
                 'branch_geometry',

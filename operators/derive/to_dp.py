@@ -160,9 +160,10 @@ def flat_branches_flow(branch_mapping):
             ['key'],
             'flat_branches',
             ['location_key'],
-            fields=dict(geometry=None, address=None, resolved_city=None, location_accurate=None),
+            fields=dict(geometry=None, address=None, resolved_city=None, location_accurate=None, national_service=None),
         ),
         DF.set_type('address', transform=lambda v, row: select_address(row, ['address', 'orig_address', 'resolved_city']), resources=['flat_branches']),
+
         # organizations onto branches
         DF.add_field(
             'organization_key',
@@ -241,6 +242,7 @@ def flat_branches_flow(branch_mapping):
                 'organization_urls',
                 'organization_phone_numbers',
                 'organization_situations',
+                'national_service',
                 'merged_situations',
             ],
             resources=['flat_branches'],
@@ -393,6 +395,7 @@ def flat_table_flow():
                 organization_kind=None,
                 organization_urls=None,
                 organization_phone_numbers=None,
+                national_service=None,
                 branch_merged_situations={'name': 'merged_situations'},
             ),
             mode='inner'
@@ -473,6 +476,7 @@ def flat_table_flow():
                 'branch_city',
                 'branch_geometry',
                 'branch_location_accurate',
+                'national_service',
                 'situation_id',
                 'situation_name',
                 'situation_synonyms',
@@ -536,6 +540,7 @@ def card_data_flow():
                 situation_id={'name': 'situation_id', 'aggregate': 'array'},
                 situation_name={'name': 'situation_name', 'aggregate': 'array'},
                 situation_synonyms={'name': 'situation_synonyms', 'aggregate': 'array'},
+                national_service=None,
             ),
         ),
         DF.add_field(
@@ -584,17 +589,17 @@ def card_data_flow():
             **{'es:keyword': True},
         ),
         DF.set_type('responses', transform=lambda v, row: helpers.reorder_responses_by_category(v, row['response_category'])),
-        DF.filter_rows(lambda r: helpers.validate_geometry(r['branch_geometry']), resources=['card_data']),
+        DF.filter_rows(lambda r: helpers.validate_geometry(r['branch_geometry']) or r['national_service'], resources=['card_data']),
         DF.add_field('possible_autocomplete', 'array', default=possible_autocomplete, resources=['card_data'], **{'es:itemType': 'string', 'es:keyword': True}),
         DF.add_field(
             'point_id', 'string',
-            lambda r: helpers.calc_point_id(r['branch_geometry']),
+            lambda r: helpers.calc_point_id(r['branch_geometry']) if not r['national_service'] else 'national_service',
             **{'es:keyword': True},
             resources=['card_data']
         ),
         DF.add_field(
             'coords', 'string',
-            lambda r: '[{},{}]'.format(*r['branch_geometry']),
+            lambda r: '[{},{}]'.format(*r['branch_geometry']) if r['branch_geometry'] else None,
             **{'es:keyword': True},
             resources=['card_data']
         ),
@@ -635,8 +640,6 @@ def card_data_flow():
             ],
             resources=['card_data'],
         ),
-        # TODO - When we join with self (in some cases??), it puts the resource into a path under data/
-        # this workaround just keeps behaviour same as other dumps we have.
         DF.update_resource(['card_data'], path='card_data.csv'),
         DF.validate(),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/card_data'),

@@ -214,10 +214,15 @@ def preprocess_locations(select_fields=None, validate=False):
         DF.update_resource(['Locations'], name='locations', path='locations.csv'),
         filter_dummy_data(),
         set_staging_pkey('locations'),
+        DF.add_field(
+            'national_service', 'boolean',
+            lambda r: r['accuracy'] == 'NATIONAL_SERVICE',
+            resources=['locations'],
+        ),
         DF.filter_rows(
             lambda r: any(
                 all(r.get(f) for f in fields)
-                for fields in [('resolved_lat', 'resolved_lon'), ('fixed_lat', 'fixed_lon')]
+                for fields in [('resolved_lat', 'resolved_lon'), ('fixed_lat', 'fixed_lon'), ('national_service',)]
             ),
             resources=['locations'],
         ),
@@ -226,8 +231,8 @@ def preprocess_locations(select_fields=None, validate=False):
             lambda r: (r['accuracy'] in ACCURATE_TYPES) or all((r.get('fixed_lat'), r['fixed_lon'])) or False,
             resources=['locations'],
         ),
-        DF.filter_rows(lambda r: any(r[x] for x in ('fixed_lat', 'resolved_lat')), resources=['locations']),
-        DF.filter_rows(lambda r: any(r[x] for x in ('fixed_lon', 'resolved_lon')), resources=['locations']),
+        DF.filter_rows(lambda r: any(r[x] for x in ('fixed_lat', 'resolved_lat', 'national_service')), resources=['locations']),
+        DF.filter_rows(lambda r: any(r[x] for x in ('fixed_lon', 'resolved_lon', 'national_service')), resources=['locations']),
         DF.add_field(
             'lat',
             'number',
@@ -241,7 +246,7 @@ def preprocess_locations(select_fields=None, validate=False):
             resources=['locations'],
         ),
         DF.add_field(
-            'geometry', 'geopoint', lambda r: [r['lon'], r['lat']], resources=['locations']
+            'geometry', 'geopoint', lambda r: [r['lon'], r['lat']] if not r['national_service'] else None, resources=['locations']
         ),
         DF.add_field(
             'address',
@@ -299,6 +304,14 @@ def address_parts(row):
     resolved_address: str = row['branch_address']
     orig_address: str = row['branch_orig_address']
     accurate: bool = row['branch_location_accurate']
+    national: bool = row['national_service']
+
+    if national:
+        return dict(
+            primary='שירות ארצי',
+            secondary=None,
+            national=True
+        )
     address = (resolved_address if accurate else orig_address) or orig_address
     city: str = row['branch_city']
     cc = regex.compile('\m(%s){e<3}' % city)
