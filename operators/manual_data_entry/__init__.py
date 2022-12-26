@@ -10,6 +10,31 @@ from srm_tools.hash import hasher
 from srm_tools.logger import logger
 from srm_tools.update_table import airtable_updater
 
+CHECKPOINT = 'mde'
+
+# PREPARE
+def slugify_org_id():
+    def func(row):
+        id = row['Org Id'] or row['Org Name']
+        row['Org Id'] = slugify(id, separator='-', lowercase=True)
+    return func
+
+def handle_national_services():
+    def func(row):
+        if row['National Service?']:
+            row['Branch Address'] = 'שירות ארצי'
+    return func
+
+
+def mde_prepare():
+    DF.Flow(
+        load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.filter_rows(lambda r: (r['Org Id'] or r['Org Name']) and r['Org Id'] != 'dummy'),
+        slugify_org_id(),
+        handle_national_services(),
+        DF.checkpoint(CHECKPOINT)
+    ).process()
+
 # ORGS
 def org_updater():
     def func(row):
@@ -36,9 +61,8 @@ def org_updater():
 def mde_organization_flow():
     today = datetime.date.today().isoformat()
     orgs = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.checkpoint(CHECKPOINT),
         DF.update_resource(-1, name='orgs'),
-        DF.filter_rows(lambda r: r['Org Id'] and r['Org Id'] != 'dummy'),
         DF.select_fields(['Org Id', 'Org Name', 'Org Short Name', 'Org Phone Number', 'Org Website']),
         DF.rename_fields({
             'Org Id': 'id',
@@ -58,10 +82,12 @@ def mde_organization_flow():
             last_tag_date=today,
         )),
         DF.select_fields(['id', 'data']),
+        DF.printer()
     ).results()[0][0]
 
     print('COLLECTED {} relevant organizations'.format(len(orgs)))
-    return airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'entities',
+
+    airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'entities',
         ['name', 'short_name', 'urls', 'phone_numbers', 'last_tag_date'],
         orgs,
         org_updater(), 
@@ -91,12 +117,13 @@ def branch_updater():
 
     return func
 
+
 def mde_branch_flow():
     branches = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.checkpoint(CHECKPOINT),
         DF.update_resource(-1, name='branches'),
-        DF.filter_rows(lambda r: r['Org Id'] and r['Org Id'] != 'dummy' and r['Branch Details']),
-        DF.select_fields(['Org Id', 'Branch Details', 'Branch Address', 'Branch Geocode', 'Branch Phone Number', 'Branch Email', 'Branch Website', 'Org Website']),
+        DF.select_fields(['Org Id', 'Org Name', 'Branch Details', 'Branch Address', 'Branch Geocode', 
+                          'Branch Phone Number', 'Branch Email', 'Branch Website', 'Org Website']),
         DF.rename_fields({
             'Org Id': 'organization',
             'Branch Details': 'name',
@@ -168,15 +195,14 @@ def service_updater():
 
 def mde_service_flow():
 
-    data_sources = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, 'DataReferences', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-    ).results()[0][0]
-    data_sources = dict((r['name'], r['reference']) for r in data_sources)
+    # data_sources = DF.Flow(
+    #     load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, 'DataReferences', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+    # ).results()[0][0]
+    # data_sources = dict((r['name'], r['reference']) for r in data_sources)
 
     services = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.checkpoint(CHECKPOINT),
         DF.update_resource(-1, name='services'),
-        DF.filter_rows(lambda r: r['Org Id'] and r['Org Id'] != 'dummy' and r['Service Name']),
         DF.select_fields(['Org Id', 'Branch Address', 'Branch Geocode', 'Data Source',
                           'Service Name', 'Service Description', 'Service Conditions', 'Service Phone Number', 'Service Email', 'Service Website',
                           'responses_ids', 'situations_ids']),
@@ -219,6 +245,7 @@ def mde_service_flow():
 
 def operator(*_):
     logger.info('Starting Manual Data Entry Flow')
+    mde_prepare()
     mde_organization_flow()
     mde_branch_flow()
     mde_service_flow()
