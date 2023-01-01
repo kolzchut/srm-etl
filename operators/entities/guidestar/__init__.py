@@ -35,6 +35,10 @@ def unwind_services(ga: GuidestarAPI, source='entities', existing_orgs = set()):
                     continue
                 services = ga.services(regNum)
                 for service in services:
+                    if service.get('recordType') != 'GreenInfo':
+                        continue
+                    if not service.get('serviceName'):
+                        continue
                     ret = dict()
                     ret.update(row)
                     ret['data'] = service
@@ -80,103 +84,112 @@ def updateServiceFromSourceData(taxonomies):
         situations = set()
 
         row['name'] = data.pop('serviceName')
-        row['description'] = data.pop('description')
+        row['description'] = data.pop('voluntaryDescription') or data.pop('description')
         data_source_url = f'https://www.guidestar.org.il/organization/{data["organization_id"]}/services'
         row['data_sources'] = f'מידע נוסף אפשר למצוא ב<a href="{data_source_url}">גיידסטאר - אתר העמותות של ישראל</a>'
-        row['organizations'] = [data.pop('organization_id')]
+        orgId = data.pop('organization_id')
+        row['organizations'] = [orgId]
         actual_branch_ids = data.pop('actual_branch_ids')
         row['branches'] = ['guidestar:' + b['branchId'] for b in (data.pop('branches') or []) if b['branchId'] in actual_branch_ids]
         if len(row['branches']) > 0:
             row['organizations'] = None
 
         record_type = data.pop('recordType')
-        assert record_type in ('GreenInfo', 'YouthProject'), record_type
-        if record_type == 'GreenInfo':
-            for k in list(data.keys()):
-                if k.startswith('youth'):
-                    data.pop(k)
-            update_from_taxonomy([data.pop('serviceTypeName')], responses, situations)
-            update_from_taxonomy((data.pop('serviceTargetAudience') or '').split(';'), responses, situations)
+        assert record_type == 'GreenInfo'
+        for k in list(data.keys()):
+            if k.startswith('youth'):
+                data.pop(k)
+        update_from_taxonomy([data.pop('serviceTypeName')], responses, situations)
+        update_from_taxonomy((data.pop('serviceTargetAudience') or '').split(';'), responses, situations)
 
-            payment_required = data.pop('paymentMethod')
-            if payment_required == 'Free service':
-                row['payment_required'] = 'no'
-            elif payment_required == 'Symbolic cost':
-                row['payment_required'] = 'yes'
-                row['payment_details'] = 'עלות סמלית'
-            elif payment_required == 'Full payment':
-                row['payment_required'] = 'yes'
-                row['payment_details'] = 'השירות ניתן בתשלום'
-            elif payment_required == 'Government funded':
-                row['payment_required'] = 'yes'
-                row['payment_details'] = 'השירות מסובסד על ידי הממשלה'
-            else:
-                assert False, payment_required + ' ' + repr(row)
+        payment_required = data.pop('paymentMethod')
+        if payment_required == 'Free service':
+            row['payment_required'] = 'no'
+        elif payment_required == 'Symbolic cost':
+            row['payment_required'] = 'yes'
+            row['payment_details'] = 'עלות סמלית'
+        elif payment_required == 'Full payment':
+            row['payment_required'] = 'yes'
+            row['payment_details'] = 'השירות ניתן בתשלום'
+        elif payment_required == 'Government funded':
+            row['payment_required'] = 'yes'
+            row['payment_details'] = 'השירות מסובסד על ידי הממשלה'
+        else:
+            assert False, payment_required + ' ' + repr(row)
 
-            area = data.pop('area')
-            if area == 'All branches':
-                row['details'] = 'השירות ניתן בסניפי הארגון'
-            elif area == 'Some branches':
-                row['details'] = 'השירות ניתן בחלק מהסניפים של הארגון'
-            elif area == 'Program':
-                row['details'] = 'תוכנית ייעודית בהרשמה מראש'
-            elif area == 'Customer Appointment':
-                row['details'] = 'בתיאום מראש ברחבי הארץ'
-            elif area == 'Country wide':
-                row['details'] = 'במפגשים קבוצתיים או אישיים'
-            elif area == 'Web Service':
-                row['details'] = 'שירות אינטרנטי מקוון'
-            elif area == 'Via Phone or Mail':
-                row['details'] = 'במענה טלפוני או בדוא"ל'
-            elif area == 'Customer Place':
-                row['details'] = 'אצל מקבלי השירות'
-            elif area == 'Not relevant':
+        details = []
+        areas = []
+        national = False
+
+        area = (data.pop('area') or '').split(';')
+        for item in area:
+            if item == 'In Branches':
+                areas.append('בסניפי הארגון')
+            elif item == 'Country wide':
+                areas.append('בתיאום מראש ברחבי הארץ')
+                national = True
+            elif item == 'Customer Place':
+                areas.append('בבית הלקוח')
+            elif item == 'Remote Service':
+                areas.append('שירות מרחוק')
+                national = True
+            elif item == 'Via Phone or Mail':
+                areas.append('במענה טלפוני, צ׳אט או בדוא"ל')
+                national = True
+            elif item == 'Web Service':
+                areas.append('בשירות אינטרנטי מקוון')
+                national = True
+            elif item in ('Customer Appointment', 'Program', 'Not relevant', ''):
                 pass
             else:
-                assert False, area + ' ' + repr(row)
-            
-        elif record_type == 'YouthProject':
-            assert data.pop('serviceTypeName') == 'תוכניות לצעירים'
-            details = ''
-            main_topic = data.pop('projectTopic_Main')
-            if main_topic == 'אחר':
-                main_topic = None
+                assert False, 'area {}: {!r}'.format(area, row)
+
+        if len(areas) > 0:
+            details.append('השירות ניתן: ' + ', '.join(areas))
+
+        if national:
+            row['branches'] = [f'guidestar:{orgId}:national']
+
+        when = data.pop('whenServiceActive')
+        if when == 'All Year':
+            details.append('השירות ניתן בכל השנה')
+        elif when == 'Requires Signup':
+            details.append('השירות ניתן בהרשמה מראש')
+        elif when == 'Time Limited':
+            details.append('השירות מתקיים בתקופה מוגבלת')
+        elif when == 'Criteria Based':
+            details.append('השירות ניתן על פי תנאים או קריטריונים')
+        elif when is None:
+            pass
+        else:
+            assert False, 'when {}: {!r}'.format(when, row)
+
+        remoteDelivery = (data.pop('remoteServiceDelivery') or '').split(';')
+        # Phone, Chat / Email / Whatsapp, Internet, Zoom / Hybrid, Other
+        methods = []
+        for item in remoteDelivery:
+            if item == 'Phone':
+                methods.append('טלפון')
+            elif item == 'Chat / Email / Whatsapp':
+                methods.append('בצ׳אט, דוא"ל או וואטסאפ')
+            elif item == 'Internet':
+                methods.append('אתר אינטרנט')
+            elif item == 'Zoom / Hybrid':
+                methods.append('בשיחת זום')
+            elif item == '':
+                pass
             else:
-                update_from_taxonomy([main_topic], responses, situations)
-            other = data.pop('projectTopicMainOther')
-            if other:
-                details += other + '\n'
+                assert False, 'remoteDelivery {!r}: {!r}'.format(item, remoteDelivery)
 
-            secondary_topics = (data.pop('projectTopic_Secondary') or '').split(';')
-            if 'אחר' in secondary_topics:
-                secondary_topics.remove('אחר')
-            other = data.pop('projectTopicSecondary_Other')
-            if other:
-                details += 'נושאים נוספים:' + other + '\n'
-            update_from_taxonomy(secondary_topics, responses, situations)
+        remoteDeliveryOther = data.pop('RemoteServiceDelivery_Other')
+        if remoteDeliveryOther:
+            methods.append(remoteDeliveryOther)
 
-            target_audience = (data.pop('youthTargetAudience') or '').split(';')
-            if 'אחר' in target_audience:
-                target_audience.remove('אחר')
-            update_from_taxonomy(target_audience, responses, situations)
+        if len(methods) > 0:
+            details.append('שירות מרחוק באמצעות: ' + ', '.join(methods))
+        
 
-            other = data.pop('youthTargetAudienceOther')
-            if other:
-                details += 'קהל יעד:' + other + '\n'
-
-            data.pop('youthActivity_Area', None)
-
-            intervention_type = data.pop('youthActivityInterventionType').split(';')
-            if 'אחר' in intervention_type:
-                intervention_type.remove('אחר')
-            other = data.pop('youthActivityInterventionTypeOther')
-            if other:
-                details += 'אופן מתן השירות:' + other + '\n'
-            update_from_taxonomy(intervention_type, responses, situations)
-
-            target_age = data.pop('targetAge').split(';')
-            update_from_taxonomy(target_age, responses, situations)
-
+        row['details'] = '\n\n'.join(details)
         url = data.pop('url')
         if url and url.startswith('http'):
             row['urls'] = f'{url}#מידע נוסף על השירות'
@@ -270,6 +283,16 @@ def unwind_branches(ga:GuidestarAPI):
                     else:
                         branch['name'] = (row['short_name'] or row['name']) + ' - ' + branch['cityName']
                     yield ret
+                national = {}
+                national.update(row)
+                national['id'] = 'guidestar:' + regNum + ':national'
+                national['data'] = {
+                    'branchId': national['id'],
+                    'name': row['name'],
+                    'address': 'שירות ארצי',
+                    'drivingInstructions': 'שירות ארצי',
+                }
+                yield national
     return DF.Flow(
         DF.add_field('data', 'object', resources='orgs'),
         func,
@@ -277,6 +300,8 @@ def unwind_branches(ga:GuidestarAPI):
 
 
 def calc_location_key(row):
+    if row.get('address'):
+        return row['address']
     key = ''
     cityName = row.get('cityName')
     if cityName:

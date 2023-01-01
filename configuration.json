@@ -2,12 +2,6 @@
     "siteTitle": "מפת המענים החברתיים",
     "kinds": [
         {
-            "name": "guidestar",
-            "display": "Scrape Guidestar Services",
-            "dgp": false,
-            "admin": true
-        },
-        {
             "name": "entities",
             "display": "Enrich Entity Data and Branches using Guidestar and BudgetKey",
             "dgp": false,
