@@ -11,3 +11,4 @@ python-dotenv
 regex
 openlocationcode
 thefuzz
+python-Levenshtein
