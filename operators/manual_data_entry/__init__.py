@@ -246,12 +246,14 @@ def mde_service_flow():
 
 def operator(*_):
     logger.info('Starting Manual Data Entry Flow')
+    
+    shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
+    
     mde_prepare()
     mde_organization_flow()
     mde_branch_flow()
     mde_service_flow()
 
-    shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
     logger.info('Finished Manual Data Entry Flow')
 
 
