@@ -144,11 +144,14 @@ def updateServiceFromSourceData(taxonomies):
             else:
                 assert False, 'area {}: {!r}'.format(area, row)
 
-        if len(areas) > 0:
+        if len(areas) > 1:
             details.append('השירות ניתן: ' + ', '.join(areas))
+        elif len(areas) == 1:
+            details.append('השירות ניתן ' + ''.join(areas))
 
-        if national:
+        if national and row['organizations'] is not None:
             row['branches'] = [f'guidestar:{orgId}:national']
+            row['organizations'] = None
 
         when = data.pop('whenServiceActive')
         if when == 'All Year':
