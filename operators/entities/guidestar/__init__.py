@@ -192,7 +192,7 @@ def updateServiceFromSourceData(taxonomies):
             details.append('שירות מרחוק באמצעות: ' + ', '.join(methods))
         
 
-        row['details'] = '\n\n'.join(details)
+        row['details'] = '\n<br/>\n'.join(details)
         url = data.pop('url')
         if url and url.startswith('http'):
             row['urls'] = f'{url}#מידע נוסף על השירות'
