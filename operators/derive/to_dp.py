@@ -96,6 +96,8 @@ def select_address(row, address_fields):
 
 def merge_duplicate_branches(branch_mapping):
     found = dict()
+    org_count = dict()
+
     def func(rows):
         count = 0
         for row in rows:
@@ -130,9 +132,18 @@ def merge_duplicate_branches(branch_mapping):
             else:
                 row['branch_key'] = new_key
                 found[new_key] = row
+                org_count.setdefault(row['organization_id'], 0)
+                org_count[row['organization_id']] += 1
+
         print('DEDUPLICATION: {} rows, {} unique'.format(count, len(found)))
-        yield from found.values()
-    return func
+        for value in found.values():
+            value['organization_branch_count'] = org_count[value['organization_id']]
+            yield value
+
+    return DF.Flow(
+        DF.add_field('organization_branch_count', 'integer'),
+        func
+    )
 
 def flat_branches_flow(branch_mapping):
     """Produce a denormalized view of branch-related data."""
@@ -395,6 +406,7 @@ def flat_table_flow():
                 organization_kind=None,
                 organization_urls=None,
                 organization_phone_numbers=None,
+                organization_branch_count=None,
                 national_service=None,
                 branch_merged_situations={'name': 'merged_situations'},
             ),
@@ -464,6 +476,7 @@ def flat_table_flow():
                 'organization_kind',
                 'organization_urls',
                 'organization_phone_numbers',
+                'organization_branch_count',
                 'branch_id',
                 'branch_name',
                 'branch_short_name',
@@ -525,6 +538,7 @@ def card_data_flow():
                 organization_kind=None,
                 organization_urls=None,
                 organization_phone_numbers=None,
+                organization_branch_count=None,
                 branch_id=None,
                 branch_name=None,
                 branch_short_name=None,
