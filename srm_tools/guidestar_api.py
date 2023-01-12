@@ -5,6 +5,8 @@ from requests.api import head
 
 from conf import settings
 
+from srm_tools.logger import logger
+
 class GuidestarAPI():
 
     BASE = settings.GUIDESTAR_API
@@ -14,8 +16,15 @@ class GuidestarAPI():
     def __init__(self):
         self.branch_cache = dict()
 
+    def to_json(self, resp):
+        try:
+            resp = resp.json()
+        except:
+            logger.error(resp.text)
+            raise
+        
     def login(self, username, password):
-        resp = requests.post(f'{self.BASE}/login', json=dict(username=username, password=password)).json()
+        resp = self.to_json(requests.post(f'{self.BASE}/login', json=dict(username=username, password=password)))
         sessionId = resp['sessionId']
         headers = dict(
             Authorization=f'Bearer {sessionId}'
@@ -41,9 +50,7 @@ class GuidestarAPI():
                     sort='regNum',
                     filter=f'branchCount>0;servicesCount>0;regNum>{minRegNum}'
                 )
-                resp = requests.get(f'{self.BASE}/organizations', params=params, headers=self.headers(), timeout=self.TIMEOUT)
-                # print(resp.url)
-                resp = resp.json()
+                resp = self.to_json(requests.get(f'{self.BASE}/organizations', params=params, headers=self.headers(), timeout=self.TIMEOUT))
                 for row in resp:
                     regNum = row['regNum']
                     _regNums.append(regNum)
@@ -58,7 +65,7 @@ class GuidestarAPI():
                 done = True
             for regNum in _regNums:
                 count += 1
-                row = requests.get(f'{self.BASE}/organizations/{regNum}', headers=self.headers(), timeout=self.TIMEOUT).json()
+                row = self.to_json(requests.get(f'{self.BASE}/organizations/{regNum}', headers=self.headers(), timeout=self.TIMEOUT))
                 # print(row)
                 if row.get('errorMsg') is not None:
                     errorMsg = row['errorMsg']
@@ -73,13 +80,13 @@ class GuidestarAPI():
     
     def branches(self, regnum):
         if regnum not in self.branch_cache:
-            self.branch_cache[regnum] = requests.get(f'{self.BASE}/organizations/{regnum}/branches', headers=self.headers(), timeout=self.TIMEOUT).json()
+            self.branch_cache[regnum] = self.to_json(requests.get(f'{self.BASE}/organizations/{regnum}/branches', headers=self.headers(), timeout=self.TIMEOUT))
         return self.branch_cache[regnum]
 
     def services(self, regnum):
         params = dict(
             filter=f'regNum={regnum}'
         )
-        resp = requests.get(f'{self.BASE}/organizations/{regnum}/services', headers=self.headers()).json()
+        resp = self.to_json(requests.get(f'{self.BASE}/organizations/{regnum}/services', headers=self.headers()))
         # resp = requests.get(f'https://www.guidestar.org.il/services/apexrest/api/services', params=params, headers=self.headers(), timeout=self.TIMEOUT).json()
         return resp
