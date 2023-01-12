@@ -18,7 +18,7 @@ class GuidestarAPI():
 
     def to_json(self, resp):
         try:
-            resp = resp.json()
+            return resp.json()
         except:
             logger.error(resp.text)
             raise
