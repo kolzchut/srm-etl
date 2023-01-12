@@ -367,7 +367,7 @@ def remove_whitespaces(resource, field):
 
     def func(value):
         if isinstance(value, str):
-            return whitespace_re.sub(' ', value).strip(' \t()\n-')
+            return whitespace_re.sub(' ', value).strip(' \t(\n-')
         return value
 
     return DF.Flow(
