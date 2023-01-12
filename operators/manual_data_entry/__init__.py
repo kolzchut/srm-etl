@@ -10,6 +10,7 @@ from conf import settings
 from srm_tools.hash import hasher
 from srm_tools.logger import logger
 from srm_tools.update_table import airtable_updater
+from srm_tools.url_utils import fix_url
 
 CHECKPOINT = 'mde'
 
@@ -51,9 +52,10 @@ def org_updater():
         if data['urls']:
             new_urls = data['urls'].split('\n')
             for new_url in new_urls:
+                new_url = helpers.fix_url(new_url)
                 if new_url:
-                    new_url = new_url.strip() + '#אתר הבית'
-                    if new_url not in urls and new_url.startswith('http'):
+                    new_url = new_url + '#אתר הבית'
+                    if new_url not in urls:
                         urls.append(new_url)
         row['urls'] = '\n'.join(urls)
         row['last_tag_date'] = data['last_tag_date']
@@ -111,7 +113,8 @@ def branch_updater():
         if data.get('urls'):
             urls = data['urls'].split('\n')
         for url in urls:
-            if url and url.startswith('http'):
+            url = fix_url(url)
+            if url:
                 combined.append(url + '#אתר הסניף')
         data['urls'] = '\n'.join(combined)
         row.update(data)
@@ -186,7 +189,8 @@ def service_updater():
         if data.get('urls'):
             urls = data['urls'].split('\n')
         for url in urls:
-            if url and url.startswith('http'):
+            url = fix_url(url)
+            if url:
                 combined.append(url + '#אתר השירות')
         data['urls'] = '\n'.join(combined)
         data['data_sources'] = data_sources.get(data['data_source'], '')

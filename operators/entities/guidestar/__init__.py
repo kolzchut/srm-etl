@@ -10,7 +10,7 @@ from srm_tools.situations import Situations
 from conf import settings
 from srm_tools.logger import logger
 from srm_tools.guidestar_api import GuidestarAPI
-
+from srm_tools.url_utils import fix_url
 
 situations = Situations()
 
@@ -198,7 +198,8 @@ def updateServiceFromSourceData(taxonomies):
 
         row['details'] = '\n<br/>\n'.join(details)
         url = data.pop('url')
-        if url and url.startswith('http'):
+        url = fix_url(url)
+        if url:
             row['urls'] = f'{url}#מידע נוסף על השירות'
 
         for k in ('isForCoronaVirus', 'lastModifiedDate', 'serviceId', 'regNum', 'isForBranch'):
