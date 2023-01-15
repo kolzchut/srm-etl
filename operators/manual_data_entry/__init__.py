@@ -52,7 +52,7 @@ def org_updater():
         if data['urls']:
             new_urls = data['urls'].split('\n')
             for new_url in new_urls:
-                new_url = helpers.fix_url(new_url)
+                new_url = fix_url(new_url)
                 if new_url:
                     new_url = new_url + '#אתר הבית'
                     if new_url not in urls:
