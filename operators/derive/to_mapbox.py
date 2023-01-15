@@ -71,12 +71,12 @@ def branches(r):
     return list([f['organization_short_name'] or f['organization_name'] for f in records])
 
 
-def point_title(r):
+def point_title(r, full=False):
     max_len = 20
     branch = branches(r)
     branch = Counter(branch)
     bn = branch.most_common(1)[0][0]
-    if len(bn) > max_len:
+    if not full and len(bn) > max_len:
         bn = bn[:max_len] + '…'
     if len(branch) > 1:
         bn += '  +{}'.format(len(branch) - 1)
@@ -137,6 +137,9 @@ def geo_data_flow():
         DF.add_field(
             'title', 'string', point_title, resources=['geo_data']
         ),
+        DF.add_field(
+            'full_title', 'string', lambda r: point_title(r, True), resources=['geo_data']
+        ),
         # DF.set_type(
         #     'records',
         #     transform=lambda v, row: helpers.reorder_records_by_category(v, row['response_category']),
@@ -167,6 +170,7 @@ def geo_data_flow():
                 'response_category',
                 # 'records',
                 'title',
+                'full_title',
                 'point_id',
                 'service_count',
                 'branch_count',
