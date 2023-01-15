@@ -148,6 +148,12 @@ def geo_data_flow():
             lambda r: len(set(branches(r))),
             resources=['geo_data'],
         ),
+        DF.add_field(
+            'card_id',
+            'string',
+            lambda r: r['records'][0]['card_id'] if len(r.get('records') or []) == 1 else None,
+            resources=['geo_data'],
+        ),
         DF.select_fields(
             [
                 'branch_geometry',
@@ -157,6 +163,7 @@ def geo_data_flow():
                 'title',
                 'point_id',
                 'service_count',
+                'card_id',
             ],
             resources=['geo_data'],
         ),
