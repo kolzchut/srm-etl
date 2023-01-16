@@ -1,5 +1,5 @@
 import os
-from time import time
+import time
 import requests
 from requests.api import head
 
@@ -16,15 +16,19 @@ class GuidestarAPI():
     def __init__(self):
         self.branch_cache = dict()
 
-    def to_json(self, resp):
-        try:
-            return resp.json()
-        except:
-            logger.error(resp.text)
-            raise
+    def to_json(self, callable):
+        resp = None
+        for _ in range(3):
+            try:
+                resp = callable()
+                return resp.json()
+            except:
+                logger.error(resp.text[:100])
+                time.sleep(30)
+        logger.error('Failed to get response from Guidestar API')
         
     def login(self, username, password):
-        resp = self.to_json(requests.post(f'{self.BASE}/login', json=dict(username=username, password=password)))
+        resp = self.to_json(lambda: requests.post(f'{self.BASE}/login', json=dict(username=username, password=password)))
         sessionId = resp['sessionId']
         headers = dict(
             Authorization=f'Bearer {sessionId}'
@@ -50,7 +54,7 @@ class GuidestarAPI():
                     sort='regNum',
                     filter=f'branchCount>0;servicesCount>0;regNum>{minRegNum}'
                 )
-                resp = self.to_json(requests.get(f'{self.BASE}/organizations', params=params, headers=self.headers(), timeout=self.TIMEOUT))
+                resp = self.to_json(lambda: requests.get(f'{self.BASE}/organizations', params=params, headers=self.headers(), timeout=self.TIMEOUT))
                 for row in resp:
                     regNum = row['regNum']
                     _regNums.append(regNum)
@@ -65,7 +69,7 @@ class GuidestarAPI():
                 done = True
             for regNum in _regNums:
                 count += 1
-                row = self.to_json(requests.get(f'{self.BASE}/organizations/{regNum}', headers=self.headers(), timeout=self.TIMEOUT))
+                row = self.to_json(lambda: requests.get(f'{self.BASE}/organizations/{regNum}', headers=self.headers(), timeout=self.TIMEOUT))
                 # print(row)
                 if row.get('errorMsg') is not None:
                     errorMsg = row['errorMsg']
@@ -80,13 +84,13 @@ class GuidestarAPI():
     
     def branches(self, regnum):
         if regnum not in self.branch_cache:
-            self.branch_cache[regnum] = self.to_json(requests.get(f'{self.BASE}/organizations/{regnum}/branches', headers=self.headers(), timeout=self.TIMEOUT))
+            self.branch_cache[regnum] = self.to_json(lambda: requests.get(f'{self.BASE}/organizations/{regnum}/branches', headers=self.headers(), timeout=self.TIMEOUT))
         return self.branch_cache[regnum]
 
     def services(self, regnum):
         params = dict(
             filter=f'regNum={regnum}'
         )
-        resp = self.to_json(requests.get(f'{self.BASE}/organizations/{regnum}/services', headers=self.headers()))
+        resp = self.to_json(lambda: requests.get(f'{self.BASE}/organizations/{regnum}/services', headers=self.headers()))
         # resp = requests.get(f'https://www.guidestar.org.il/services/apexrest/api/services', params=params, headers=self.headers(), timeout=self.TIMEOUT).json()
         return resp
