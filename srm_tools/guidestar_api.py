@@ -18,7 +18,7 @@ class GuidestarAPI():
 
     def to_json(self, callable):
         resp = None
-        for _ in range(3):
+        for _ in range(10):
             try:
                 resp = callable()
                 return resp.json()
