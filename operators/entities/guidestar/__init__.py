@@ -63,6 +63,7 @@ def updateServiceFromSourceData(taxonomies):
                     situations.update(mapping['situation_ids'] or [])
                 except KeyError:
                     print('WARNING: no mapping for {}'.format(name))
+                    taxonomies[name] = dict(response_ids=[], situation_ids=[])
                     DF.Flow(
                         [dict(name=name)],
                         DF.update_resource(-1, name='taxonomies'),
