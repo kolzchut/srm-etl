@@ -23,7 +23,11 @@ class GuidestarAPI():
                 resp = callable()
                 return resp.json()
             except:
-                logger.error(resp.text[:100])
+                try:
+                    logger.error(resp.text[:100])
+                except:
+                    pass
+                logger.error('FAILED TO FETCH FROM GUIDESTAR API, retrying in 30 seconds...')
                 time.sleep(30)
         logger.error('Failed to get response from Guidestar API')
         
