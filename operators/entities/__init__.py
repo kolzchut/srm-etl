@@ -13,6 +13,7 @@ from srm_tools.budgetkey import fetch_from_budgetkey
 
 from conf import settings
 from srm_tools.logger import logger
+from srm_tools.url_utils import fix_url
 
 from .guidestar import operator as guidestar
 
@@ -60,7 +61,8 @@ def updateOrgFromSourceData(ga: GuidestarAPI):
                     row['purpose'] = data.get('orgGoal')
                     urls = []
                     if data.get('website'):
-                        urls.append(data['website'] + '#אתר הבית')
+                        website = fix_url(data['website'])
+                        urls.append(website + '#אתר הבית')
                     row['urls'] = '\n'.join(urls)
                     phone_numbers = []
                     if data.get('tel1'):
