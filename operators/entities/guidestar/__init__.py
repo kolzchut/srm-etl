@@ -251,7 +251,8 @@ def updateOrgFromSourceData():
         urls = []
         if data.get('website'):
             website = fix_url(data['website'])
-            urls.append(website + '#אתר הבית')
+            if website:
+                urls.append(website + '#אתר הבית')
         row['urls'] = '\n'.join(urls)
         phone_numbers = []
         if data.get('tel1'):
