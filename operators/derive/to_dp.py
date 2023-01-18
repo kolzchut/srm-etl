@@ -197,7 +197,7 @@ def flat_branches_flow(branch_mapping):
                 organization_kind={'name': 'kind'},
                 organization_urls={'name': 'urls'},
                 organization_phone_numbers={'name': 'phone_numbers'},
-                organization_situations={'name': 'situations', 'aggregate': 'set'},
+                organization_situations={'name': 'situations'},
             ),
             mode='inner'
         ),
