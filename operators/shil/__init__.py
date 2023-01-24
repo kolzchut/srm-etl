@@ -37,7 +37,7 @@ SERVICE = {
         'urls': '',
         # 'urls': 'https://www.gov.il/he/departments/bureaus/?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca#שירות ייעוץ לאזרח',
         'organizations': ['7cbc48b1-bf90-4136-8c16-749e77d1ecca'],
-        'data_sources': f'המידע התקבל מ<a href="{SHIL_URL}" target="_blank">האתר של שי״ל</a>'
+        'data_sources': f'המידע התקבל מ<a target="_blank" href="{SHIL_URL}" target="_blank">האתר של שי״ל</a>'
     },
 }
 

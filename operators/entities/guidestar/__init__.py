@@ -87,7 +87,7 @@ def updateServiceFromSourceData(taxonomies):
         row['name'] = data.pop('serviceName')
         row['description'] = data.pop('voluntaryDescription') or data.pop('description')
         data_source_url = f'https://www.guidestar.org.il/organization/{data["organization_id"]}/services'
-        row['data_sources'] = f'מידע נוסף אפשר למצוא ב<a href="{data_source_url}">גיידסטאר - אתר העמותות של ישראל</a>'
+        row['data_sources'] = f'מידע נוסף אפשר למצוא ב<a target="_blank" href="{data_source_url}">גיידסטאר - אתר העמותות של ישראל</a>'
         orgId = data.pop('organization_id')
         row['organizations'] = [orgId]
         actual_branch_ids = data.pop('actual_branch_ids')

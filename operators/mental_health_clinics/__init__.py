@@ -109,7 +109,7 @@ ORGS = {
     ),
 }
 DATA_SOURCE_ID = 'mental-health-clinics'
-DATA_SOURCE_TEXT = 'המידע התקבל מ<a href="https://www.health.gov.il/Subjects/mental_health/treatment/clinics/Pages/mental-clinics.aspx">משרד הבריאות</a>'
+DATA_SOURCE_TEXT = 'המידע התקבל מ<a target="_blank" href="https://www.health.gov.il/Subjects/mental_health/treatment/clinics/Pages/mental-clinics.aspx">משרד הבריאות</a>'
 splitter = re.compile('[.,\n]')
 phone_number = re.compile('[0-9-]{7,}')
 

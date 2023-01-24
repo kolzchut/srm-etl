@@ -55,7 +55,7 @@ BASE_URL = (
 )
 
 DATA_SOURCE_ID = 'revaha'
-DATA_SOURCES = f'המידע מ<a href="{BASE_URL}" target="_blank">אתר משרד הרווחה</a>'
+DATA_SOURCES = f'המידע מ<a target="_blank" href="{BASE_URL}" target="_blank">אתר משרד הרווחה</a>'
 PAYMENT_DETAILS = 'נדרש תיאום מראש'
 
 BRANCH_NAME_PREFIX = 'מחלקה לשירותים חברתיים'
