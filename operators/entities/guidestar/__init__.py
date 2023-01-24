@@ -121,9 +121,9 @@ def updateServiceFromSourceData(taxonomies):
         service_terms = data.pop('serviceTerms')
         if service_terms:
             if row.get('payment_details'):
-                row['payment_details'] += ', ' + serviceTerms
+                row['payment_details'] += ', ' + service_terms
             else:
-                row['payment_details'] = serviceTerms
+                row['payment_details'] = service_terms
 
         details = []
         areas = []
