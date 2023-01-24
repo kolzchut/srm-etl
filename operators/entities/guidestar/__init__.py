@@ -118,6 +118,13 @@ def updateServiceFromSourceData(taxonomies):
         else:
             assert False, payment_required + ' ' + repr(row)
 
+        service_terms = data.pop('serviceTerms')
+        if service_terms:
+            if row.get('payment_details'):
+                row['payment_details'] += ', ' + serviceTerms
+            else:
+                row['payment_details'] = serviceTerms
+
         details = []
         areas = []
         national = False
@@ -207,7 +214,7 @@ def updateServiceFromSourceData(taxonomies):
             data.pop(k)
         row['situations'] = sorted(situations)
         row['responses'] = sorted(responses)
-        assert all(v in (None, '0') for v in data.values()), repr(row)
+        assert all(v in (None, '0') for v in data.values()), repr(data_source_url)
     return DF.Flow(
         func,
     )
