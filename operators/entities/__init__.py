@@ -50,8 +50,8 @@ def updateOrgFromSourceData(ga: GuidestarAPI):
     def func(rows):
         for row in rows:
             regNums = [row['id']]
-            if row['kind'] is not None:
-                continue
+            # if row['kind'] is not None:
+            #     continue
             for data in ga.organizations(regNums=regNums):
                 try:
                     data = data['data']
