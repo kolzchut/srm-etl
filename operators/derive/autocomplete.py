@@ -21,10 +21,10 @@ TEMPLATES = [
     '{org_name}',
     '{response} של {org_name}',
     '{org_id}',
-    '{response} באיזור {city_name}',
-    'שירותים עבור {situation} באיזור {city_name}',
-    '{response} עבור {situation} באיזור {city_name}',
-    '{response} של {org_name} באיזור {city_name}',
+    '{response} ב{city_name}',
+    'שירותים עבור {situation} ב{city_name}',
+    '{response} עבור {situation} ב{city_name}',
+    '{response} של {org_name} ב{city_name}',
 ]
 STOP_WORDS = [
     'עבור',
