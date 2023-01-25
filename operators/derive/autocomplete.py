@@ -157,10 +157,11 @@ def autocomplete_flow():
         DF.set_type('score', type='number', transform=lambda v: (math.log(v) + 1)**2),
         DF.set_type('query', **{'es:autocomplete': True, 'es:title': True}),
         DF.set_type('query_heb', **{'es:title': True}),
+        DF.set_type('structured_query', **{'es:title': True}),
         DF.set_type('response', **{'es:keyword': True}),
         DF.set_type('situation', **{'es:keyword': True}),
         DF.set_type('org_id', **{'es:keyword': True}),
-        DF.set_type('synonyms', **{'es:itemType': 'string'}),
+        DF.set_type('synonyms', **{'es:itemType': 'string', 'es:title': True}),
         DF.add_field('id', 'string', lambda r: '_'.join(PKRE.findall(r['query']))),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/autocomplete'),
     )
