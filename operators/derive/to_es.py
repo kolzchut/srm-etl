@@ -22,7 +22,7 @@ def data_api_es_flow():
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
         DF.update_package(title='Card Data', name='srm_card_data'),
         DF.update_resource('card_data', name='cards'),
-        DF.add_field('score', 'number', 1),
+        DF.add_field('score', 'number', lambda r: 1 + (r['organization_branch_count'] or 0)**0.5, resources=['cards']),
         DF.set_type(
             'situations',
             **{
