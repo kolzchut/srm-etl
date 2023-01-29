@@ -11,6 +11,7 @@ from srm_tools.hash import hasher
 from srm_tools.logger import logger
 from srm_tools.update_table import airtable_updater
 from srm_tools.url_utils import fix_url
+from ..derive.autocomplete import VERIFY_ORG_ID
 
 CHECKPOINT = 'mde'
 
@@ -19,6 +20,10 @@ def slugify_org_id():
     def func(row):
         id = row['Org Id'] or row['Org Name']
         row['Org Id'] = slugify(id, separator='-', lowercase=True)
+        if VERIFY_ORG_ID.match(row['Org Id']) is None:
+            h = hasher(row['Org Id'])
+            i = int(h, 16)
+            row['Org Id'] = f'srm9{i}'
     return func
 
 def handle_national_services():

@@ -38,7 +38,7 @@ IGNORE_SITUATIONS = {
 }
 
 PKRE = re.compile('[0-9a-zA-Zא-ת]+')
-VERIFY_ORG_ID = re.compile('^[0-9]+$')
+VERIFY_ORG_ID = re.compile('^(srm|)[0-9]+$')
 VERIFY_CITY_NAME = re.compile('''^[א-ת-`"' ]+$''')
 
 def prepare_locations():

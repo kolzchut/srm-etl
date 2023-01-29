@@ -63,7 +63,7 @@ SITUATIONS = {
 }
 ORGS = {
     'לאומית': dict(
-        id='mental-health-clinics-leumit',
+        id='srm0010',
         data=dict(
             name='קופת חולים לאומית - מרפאות בריאות נפש',
             short_name='לאומית',
@@ -72,7 +72,7 @@ ORGS = {
         ),
     ),
     'מכבי': dict(
-        id='mental-health-clinics-maccabi',
+        id='srm0011',
         data=dict(
             name='מכבי שירותי בריאות - מרפאות בריאות נפש',
             short_name='מכבי',
@@ -81,7 +81,7 @@ ORGS = {
         ),
     ),
     'כללית': dict(
-        id='mental-health-clinics-clalit',
+        id='srm0012',
         data=dict(
             name='שירותי בריאות כללית - מרפאות בריאות נפש',
             short_name='כללית',
@@ -90,7 +90,7 @@ ORGS = {
         ),
     ),
     'מאוחדת': dict(
-        id='mental-health-clinics-meuhedet',
+        id='srm0013',
         data=dict(
             name='קופת חולים מאוחדת - מרפאות בריאות נפש',
             short_name='מאוחדת',
@@ -99,7 +99,7 @@ ORGS = {
         ),
     ),
     'default': dict(
-        id='mental-health-clinics',
+        id='srm0019',
         data=dict(
             name='מרפאות בריאות נפש',
             short_name='משרד הבריאות',

@@ -14,7 +14,7 @@ DATA_SOURCE_ID = 'shil'
 SHIL_URL = 'https://www.gov.il/he/Departments/Guides/molsa-shill-guide'
 
 ORGANIZATION = {
-    'id': '7cbc48b1-bf90-4136-8c16-749e77d1ecca',
+    'id': 'srm0000',
     'data': {
         'name': 'תחנות שירות ייעוץ לאזרח (שי"ל)',
         'source': DATA_SOURCE_ID,
@@ -36,7 +36,7 @@ SERVICE = {
         'payment_required': 'no',
         'urls': '',
         # 'urls': 'https://www.gov.il/he/departments/bureaus/?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca#שירות ייעוץ לאזרח',
-        'organizations': ['7cbc48b1-bf90-4136-8c16-749e77d1ecca'],
+        'organizations': ['srm0000'],
         'data_sources': f'המידע התקבל מ<a target="_blank" href="{SHIL_URL}" target="_blank">האתר של שי״ל</a>'
     },
 }

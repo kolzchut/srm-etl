@@ -62,7 +62,7 @@ BRANCH_NAME_PREFIX = 'מחלקה לשירותים חברתיים'
 
 ORGANIZATION = {
     # the id is just a uuid I generated
-    'id': '53a2e790-87b3-44a2-a5f2-5b826f714775',
+    'id': 'srm0020',
     'data': {
         'name': 'משרד הרווחה והביטחון החברתי',
         'source': DATA_SOURCE_ID,
@@ -85,7 +85,7 @@ SERVICES = [
             'description': 'השירות לאוכלוסיית התושבים הוותיקים ובני משפחותיהם ניתן במחלקות לשירותים חברתיים וכולל מיצוי זכויות, מידע על מסגרות יומיות ,שירותי סעד, עובדים זרים, דיור מוגן ומסגרות מוסדיות זמניות וקבועות.',
             'payment_required': 'no',
             'urls': '',
-            'organizations': ['53a2e790-87b3-44a2-a5f2-5b826f714775'],
+            'organizations': ['srm0020'],
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES
         },
@@ -98,7 +98,7 @@ SERVICES = [
             'description': 'השירות לאנשים  עם מוגבלות ובני משפחותיהם ניתן במחלקות לשירותים חברתיים ומיועד לאנשים עם פיגור שכלי, אוטיזם, מוגבלויות פיזיות וחושיות (עיוורון וחירשות) ולבני משפחותיהם. למימוש הזכאות לשירותים יש צורך בהכרה של משרד הרווחה והשירותים החברתיים.',
             'payment_required': 'no',
             'urls': '',
-            'organizations': ['53a2e790-87b3-44a2-a5f2-5b826f714775'],
+            'organizations': ['srm0020'],
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES
         },
@@ -111,7 +111,7 @@ SERVICES = [
             'description': 'השירות מסייע לילדים, בני נוער, משפחות, יחידים, מוגבלים, זקנים, עולים חדשים ולכל פרט/קבוצה החפצים בקבלת סיוע. המחלקות לשירותים חברתיים  מעניקות מידע, יעוץ, טיפול, שירותים סוציאליים, הכוונה, תיווך לקבלת שירות, שילוב במסגרות ושירותי עזר בבית - בהתאם לכללי נזקקות וזכאות ולאפשרויות התקציביות.',
             'payment_required': 'no',
             'urls': '',
-            'organizations': ['53a2e790-87b3-44a2-a5f2-5b826f714775'],
+            'organizations': ['srm0020'],
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES
         },
