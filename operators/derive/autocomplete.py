@@ -79,6 +79,7 @@ def unwind_templates():
                     if city_name and VERIFY_CITY_NAME.match(city_name) is None:
                         continue
                     query = template.format(response=response.get('name'), situation=situation.get('name'), org_name=org_name, org_id=org_id, city_name=city_name)
+                    query_heb = template.format(response=response.get('name'), situation=situation.get('name'), org_name=org_name, org_id=org_name, city_name=city_name)
                     structured_query = set([
                         response.get('name'),
                         situation.get('name'),
@@ -89,7 +90,7 @@ def unwind_templates():
                     structured_query = ' '.join(remove_stop_words(x.strip()) for x in structured_query if x)
                     yield {
                         'query': query,
-                        'query_heb': query,
+                        'query_heb': query_heb,
                         'response': response.get('id'),
                         'situation': situation.get('id'),
                         'org_id': org_id,

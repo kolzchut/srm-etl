@@ -24,13 +24,11 @@ class SRMMappingGenerator(MappingGenerator):
         if field['type'] == 'any':
             field['es:itemType'] = 'string'
         prop = super()._convert_type(schema_type, field, prefix)
-        boost, keyword, autocomplete, hebrew = field.get('es:boost'), field.get('es:keyword'), field.get('es:autocomplete'), field.get('es:hebrew')
+        keyword, autocomplete, hebrew = field.get('es:keyword'), field.get('es:autocomplete'), field.get('es:hebrew')
         if keyword:
             prop['type'] = 'keyword'
         if autocomplete:
             prop['type'] = 'search_as_you_type'
-        if boost:
-            prop['boost'] = boost
         if schema_type in ('number', 'integer', 'geopoint'):
             prop['index'] = True
         if hebrew or field['name'].split('_')[-1] in ('name', 'purpose', 'description', 'details', 'synonyms', 'heb'):
