@@ -150,12 +150,13 @@ def autocomplete_flow():
         DF.add_field('response_name', 'string'),
         DF.add_field('situation_name', 'string'),
         DF.add_field('structured_query', 'string'),
+        DF.add_field('visible', 'boolean'),
         unwind_templates(),
         DF.join_with_self('autocomplete', ['query'], fields=dict(
             score=dict(aggregate='count'),
             query=None, query_heb=None, response=None, situation=None, synonyms=None, 
             org_id=None, org_name=None, city_name=None,
-            response_name=None, situation_name=None, structured_query=None
+            response_name=None, situation_name=None, structured_query=None, visible=None
         )),
         DF.add_field('bounds', 'array', **{'es:itemType': 'number', 'es:index': False}),
         get_bounds(),
