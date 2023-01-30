@@ -71,6 +71,7 @@ def unwind_templates():
                 org_ids = [org_id]
                 city_name = row.get('branch_city') if '{city_name}' in template else None
                 city_names = [city_name]
+                visible = '{org_id}' not in template
                 for response, situation, org_name, org_id, city_name in product(responses, situations, org_names, org_ids, city_names):
                     if situation.get('id') in IGNORE_SITUATIONS:
                         continue
@@ -79,6 +80,8 @@ def unwind_templates():
                     if city_name and VERIFY_CITY_NAME.match(city_name) is None:
                         continue
                     query = template.format(response=response.get('name'), situation=situation.get('name'), org_name=org_name, org_id=org_id, city_name=city_name)
+                    if 'None' in query:
+                        continue
                     query_heb = template.format(response=response.get('name'), situation=situation.get('name'), org_name=org_name, org_id=org_name, city_name=city_name)
                     structured_query = set([
                         response.get('name'),
@@ -99,7 +102,8 @@ def unwind_templates():
                         'synonyms': response.get('synonyms', []) + situation.get('synonyms', []),
                         'response_name': response.get('name'),
                         'situation_name': situation.get('name'),
-                        'structured_query': structured_query
+                        'structured_query': structured_query,
+                        'visible': visible,
                     }
 
 
