@@ -34,11 +34,15 @@ def unwind_services(ga: GuidestarAPI, source='entities', existing_orgs = set()):
                 if len(branches) == 0:
                     continue
                 services = ga.services(regNum)
+                govServices = dict(
+                    (s['serviceId'], s) for s in services if s.get('serviceGovName') is not None
+                )
                 for service in services:
                     if service.get('recordType') != 'GreenInfo':
                         continue
                     if not service.get('serviceName'):
                         continue
+                    service['relatedMalkarService'] = govServices.get(service.get('relatedServiceId'))
                     ret = dict()
                     ret.update(row)
                     ret['data'] = service
@@ -89,19 +93,22 @@ def updateServiceFromSourceData(taxonomies):
         data_source_url = f'https://www.guidestar.org.il/organization/{data["organization_id"]}/services'
         row['data_sources'] = f'מידע נוסף אפשר למצוא ב<a target="_blank" href="{data_source_url}">גיידסטאר - אתר העמותות של ישראל</a>'
         orgId = data.pop('organization_id')
-        row['organizations'] = [orgId]
         actual_branch_ids = data.pop('actual_branch_ids')
         row['branches'] = ['guidestar:' + b['branchId'] for b in (data.pop('branches') or []) if b['branchId'] in actual_branch_ids]
-        if len(row['branches']) > 0:
-            row['organizations'] = None
+        if len(row['branches']) == 0:
+            row['branches'] = ['guidestar:' + bid for bid in actual_branch_ids]
 
         record_type = data.pop('recordType')
         assert record_type == 'GreenInfo'
         for k in list(data.keys()):
             if k.startswith('youth'):
                 data.pop(k)
+
+        relatedMalkarService = data.pop('relatedMalkarService') or {}
+
         update_from_taxonomy([data.pop('serviceTypeName')], responses, situations)
         update_from_taxonomy((data.pop('serviceTargetAudience') or '').split(';'), responses, situations)
+        update_from_taxonomy([relatedMalkarService.get('serviceGovId')], responses, situations)
 
         payment_required = data.pop('paymentMethod')
         if payment_required == 'Free service':
@@ -202,7 +209,12 @@ def updateServiceFromSourceData(taxonomies):
 
         if len(methods) > 0:
             details.append('שירות מרחוק באמצעות: ' + ', '.join(methods))
-        
+
+        if relatedMalkarService:
+            relatedId = relatedMalkarService.get('serviceGovId')
+            relatedOffice = relatedMalkarService.get('serviceOffice')
+            if relatedId and relatedOffice:
+                row['implements'] = f'{relatedOffice}:{relatedId}'
 
         row['details'] = '\n<br/>\n'.join(details)
         url = data.pop('url')
@@ -422,6 +434,15 @@ def operator(name, params, pipeline):
     taxonomy = dict(
         (r.pop('name'), r) for r in taxonomy
     )
+
+    print('FETCHING SOPROC MAPPING')
+    taxonomy = DF.Flow(
+        load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, 'soproc-service-tagging', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.select_fields(['id', 'situation_ids', 'response_ids']),
+    ).results()[0][0]
+    taxonomy.update(dict(
+        (r.pop('id'), r) for r in taxonomy
+    ))
 
     skip_orgs = fetchServiceData(ga, taxonomy)
 

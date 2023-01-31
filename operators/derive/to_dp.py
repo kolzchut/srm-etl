@@ -527,7 +527,7 @@ def card_data_flow():
                 service_urls=None,
                 service_phone_numbers=None,
                 data_sources=None,
-                response_id={'name': 'response_id', 'aggregate': 'array'},
+                response_ids={'name': 'response_id', 'aggregate': 'array'},
                 response_name={'name': 'response_name', 'aggregate': 'array'},
                 response_synonyms={'name': 'response_synonyms', 'aggregate': 'array'},
                 response_categories={'name': 'response_category', 'aggregate': 'set'},
@@ -552,7 +552,7 @@ def card_data_flow():
                 branch_city=None,
                 branch_geometry=None,
                 branch_location_accurate=None,
-                situation_id={'name': 'situation_id', 'aggregate': 'array'},
+                situation_ids={'name': 'situation_id', 'aggregate': 'array'},
                 situation_name={'name': 'situation_name', 'aggregate': 'array'},
                 situation_synonyms={'name': 'situation_synonyms', 'aggregate': 'array'},
                 national_service=None,
@@ -563,7 +563,7 @@ def card_data_flow():
             'array',
             lambda r: [
                 {'id': id, 'name': name, 'synonyms': synonyms}
-                for id, name, synonyms in set(tuple(zip(r['situation_id'], r['situation_name'], map(tuple, r['situation_synonyms']))))
+                for id, name, synonyms in set(tuple(zip(r['situation_ids'], r['situation_name'], map(tuple, r['situation_synonyms']))))
             ],
             resources=['card_data'],
         ),
@@ -573,19 +573,21 @@ def card_data_flow():
             'array',
             lambda r: [
                 {'id': id, 'name': name, 'synonyms': synonyms}
-                for id, name, synonyms in set(tuple(zip(r['response_id'], r['response_name'], map(tuple, r['response_synonyms']))))
+                for id, name, synonyms in set(tuple(zip(r['response_ids'], r['response_name'], map(tuple, r['response_synonyms']))))
             ],
             resources=['card_data'],
         ),
+        DF.set_type('response_ids', **{'es:itemType': 'string', 'es:keyword': True}, transform=lambda v: list(set(v)), resources=['card_data']),
         DF.add_field(
-            'response_ids', 'array', 
-            lambda r: helpers.update_taxonomy_with_parents(r['response_id']),
+            'response_ids_parents', 'array', 
+            lambda r: helpers.update_taxonomy_with_parents(r['response_ids']),
             **{'es:itemType': 'string', 'es:keyword': True},
             resources=['card_data']
         ),
+        DF.set_type('situation_ids', **{'es:itemType': 'string', 'es:keyword': True}, transform=lambda v: list(set(v)),  resources=['card_data']),
         DF.add_field(
-            'situation_ids', 'array',
-            lambda r: helpers.update_taxonomy_with_parents([s['id'] for s in r['situations']]),
+            'situation_ids_parents', 'array',
+            lambda r: helpers.update_taxonomy_with_parents(r['situation_ids']),
             **{'es:itemType': 'string', 'es:keyword': True},
             resources=['card_data']
         ),
@@ -646,10 +648,8 @@ def card_data_flow():
         DF.set_primary_key(['card_id'], resources=['card_data']),
         DF.delete_fields(
             [
-                'response_id',
                 'response_name',
                 'response_synonyms',
-                'situation_id',
                 'situation_name',
                 'situation_synonyms',
             ],

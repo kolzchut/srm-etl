@@ -18,7 +18,7 @@ SELECT_FIELDS = {
 
     # 'DisplayName': '',
 
-    'Administration': 'department',
+    # 'Administration': 'department',
     'parent_group_name': 'service_group',
     'group_name': 'unit',
     'FamilyName': 'name',
@@ -27,10 +27,10 @@ SELECT_FIELDS = {
     'Short_Description': 'description',
     'Description': 'details',
 
-    'Naming_Outputs': 'tags',
+    'Normative_Source': 'normative_source',
 
     'Domin': 'service_subject',
-    'Type': 'service_type',
+    # 'Type': 'service_type',
     'Target_Population_A': 'target_populations_level_1',
     'Target_Population': 'target_populations_level_2',
 
@@ -44,15 +44,21 @@ SELECT_FIELDS = {
     'Deductible': 'payment_details',
     # 'Relationship_Type', # TODO: See if useful
     
-    'Service_Status': 'service_status',
-    'Service_Channels': 'delivery_channels',
+    # 'Service_Status': 'service_status',
+    # 'Service_Channels': 'delivery_channels',
     # 'Right_or_Service', # TODO: See if useful
-    'Program_Activation_Model': 'internal_operation_model',
+    # 'Program_Activation_Model': 'internal_operation_model',
     # 'location_type', # TODO: Probably not useful
     
     'Implementaion_Process': 'implementation_details',
     
     'Link_to_Kolzchut': 'link_to_kolzchut',
+    'Link_to_Molsa': 'link_to_molsa',
+    'Link_to_TAAS': 'link_to_taas',
+
+    'Causes_Referes': 'causes_referes',
+    'Location': 'location',
+    'Informational_Notes': 'notes',
 }
 DEDUCTIBLE_TYPE = {
     'אינו כרוך בהשתתפות עצמית': 'no',
@@ -69,7 +75,7 @@ def decode_and_clean():
                     v = codecs.decode(v.encode('ascii'), 'base64').decode('utf8')
                 except:
                     pass
-                v = bleach.clean(v, strip=True).replace('&nbsp;', ' ').replace('\xa0', ' ').replace('\r', '')
+                v = bleach.clean(v, strip=True).replace('&nbsp;', ' ').replace('\xa0', ' ').replace('\r', '').strip()
                 if v == 'NULL':
                     v = None
                 row[k] = v
@@ -104,8 +110,7 @@ def scrape_click():
         docs = requests.get(settings.CLICK_API)
         docs = docs.json().get('response').get('docs')
         json.dump(docs, open('click-cache.json', 'w'))
-
-    # print(len(docs))
+        print('SCRAPING CLICK', len(docs))
     all_keys = set()
     for doc in docs:
         all_keys.update(k for k, v in doc.items() if v)
@@ -155,21 +160,19 @@ def scrape_click():
                 'description', 'details', 'implementation_details','target_community_text', 'service_duration_text'
             ] if isinstance(row.get(f), str))
         ),
-        DF.set_type('tags', type='array', 
-            transform=lambda v, row: (
-                (v.split('|') if v else []) +
+        DF.add_field('tags', 'array', 
+            lambda row: (
                 ['age-{age_min}-{age_max}'.format(**row)] +
                 (row.get('target_populations_level_1') or []) +
                 (row.get('target_populations_level_2') or []) +
                 (row.get('service_subject') or [])
             )
         ),
-        DF.set_type('delivery_channels', type='array', transform=lambda v: v.split('|') if v else []),
-        DF.set_type('name', type='string', transform=lambda v: ''.join(v)),
+        # DF.set_type('delivery_channels', type='array', transform=lambda v: v.split('|') if v else []),
+        DF.set_type('name', type='string', transform=lambda v: ''.join(v).strip()),
         DF.set_type('payment_required', type='string', transform=lambda v: DEDUCTIBLE_TYPE.get(v)),
-        DF.add_field('situations', 'array', []), # fetch_from_taxonomy(taxonomy, 'situation_ids')),
-        DF.add_field('responses', 'array', []), # fetch_from_taxonomy(taxonomy, 'response_ids')),
-        DF.select_fields(['catalog_number', 'name', 'description', 'details', 'payment_required', 'payment_details', 'data_sources', 'urls', 'situations', 'responses']),
+        DF.add_field('links', 'array', lambda r: list(filter(None, [v for k, v in r.items() if k.startswith('link_')]))),
+        DF.select_fields(['catalog_number', 'name', 'description', 'details', 'payment_required', 'payment_details', 'data_sources', 'urls']),
         # DF.printer()
     ).results()[0][0]
     return dict((r['catalog_number'], r) for r in records)

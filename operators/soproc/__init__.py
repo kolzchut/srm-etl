@@ -1,6 +1,7 @@
 import datetime
 from srm_tools.budgetkey import fetch_from_budgetkey
 import dataflows as DF
+from dataflows_airtable import load_from_airtable
 from copy import deepcopy
 
 from srm_tools.logger import logger
@@ -65,12 +66,12 @@ def soprocServices(services):
         ]
         extra_data['data_sources'] = '\n'.join(data_sources)
         id = 'soproc:' + service['id']
-        tags = (
-            (service['intervention'] or []) +
-            (service['subject'] or []) +
-            (service['target_age_group'] or []) +
-            (service['target_audience'] or [])
-        )
+        # tags = (
+        #     (service['intervention'] or []) +
+        #     (service['subject'] or []) +
+        #     (service['target_age_group'] or []) +
+        #     (service['target_audience'] or [])
+        # )
         data = dict(
             name=service['name'],
             description=service['description'],
@@ -82,10 +83,11 @@ def soprocServices(services):
             data['phone_numbers'] = '118'
         elif service['office'] == 'משרד הבריאות':
             data['phone_numbers'] = '*5400'
+        data['soproc-service-tagging'] = id
 
         yield dict(
             id=id,
-            tags=tags,
+            # tags=tags,
             data=data
         )
 
@@ -98,8 +100,9 @@ def fetchServiceData():
     social_service_activities = list(fetch_from_budgetkey(query))
     print(social_service_activities[0])
     print('COLLECTED {} relevant services'.format(len(social_service_activities)))
+
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'social-procurement',
-        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers', 'organizations', 'data_sources'],
+        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers', 'organizations', 'data_sources', 'soproc-service-tagging'],
         soprocServices(social_service_activities),
         updateFromSourceData(),
         airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
