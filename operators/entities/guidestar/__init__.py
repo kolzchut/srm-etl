@@ -436,12 +436,12 @@ def operator(name, params, pipeline):
     )
 
     print('FETCHING SOPROC MAPPING')
-    taxonomy = DF.Flow(
+    soproc_mappings = DF.Flow(
         load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, 'soproc-service-tagging', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.select_fields(['id', 'situation_ids', 'response_ids']),
     ).results()[0][0]
     taxonomy.update(dict(
-        (r.pop('id'), r) for r in taxonomy
+        (r.pop('id'), r) for r in soproc_mappings
     ))
 
     skip_orgs = fetchServiceData(ga, taxonomy)
