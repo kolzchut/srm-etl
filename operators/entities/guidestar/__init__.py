@@ -108,7 +108,7 @@ def updateServiceFromSourceData(taxonomies):
 
         update_from_taxonomy([data.pop('serviceTypeName')], responses, situations)
         update_from_taxonomy((data.pop('serviceTargetAudience') or '').split(';'), responses, situations)
-        update_from_taxonomy(['soproc:' + relatedMalkarService.get('serviceGovId')], responses, situations)
+        update_from_taxonomy(['soproc:' + relatedMalkarService.get('serviceGovId', '')], responses, situations)
 
         payment_required = data.pop('paymentMethod')
         if payment_required == 'Free service':
