@@ -264,6 +264,32 @@ def flat_branches_flow(branch_mapping):
     )
 
 
+def merge_duplicate_services():
+
+    found = dict()
+
+    def func(rows):
+        for row in rows:
+            implements = row['service_implements']
+            org_key = row['organization_key']
+            service_id = row['service_id']
+            if implements:
+                found.setdefault(org_key, set()).add(implements)
+            else:
+                if org_key in found:
+                    if any(service_id in x for x in found[org_key]):
+                        print('SKIPPING AS ALREADY IMPLEMENTED {!r}'.format(row))
+                        continue
+            yield row
+
+    return DF.Flow(
+        DF.add_field('__implements', 'integer', lambda row: 0 if row['service_implements'] else 0),
+        DF.sort_rows('{__implements}'),
+        func,
+        DF.delete_fields(['__implements']),
+    )
+
+
 def flat_services_flow(branch_mapping):
     """Produce a denormalized view of service-related data."""
 
@@ -331,10 +357,12 @@ def flat_services_flow(branch_mapping):
                 'payment_details': 'service_payment_details',
                 'urls': 'service_urls',
                 'phone_numbers': 'service_phone_numbers',
+                'implements': 'service_implements',
                 'situations': 'service_situations',
             },
             resources=['flat_services'],
         ),
+        merge_duplicate_services(),
         DF.select_fields(
             [
                 'service_key',
@@ -347,6 +375,7 @@ def flat_services_flow(branch_mapping):
                 'service_urls',
                 'service_phone_numbers',
                 'service_situations',
+                'service_implements',
                 'data_sources',
                 'response_key',
                 'response_id',

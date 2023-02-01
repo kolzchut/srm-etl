@@ -222,7 +222,7 @@ def updateServiceFromSourceData(taxonomies):
             relatedOffice = relatedMalkarService.get('serviceOffice')
             print('GOT RELATED {}: id={}, office={}'.format(relatedMalkarService, relatedId, relatedOffice))
             if relatedId and relatedOffice:
-                row['implements'] = f'{relatedOffice}:{relatedId}'
+                row['implements'] = f'soproc:{relatedId}#{relatedOffice}'
 
         row['details'] = '\n<br/>\n'.join(details)
         url = data.pop('url')

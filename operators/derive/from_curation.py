@@ -110,7 +110,7 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
     updated_branches = {k: conversion.get(v) for k, v in updated_branches.items()}
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, source_id,
-        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers',
+        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers', 'implements',
          'situations', 'responses', 'organizations', 'branches', 'responses_manual', 'situations_manual', 'data_sources'],
         DF.Flow(
             load_from_airtable(curation_base, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
