@@ -92,9 +92,9 @@ class GuidestarAPI():
         return self.branch_cache[regnum]
 
     def services(self, regnum):
-        params = dict(
-            filter=f'regNum={regnum}'
-        )
+        # params = dict(
+        #     filter=f'regNum={regnum}'
+        # )
         resp = self.to_json(lambda: requests.get(f'{self.BASE}/organizations/{regnum}/services', headers=self.headers()))
         # resp = requests.get(f'https://www.guidestar.org.il/services/apexrest/api/services', params=params, headers=self.headers(), timeout=self.TIMEOUT).json()
         return resp

@@ -21,34 +21,41 @@ def unwind_services(ga: GuidestarAPI, source='entities', existing_orgs = set()):
         if rows.res.name != 'orgs':
             yield from rows        
         else:
+            count = 0
             for _, row in enumerate(rows):
                 if row['source'] != source:
                     continue
                 regNum = row['id']
 
                 existing_orgs.add(regNum)
-                if len(existing_orgs) % 10 == 0:
-                    print('COLLECTED {} organization services'.format(len(existing_orgs)))
 
                 branches = ga.branches(regNum)
                 if len(branches) == 0:
                     continue
                 services = ga.services(regNum)
                 govServices = dict(
-                    (s['serviceId'], s) for s in services if s.get('serviceGovName') is not None
+                    (s['relatedMalkarService'], s) for s in services if s.get('serviceGovName') is not None and s.get('relatedMalkarService') is not None
                 )
+                if regNum == '580019800':
+                    print('GOT ENOSH SERVICES', len(services))
+                    print('GOT ENOSH GOV SERVICES', len(govServices))
                 for service in services:
+                    if service['serviceId'] in govServices is not None:
+                        print('GOT RELATED SERVICE', service['serviceId'], govServices.get(service['serviceId']))
+                        service['relatedMalkarService'] = govServices.get(service['serviceId'])
                     if service.get('recordType') != 'GreenInfo':
                         continue
                     if not service.get('serviceName'):
                         continue
-                    service['relatedMalkarService'] = govServices.get(service.get('relatedServiceId'))
                     ret = dict()
                     ret.update(row)
                     ret['data'] = service
                     ret['data']['organization_id'] = regNum
                     ret['data']['actual_branch_ids'] = [b['branchId'] for b in branches]
                     ret['id'] = 'guidestar:' + service['serviceId']
+                    count += 1
+                    if count % 10 == 0:
+                        print('COLLECTED {} organization\'s {} services'.format(len(existing_orgs), count))
                     yield ret
     return DF.Flow(
         DF.add_field('data', 'object', resources='orgs'),
@@ -213,6 +220,7 @@ def updateServiceFromSourceData(taxonomies):
         if relatedMalkarService:
             relatedId = relatedMalkarService.get('serviceGovId')
             relatedOffice = relatedMalkarService.get('serviceOffice')
+            print('GOT RELATED {}: id={}, office={}'.format(relatedMalkarService, relatedId, relatedOffice))
             if relatedId and relatedOffice:
                 row['implements'] = f'{relatedOffice}:{relatedId}'
 
