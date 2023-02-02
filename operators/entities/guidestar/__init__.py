@@ -325,7 +325,7 @@ def unwind_branches(ga:GuidestarAPI):
                     'organization_id': regNum,
                     'name': row['name'],
                     'address': 'שירות ארצי',
-                    'drivingInstructions': 'שירות ארצי',
+                    'location': 'שירות ארצי',
                 }
                 yield national
     return DF.Flow(

@@ -157,7 +157,7 @@ def unwind_branches(ga:GuidestarAPI):
                         'organization': regNum,
                         'name': row['name'],
                         'address': 'שירות ארצי',
-                        'drivingInstructions': 'שירות ארצי',
+                        'location': 'שירות ארצי',
                     }
                     yield national
                 else:
