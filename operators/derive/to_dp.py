@@ -274,9 +274,12 @@ def merge_duplicate_services():
             org_key = row['organization_key']
             service_id = row['service_id']
             if implements:
+                if org_key not in found:
+                    print('FOUND ORG WHICH IMPLEMENTS {}'.format(org_key))
                 found.setdefault(org_key, set()).add(implements)
             else:
                 if org_key in found:
+                    print('ORG {} IMPLEMENTED SERVICES, CHECKING {}: {}'.format(org_key, service_id, list(found[org_key])))
                     if any(service_id in x for x in found[org_key]):
                         print('SKIPPING AS ALREADY IMPLEMENTED {!r}'.format(row))
                         continue

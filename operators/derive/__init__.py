@@ -7,7 +7,7 @@ def operator(*_):
 
     logger.info('Starting Derive Data Flow')
 
-    from_curation.operator()
+    # from_curation.operator()
     to_dp.operator()
     autocomplete.operator()
     to_es.operator()
