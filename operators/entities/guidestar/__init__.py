@@ -36,12 +36,9 @@ def unwind_services(ga: GuidestarAPI, source='entities', existing_orgs = set()):
                 govServices = dict(
                     (s['relatedMalkarService'], s) for s in services if s.get('serviceGovName') is not None and s.get('relatedMalkarService') is not None
                 )
-                if regNum == '580019800':
-                    print('GOT ENOSH SERVICES', len(services))
-                    print('GOT ENOSH GOV SERVICES', len(govServices))
                 for service in services:
                     if service['serviceId'] in govServices is not None:
-                        print('GOT RELATED SERVICE', service['serviceId'], govServices.get(service['serviceId']))
+                        print('GOT RELATED SERVICE', service['serviceId'])
                         service['relatedMalkarService'] = govServices.get(service['serviceId'])
                     if service.get('recordType') != 'GreenInfo':
                         continue
@@ -219,7 +216,7 @@ def updateServiceFromSourceData(taxonomies):
         if relatedMalkarService:
             relatedId = relatedMalkarService.get('serviceGovId')
             relatedOffice = relatedMalkarService.get('serviceOffice')
-            print('GOT RELATED {}: id={}, office={}'.format(relatedMalkarService, relatedId, relatedOffice))
+            print('GOT RELATED: id={}, office={}'.format(relatedId, relatedOffice))
             if relatedId and relatedOffice:
                 row['implements'] = f'soproc:{relatedId}#{relatedOffice}'
 

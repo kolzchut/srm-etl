@@ -38,7 +38,7 @@ def upload_tileset(filename, tileset, name):
 
     AUTH = dict(access_token=settings.MAPBOX_ACCESS_TOKEN)
     creds = requests.get(settings.MAPBOX_UPLOAD_CREDENTIALS, params=AUTH).json()
-    print(creds, AUTH)
+    # print(creds, AUTH)
     s3_client = boto3.client(
         's3',
         aws_access_key_id=creds['accessKeyId'],
@@ -55,7 +55,7 @@ def upload_tileset(filename, tileset, name):
         name=name
     )
     upload = requests.post(settings.MAPBOX_CREATE_UPLOAD, params=AUTH, json=data).json()
-    print(upload)
+    # print(upload)
     assert not upload.get('error')
     while True:
         status = requests.get(settings.MAPBOX_UPLOAD_STATUS + upload['id'], params=AUTH).json()

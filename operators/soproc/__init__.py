@@ -98,7 +98,7 @@ def fetchServiceData():
         select * from activities
     '''
     social_service_activities = list(fetch_from_budgetkey(query))
-    print(social_service_activities[0])
+    # print(social_service_activities[0])
     print('COLLECTED {} relevant services'.format(len(social_service_activities)))
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'social-procurement',
