@@ -175,9 +175,8 @@ def updateServiceFromSourceData(taxonomies):
         elif len(areas) == 1:
             details.append('השירות ניתן ' + ''.join(areas))
 
-        if national and row['organizations'] is not None:
+        if national:
             row['branches'] = [f'guidestar:{orgId}:national']
-            row['organizations'] = None
 
         when = data.pop('whenServiceActive')
         if when == 'All Year':
