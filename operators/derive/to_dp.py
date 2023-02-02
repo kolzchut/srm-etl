@@ -280,6 +280,9 @@ def merge_duplicate_services():
                     if any(service_id in x for x in found[org_key]):
                         print('SKIPPING AS ALREADY IMPLEMENTED {!r}'.format(row))
                         continue
+                    if service_id.startswith('soproc:'):
+                        print('SKIPPING AS SOPROC {!r}'.format(row))
+                        continue
             yield row
 
     return DF.Flow(
