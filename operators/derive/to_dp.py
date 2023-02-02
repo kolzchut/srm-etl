@@ -38,6 +38,9 @@ def fix_situations(situations):
         both_genders = ['human_situations:gender:women', 'human_situations:gender:men']
         if all(s in ids for s in both_genders):
             situations = [s for s in situations if s['id'] not in both_genders]
+        hebrew = 'human_situations:language:hebrew_speaking'
+        if hebrew in ids:
+            situations = [s for s in situations if s['id'] != hebrew]
     return situations
 
 
@@ -271,7 +274,7 @@ def merge_duplicate_services():
         skipped_implementing = 0
         skipped_soproc = 0
         found = dict()
-        
+
         for row in rows:
             implements = row['service_implements']
             org_id = row['organization_id']
