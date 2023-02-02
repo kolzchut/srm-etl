@@ -322,6 +322,7 @@ def unwind_branches(ga:GuidestarAPI):
                 national['id'] = 'guidestar:' + regNum + ':national'
                 national['data'] = {
                     'branchId': national['id'],
+                    'organization_id': regNum,
                     'name': row['name'],
                     'address': 'שירות ארצי',
                     'drivingInstructions': 'שירות ארצי',
