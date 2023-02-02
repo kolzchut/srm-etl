@@ -50,6 +50,9 @@ def updateOrgFromSourceData(ga: GuidestarAPI):
     def func(rows):
         for row in rows:
             regNums = [row['id']]
+            if row['id'].startswith('srm'):
+                yield row
+                continue
             # if row['kind'] is not None:
             #     continue
             for data in ga.organizations(regNums=regNums):
@@ -151,7 +154,7 @@ def unwind_branches(ga:GuidestarAPI):
                     national['id'] = 'guidestar:' + regNum + ':national'
                     national['data'] = {
                         'branchId': national['id'],
-                        'organization_id': regNum,
+                        'organization': regNum,
                         'name': row['name'],
                         'address': 'שירות ארצי',
                         'drivingInstructions': 'שירות ארצי',
