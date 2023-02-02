@@ -266,30 +266,39 @@ def flat_branches_flow(branch_mapping):
 
 def merge_duplicate_services():
 
-    found = dict()
-
     def func(rows):
+        implementing = 0
+        skipped_implementing = 0
+        skipped_soproc = 0
+        found = dict()
+        
         for row in rows:
             implements = row['service_implements']
-            org_key = row['organization_key']
+            org_id = row['organization_id']
             service_id = row['service_id']
             if implements:
-                if org_key not in found:
-                    print('FOUND ORG WHICH IMPLEMENTS {}'.format(org_key))
-                found.setdefault(org_key, set()).add(implements)
+                # if org_id not in found:
+                print('FOUND ORG WHICH IMPLEMENTS {}: {}'.format(org_id, implements))
+                found.setdefault(org_id, set()).add(implements)
+                implementing += 1
             else:
-                if org_key in found:
-                    print('ORG {} IMPLEMENTED SERVICES, CHECKING {}: {}'.format(org_key, service_id, list(found[org_key])))
-                    if any(service_id in x for x in found[org_key]):
-                        print('SKIPPING AS ALREADY IMPLEMENTED {!r}'.format(row))
+                if org_id in found:
+                    print('ORG {} IMPLEMENTED SERVICES, CHECKING {}: {}'.format(org_id, service_id, list(found[org_id])))
+                    if any(service_id in x for x in found[org_id]):
+                        print('SKIPPING AS ALREADY IMPLEMENTED {}'.format(service_id))
+                        skipped_implementing += 1
                         continue
                     if service_id.startswith('soproc:'):
-                        print('SKIPPING AS SOPROC {!r}'.format(row))
+                        print('SKIPPING AS SOPROC {}'.format(service_id))
+                        skipped_soproc += 1
                         continue
             yield row
+        print('DEDUPLICATION: IMPLEMENTING: {}'.format(implementing))
+        print('\tSKIPPED IMPLEMENTING: {}'.format(skipped_implementing))
+        print('\tSKIPPED SOPROC: {}'.format(skipped_soproc))
 
     return DF.Flow(
-        DF.add_field('__implements', 'integer', lambda row: 0 if row['service_implements'] else 0),
+        DF.add_field('__implements', 'integer', lambda row: 0 if row['service_implements'] else 1),
         DF.sort_rows('{__implements}'),
         func,
         DF.delete_fields(['__implements']),
@@ -368,7 +377,6 @@ def flat_services_flow(branch_mapping):
             },
             resources=['flat_services'],
         ),
-        merge_duplicate_services(),
         DF.select_fields(
             [
                 'service_key',
@@ -595,6 +603,7 @@ def card_data_flow():
                 national_service=None,
             ),
         ),
+        merge_duplicate_services(),
         DF.add_field(
             'situations',
             'array',
