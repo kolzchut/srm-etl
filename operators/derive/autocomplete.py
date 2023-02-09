@@ -63,8 +63,10 @@ def unwind_templates():
         for row in rows:
             # print(row)
             for template in TEMPLATES:
-                responses = [r for r in row['responses']] if '{response}' in template else [dict()]
-                situations = [s for s in row['situations']] if '{situation}' in template else [dict()]
+                responses = row['responses_parents'] if '{response}' in template else [dict()]
+                situations = row['situations_parents'] if '{situation}' in template else [dict()]
+                direct_responses = row['response_ids'] + [None]
+                direct_situations = row['situation_ids'] + [None]
                 org_name = row.get('organization_short_name') or row.get('organization_name') if '{org_name}' in template or '{org_id}' in template else None
                 org_names = [org_name]
                 org_id = row.get('organization_id') if org_name else None
@@ -73,12 +75,19 @@ def unwind_templates():
                 city_names = [city_name]
                 visible = '{org_id}' not in template
                 for response, situation, org_name, org_id, city_name in product(responses, situations, org_names, org_ids, city_names):
-                    if situation.get('id') in IGNORE_SITUATIONS:
+                    situation_id = situation.get('id')
+                    response_id = response.get('id')
+                    if situation_id in IGNORE_SITUATIONS:
                         continue
                     if org_id and VERIFY_ORG_ID.match(org_id) is None:
                         continue
                     if city_name and VERIFY_CITY_NAME.match(city_name) is None:
                         continue
+                    low = False
+                    if situation_id not in direct_situations:
+                        low = True
+                    if response_id not in direct_responses:
+                        low = True
                     query = template.format(response=response.get('name'), situation=situation.get('name'), org_name=org_name, org_id=org_id, city_name=city_name)
                     if 'None' in query:
                         continue
@@ -94,8 +103,8 @@ def unwind_templates():
                     yield {
                         'query': query,
                         'query_heb': query_heb,
-                        'response': response.get('id'),
-                        'situation': situation.get('id'),
+                        'response': response_id,
+                        'situation': situation_id,
                         'org_id': org_id,
                         'org_name': org_name,
                         'city_name': city_name,
@@ -104,6 +113,7 @@ def unwind_templates():
                         'situation_name': situation.get('name'),
                         'structured_query': structured_query,
                         'visible': visible,
+                        'low': low,
                     }
 
 
@@ -151,16 +161,18 @@ def autocomplete_flow():
         DF.add_field('situation_name', 'string'),
         DF.add_field('structured_query', 'string'),
         DF.add_field('visible', 'boolean'),
+        DF.add_field('low', 'boolean'),
         unwind_templates(),
         DF.join_with_self('autocomplete', ['query'], fields=dict(
             score=dict(aggregate='count'),
             query=None, query_heb=None, response=None, situation=None, synonyms=None, 
             org_id=None, org_name=None, city_name=None,
-            response_name=None, situation_name=None, structured_query=None, visible=None
+            response_name=None, situation_name=None, structured_query=None, visible=None, low=None,
         )),
         DF.add_field('bounds', 'array', **{'es:itemType': 'number', 'es:index': False}),
         get_bounds(),
         DF.set_type('score', type='number', transform=lambda v: (math.log(v) + 1)**2),
+        DF.set_type('score', transform=lambda v, row: 0.5 if row['low'] else v),
         DF.set_type('query', **{'es:autocomplete': True, 'es:title': True}),
         DF.set_type('query_heb', **{'es:title': True}),
         DF.set_type('structured_query', **{'es:hebrew': True}),

@@ -50,6 +50,32 @@ def data_api_es_flow():
             },
         ),
         DF.set_type(
+            'situations_parents',
+            **{
+                'es:itemType': 'object',
+                'es:schema': {
+                    'fields': [
+                        {'type': 'string', 'name': 'id', 'es:keyword': True},
+                        {'type': 'string', 'name': 'name'},
+                        {'type': 'string', 'name': 'synonyms'},
+                    ]
+                },
+            },
+        ),
+        DF.set_type(
+            'responses_parents',
+            **{
+                'es:itemType': 'object',
+                'es:schema': {
+                    'fields': [
+                        {'type': 'string', 'name': 'id', 'es:keyword': True},
+                        {'type': 'string', 'name': 'name'},
+                        {'type': 'string', 'name': 'synonyms'},
+                    ]
+                },
+            },
+        ),
+        DF.set_type(
             'service_urls',
             **{
                 'es:itemType': 'object',

@@ -142,9 +142,8 @@ def preprocess_services(select_fields=None, validate=False):
         set_staging_pkey('services'),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['services']),
         DF.set_type('name', transform=lambda v, row: row['name_manual'] or v, resources=['services']),
-        DF.set_type('responses', transform=lambda _, row: row['responses_manual'] or row['responses'], resources=['services']),
-        DF.set_type('situations', transform=lambda _, row: row['situations_manual'] or row['situations'], resources=['services']),
-        DF.add_field('response_ids', 'array', default=lambda row: row['responses_manual_ids'] or row['responses_ids'], resources=['services']),
+        DF.set_type('situation_ids', transform=lambda _, row: row['situations_manual_ids'] or row['situation_ids'], resources=['services']),
+        DF.set_type('response_ids', transform=lambda _, row: row['responses_manual_ids'] or row['response_ids'], resources=['services']),
         DF.set_type(
             'phone_numbers',
             type='array',
@@ -157,7 +156,7 @@ def preprocess_services(select_fields=None, validate=False):
             transform=lambda v: v.split('\n') if v else [],
             resources=['services'],
         ),
-        DF.delete_fields(['situations_manual', 'responses_manual', 'name_manual', 'responses_manual_ids', 'responses_ids'], resources=['services']),
+        DF.delete_fields(['situations_manual', 'responses_manual', 'name_manual', 'responses_manual_ids'], resources=['services']),
         DF.select_fields(select_fields, resources=['services']) if select_fields else None,
         DF.validate() if validate else None,
     )

@@ -32,16 +32,15 @@ def merge_array_fields(fieldnames):
     return func
 
 
-def fix_situations(situations):
-    if situations:
-        ids = [s['id'] for s in situations]
+def fix_situations(ids):
+    if ids:
         both_genders = ['human_situations:gender:women', 'human_situations:gender:men']
         if all(s in ids for s in both_genders):
-            situations = [s for s in situations if s['id'] not in both_genders]
+            ids = [s for s in ids if s not in both_genders]
         hebrew = 'human_situations:language:hebrew_speaking'
         if hebrew in ids:
-            situations = [s for s in situations if s['id'] != hebrew]
-    return situations
+            ids = [s for s in ids if s != hebrew]
+    return ids
 
 
 def possible_autocomplete(row):
@@ -52,7 +51,7 @@ def possible_autocomplete(row):
             if s['id'] not in IGNORE_SITUATIONS:
                 if s['id'].split(':')[1] not in ('age_group', 'language'):
                     autocompletes.add(s['name'])
-                autocompletes.add('{} עבור {}'.format(r['name'], s['name']))
+                autocompletes.add('{}ל {}'.format(r['name'], s['name']))
     return sorted(autocompletes)
 
 
@@ -204,13 +203,6 @@ def flat_branches_flow(branch_mapping):
             ),
             mode='inner'
         ),
-        # merge multiple situation fields into a single field
-        DF.add_field(
-            'merged_situations',
-            'array',
-            merge_array_fields(['situations', 'organization_situations']),
-            resources=['flat_branches'],
-        ),
         DF.rename_fields(
             {
                 'key': 'branch_key',
@@ -257,7 +249,6 @@ def flat_branches_flow(branch_mapping):
                 'organization_phone_numbers',
                 'organization_situations',
                 'national_service',
-                'merged_situations',
             ],
             resources=['flat_branches'],
         ),
@@ -318,24 +309,10 @@ def flat_services_flow(branch_mapping):
         ),
         DF.load(
             f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json',
-            resources=['responses', 'services'],
+            resources=['services'],
         ),
         DF.update_package(name='Flat Services'),
         DF.update_resource(['services'], name='flat_services', path='flat_services.csv'),
-        # responses onto services
-        unwind('response_ids', 'response_id', resources=['flat_services']),
-        DF.join(
-            'responses',
-            ['id'],
-            'flat_services',
-            ['response_id'],
-            fields=dict(
-                response_id={'name': 'id'},
-                response_name={'name': 'name'},
-                response_situations={'name': 'situations'},
-                response_synonyms={'name': 'synonyms'},
-            ),
-        ),
         # branches onto services, through organizations (we already have direct branches)
         unwind('organizations', 'organization_key', resources=['flat_services']),
         DF.filter_rows(lambda r: r['national_service'] is not True, resources=['flat_branches']),
@@ -357,13 +334,6 @@ def flat_services_flow(branch_mapping):
             resources=['flat_services'],
         ),
         unwind('merge_branches', 'branch_key', resources=['flat_services']),
-        # merge multiple situation fields into a single field
-        DF.add_field(
-            'merged_situations',
-            'array',
-            merge_array_fields(['situations', 'response_situations']),
-            resources=['flat_services'],
-        ),
         DF.rename_fields(
             {
                 'key': 'service_key',
@@ -376,7 +346,8 @@ def flat_services_flow(branch_mapping):
                 'urls': 'service_urls',
                 'phone_numbers': 'service_phone_numbers',
                 'implements': 'service_implements',
-                'situations': 'service_situations',
+                'situation_ids': 'service_situations',
+                'response_ids': 'service_responses',
             },
             resources=['flat_services'],
         ),
@@ -392,15 +363,10 @@ def flat_services_flow(branch_mapping):
                 'service_urls',
                 'service_phone_numbers',
                 'service_situations',
+                'service_responses',
                 'service_implements',
                 'data_sources',
-                'response_key',
-                'response_id',
-                'response_name',
-                'response_situations',
-                'response_synonyms',
                 'branch_key',
-                'merged_situations',
             ],
             resources=['flat_services'],
         ),
@@ -413,10 +379,6 @@ def flat_table_flow():
     """Produce a flat table to back our Data APIs."""
 
     return DF.Flow(
-        DF.load(
-            f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json',
-            resources=['situations'],
-        ),
         DF.load(
             f'{settings.DATA_DUMP_DIR}/flat_branches/datapackage.json',
             resources=['flat_branches'],
@@ -443,6 +405,7 @@ def flat_table_flow():
                 branch_location_accurate=None,
                 branch_address=None,
                 branch_orig_address=None,
+                branch_situations=None,
                 branch_city=None,
                 organization_key=None,
                 organization_id=None,
@@ -454,43 +417,17 @@ def flat_table_flow():
                 organization_urls=None,
                 organization_phone_numbers=None,
                 organization_branch_count=None,
+                organization_situations=None,
                 national_service=None,
-                branch_merged_situations={'name': 'merged_situations'},
             ),
             mode='inner'
         ),
-        DF.filter_rows(lambda r: r['response_id'] is not None, resources=['flat_table']),
+        DF.filter_rows(lambda r: bool(r['service_responses']), resources=['flat_table']),
         DF.add_field(
             'branch_short_name', 'string', helpers.calculate_branch_short_name, resources=['flat_table']
         ),
-        DF.add_field(
-            'response_category',
-            'string',
-            lambda r: r['response_id'].split(':')[1],
-            resources=['flat_table'],
-        ),
-        # merge multiple situation fields into a single field
-        DF.add_field(
-            'situations',
-            'array',
-            merge_array_fields(['branch_merged_situations', 'merged_situations']),
-            resources=['flat_table'],
-        ),
-        # situations onto table records
-        unwind('situations', 'situation_key', resources=['flat_table'], allow_empty=True),
-        DF.join(
-            'situations',
-            ['key'],
-            'flat_table',
-            ['situation_key'],
-            fields=dict(
-                situation_id={'name': 'id'},
-                situation_name={'name': 'name'},
-                situation_synonyms={'name': 'synonyms'},
-            ),
-        ),
         DF.set_primary_key(
-            ['service_id', 'response_id', 'branch_id', 'situation_id'],
+            ['service_id', 'branch_id'],
             resources=['flat_table'],
         ),
         DF.select_fields(
@@ -511,11 +448,9 @@ def flat_table_flow():
                 'service_urls',
                 'service_phone_numbers',
                 'service_implements',
+                'service_situations',
+                'service_responses',
                 'data_sources',
-                'response_id',
-                'response_name',
-                'response_synonyms',
-                'response_category',
                 'organization_id',
                 'organization_name',
                 'organization_short_name',
@@ -525,6 +460,7 @@ def flat_table_flow():
                 'organization_urls',
                 'organization_phone_numbers',
                 'organization_branch_count',
+                'organization_situations',
                 'branch_id',
                 'branch_name',
                 'branch_short_name',
@@ -537,10 +473,8 @@ def flat_table_flow():
                 'branch_city',
                 'branch_geometry',
                 'branch_location_accurate',
+                'branch_situations',
                 'national_service',
-                'situation_id',
-                'situation_name',
-                'situation_synonyms',
             ],
             resources=['flat_table'],
         ),
@@ -550,6 +484,36 @@ def flat_table_flow():
 
 
 def card_data_flow():
+
+    situations = DF.Flow(
+        DF.load(
+            f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json',
+            resources=['situations'],
+        ),
+        DF.select_fields(['key', 'id', 'name', 'synonyms']),
+    ).results()[0][0]
+    situations = dict(
+        (s.pop('key'), s) for s in situations
+    ) | dict(
+        (s['id'], s) for s in situations
+    )
+    responses = DF.Flow(
+        DF.load(
+            f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json',
+            resources=['responses'],
+        ),
+        DF.select_fields(['key', 'id', 'name', 'synonyms']),
+    ).results()[0][0]
+    responses = dict(
+        (r.pop('key'), r) for r in responses
+    ) | dict(
+        (r['id'], r) for r in responses
+    )
+    def map_taxonomy(taxonomy):
+        def func(ids):
+            return list(map(lambda x: taxonomy[x]['id'], filter(lambda y: y in taxonomy, ids)))
+        return func
+
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/flat_table/datapackage.json'),
         DF.update_package(name='Card Data'),
@@ -560,86 +524,23 @@ def card_data_flow():
             lambda r: hasher(r['branch_id'], r['service_id']),
             resources=['card_data'],
         ),
-        DF.join_with_self(
-            'card_data',
-            ['card_id'],
-            fields=dict(
-                card_id=None,
-                service_id=None,
-                service_name=None,
-                service_description=None,
-                service_details=None,
-                service_payment_required=None,
-                service_payment_details=None,
-                service_urls=None,
-                service_phone_numbers=None,
-                service_implements=None,
-                data_sources=None,
-                response_ids={'name': 'response_id', 'aggregate': 'array'},
-                response_name={'name': 'response_name', 'aggregate': 'array'},
-                response_synonyms={'name': 'response_synonyms', 'aggregate': 'array'},
-                response_categories={'name': 'response_category', 'aggregate': 'set'},
-                organization_id=None,
-                organization_name=None,
-                organization_short_name=None,
-                organization_description=None,
-                organization_purpose=None,
-                organization_kind=None,
-                organization_urls=None,
-                organization_phone_numbers=None,
-                organization_branch_count=None,
-                branch_id=None,
-                branch_name=None,
-                branch_short_name=None,
-                branch_description=None,
-                branch_urls=None,
-                branch_phone_numbers=None,
-                branch_email_addresses=None,
-                branch_address=None,
-                branch_orig_address=None,
-                branch_city=None,
-                branch_geometry=None,
-                branch_location_accurate=None,
-                situation_ids={'name': 'situation_id', 'aggregate': 'array'},
-                situation_name={'name': 'situation_name', 'aggregate': 'array'},
-                situation_synonyms={'name': 'situation_synonyms', 'aggregate': 'array'},
-                national_service=None,
-            ),
-        ),
         merge_duplicate_services(),
-        DF.add_field(
-            'situations',
-            'array',
-            lambda r: [
-                {'id': id, 'name': name, 'synonyms': synonyms}
-                for id, name, synonyms in set(tuple(zip(r['situation_ids'], r['situation_name'], map(tuple, r['situation_synonyms']))))
-            ],
-            resources=['card_data'],
-        ),
-        DF.set_type('situations', transform=fix_situations, resources=['card_data']),
-        DF.add_field(
-            'responses',
-            'array',
-            lambda r: [
-                {'id': id, 'name': name, 'synonyms': synonyms}
-                for id, name, synonyms in set(tuple(zip(r['response_ids'], r['response_name'], map(tuple, r['response_synonyms']))))
-            ],
-            resources=['card_data'],
-        ),
-        DF.set_type('response_ids', **{'es:itemType': 'string', 'es:keyword': True}, transform=lambda v: list(set(v)), resources=['card_data']),
-        DF.add_field(
-            'response_ids_parents', 'array', 
-            lambda r: helpers.update_taxonomy_with_parents(r['response_ids']),
-            **{'es:itemType': 'string', 'es:keyword': True},
-            resources=['card_data']
-        ),
-        DF.set_type('situation_ids', **{'es:itemType': 'string', 'es:keyword': True}, transform=lambda v: list(set(v)),  resources=['card_data']),
-        DF.add_field(
-            'situation_ids_parents', 'array',
-            lambda r: helpers.update_taxonomy_with_parents(r['situation_ids']),
-            **{'es:itemType': 'string', 'es:keyword': True},
-            resources=['card_data']
-        ),
+        DF.add_field('situation_ids', 'array', merge_array_fields(['service_situations', 'branch_situations', 'organization_situations']), resources=['card_data']),
+        DF.set_type('situation_ids', transform=map_taxonomy(situations), resources=['card_data']),
+        DF.set_type('situation_ids', transform=fix_situations, resources=['card_data']),
+        DF.add_field('response_ids', 'array', merge_array_fields(['service_responses']), resources=['card_data']),
+        DF.set_type('response_ids', transform=map_taxonomy(responses), resources=['card_data']),
+        DF.add_field('situation_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['situation_ids']), resources=['card_data']),
+        DF.add_field('response_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_ids']), resources=['card_data']),
+        DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses'], resources=['card_data']),
+        DF.add_field('situations', 'array', lambda r: [situations[s] for s in r['situation_ids']], resources=['card_data']),
+        DF.add_field('responses', 'array', lambda r: [responses[s] for s in r['response_ids']], resources=['card_data']),
+        DF.add_field('situations_parents', 'array', lambda r: [situations[s] for s in r['situation_ids_parents']], resources=['card_data']),
+        DF.add_field('responses_parents', 'array', lambda r: [responses[s] for s in r['response_ids_parents']], resources=['card_data']),
+        DF.set_type('situation_ids', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
+        DF.set_type('response_ids', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
+        DF.set_type('situation_ids_parents', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
+        DF.set_type('response_ids_parents', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),        
         DF.add_field(
             'response_categories',
             'array',
@@ -695,15 +596,6 @@ def card_data_flow():
         DF.set_type('organization_id', **{'es:keyword': True}),
         DF.set_type('response_categories', **{'es:itemType': 'string', 'es:keyword': True}),
         DF.set_primary_key(['card_id'], resources=['card_data']),
-        DF.delete_fields(
-            [
-                'response_name',
-                'response_synonyms',
-                'situation_name',
-                'situation_synonyms',
-            ],
-            resources=['card_data'],
-        ),
         DF.update_resource(['card_data'], path='card_data.csv'),
         DF.validate(),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/card_data'),
