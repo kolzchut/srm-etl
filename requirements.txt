@@ -12,3 +12,4 @@ regex
 openlocationcode
 thefuzz
 python-Levenshtein
+cattrs==1.1.0
