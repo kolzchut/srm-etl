@@ -141,9 +141,9 @@ def unwind_branches(ga:GuidestarAPI):
                         data['phone_numbers'] = branch['phone']
                     data['organization'] = [regNum]
                     if branch.get('language'):
-                        data['situations'] = situations.convert_situation_list([
+                        data['situations'] = [
                             'human_situations:language:{}_speaking'.format(l.lower().strip()) for l in branch['language'].split(';')
-                        ])
+                        ]
 
                     ret['data'] = data
                     ret['id'] = 'guidestar:' + branch['branchId']
