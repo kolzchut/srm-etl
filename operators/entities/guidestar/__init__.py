@@ -69,6 +69,8 @@ def updateServiceFromSourceData(taxonomies):
                     mapping = taxonomies[name]
                     responses.update(mapping['response_ids'] or [])
                     situations.update(mapping['situation_ids'] or [])
+                    if any(x.startswith('rec') for x in mapping['response_ids']) or any(x.startswith('rec') for x in mapping['situation_ids']):
+                        print('BAD MAPPING REC', name, mapping)
                 except KeyError:
                     print('WARNING: no mapping for {}'.format(name))
                     taxonomies[name] = dict(response_ids=[], situation_ids=[])
@@ -434,7 +436,7 @@ def operator(name, params, pipeline):
     taxonomy = DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_GUIDESTAR_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         # DF.printer(),
-        # DF.select_fields(['name', 'situation_ids', 'response_ids']),
+        DF.select_fields(['name', 'situation_ids', 'response_ids']),
     ).results()[0][0]
     taxonomy = dict(
         (r.pop('name'), r) for r in taxonomy
