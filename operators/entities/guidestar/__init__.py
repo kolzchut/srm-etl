@@ -69,8 +69,6 @@ def updateServiceFromSourceData(taxonomies):
                     mapping = taxonomies[name]
                     responses.update(mapping['response_ids'] or [])
                     situations.update(mapping['situation_ids'] or [])
-                    if any(x.startswith('rec') for x in mapping['response_ids']) or any(x.startswith('rec') for x in mapping['situation_ids']):
-                        print('BAD MAPPING REC', name, mapping)
                 except KeyError:
                     print('WARNING: no mapping for {}'.format(name))
                     taxonomies[name] = dict(response_ids=[], situation_ids=[])
