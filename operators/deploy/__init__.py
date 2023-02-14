@@ -18,15 +18,12 @@ class DeploySpec:
 DEPLOY_CONFIG = [
     # Presets
     DeploySpec(settings.AIRTABLE_PRESETS_TABLE, 
-               'id', ['title', 'style', 'link'], add_missing=True),
+               'id', ['title'], add_missing=True),
     # Situations and Responses
     DeploySpec(settings.AIRTABLE_SITUATION_TABLE,
                'id', ['synonyms'], add_missing=True),
     DeploySpec(settings.AIRTABLE_RESPONSE_TABLE,
                'id', ['synonyms'], add_missing=True),
-    # Taxonomy Mappings
-    DeploySpec(settings.AIRTABLE_TAXONOMY_MAPPING_GUIDESTAR_TABLE,
-               'name', ['response_ids:Responses', 'situation_ids:Situations'], add_missing=True),
     # Organization Short Names
     DeploySpec(settings.AIRTABLE_ORGANIZATION_TABLE,
                'id', ['short_name']),
