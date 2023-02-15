@@ -150,7 +150,7 @@ def run_single_benchmark(found, result_mapping, bad_performers):
                 *[add_to_found(i, query, response['id'], response['name'], 'Response', used) for response in card.get('responses', [])],
                 *[add_to_found(i, query, situation['id'], situation['name'], 'Situation', used) for situation in card.get('situations', [])],
             ]
-            decisions = list(filter(None, decisions))
+            decisions = list(filter(lambda x: x not in (None, 'Neutral'), decisions))
             ind_score = 0.89**i
             total += ind_score
             if decisions:
