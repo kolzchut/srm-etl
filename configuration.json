@@ -86,7 +86,7 @@
             "admin": true
         },
         {
-            "name": "search-benchmark",
+            "name": "benchmark",
             "display": "Run search benchmarks",
             "dgp": false,
             "admin": true
