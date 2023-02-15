@@ -1,0 +1,233 @@
+import json
+from collections import Counter
+
+import requests
+
+import dataflows as DF
+
+from srm_tools.logger import logger
+from srm_tools.processors import fetch_mapper, update_mapper
+from dataflows_airtable import load_from_airtable, AIRTABLE_ID_FIELD, dump_to_airtable
+
+from conf import settings
+
+BASE = 'https://srm-staging-api.whiletrue.industries'
+
+
+def get_autocomplete(query):
+    query = query.replace(' ', '_')
+    resp = requests.get(f'{BASE}/api/idx/get/{query}?type=autocomplete')
+    if resp.status_code == 200:
+        return resp.json()
+    else:
+        return None
+
+def search_dym_autocomplete(query):
+    params = dict(
+      size=1,
+      q=query,
+      match_operator='and',
+      filter=json.dumps([{'visible': True}]),
+    )
+    ret = requests.get(f'{BASE}/api/idx/search/autocomplete', params).json()
+    if ret and 'search_results' in ret and ret['search_results']:
+        return ret['search_results'][0]['source']['query']
+
+def search_dym(query):
+    SHARD_SIZE = 50
+    params = dict(
+        size=1,
+        offset=0,
+        extra='did-you-mean',
+        q=query,        
+    )
+    resp = requests.get(f'{BASE}/api/idx/search/cards', params).json()
+    pa = resp.get('possible_autocomplete')
+    if pa:
+        best = pa[0]
+        total = resp.get('search_counts', {}).get('_current', {}).get('total_overall') or 0
+        best_doc_count = best.get('doc_count') or 0
+        threshold = min(total, SHARD_SIZE) / 3
+        if best_doc_count <= SHARD_SIZE and best_doc_count > threshold and 'key' in best:
+            return best['key']
+
+def make_filter(ac):
+    ret = dict()
+    if ac.get('response'):
+        ret['response_ids_parents'] = ac['response']
+    if ac.get('situation'):
+        ret['situation_ids'] = ac['situation']
+    if ac.get('org_id'):
+        ret['organization_id'] = ac['org_id']
+    return ret or None
+
+
+def search_cards(query, ac):
+    params = dict(
+        size=20,
+        offset=0,
+    )
+    ff = dict()
+    if ac is None:
+        params['q'] = query
+        params['minscore'] = 20
+    else:
+        params['q'] = ac['structured_query']
+        ff = make_filter(ac) or ff
+
+    ret = []
+    for n in (False, True, None):
+        if n is not None:
+            filters = dict(**ff, national_service=n)
+        else:
+            filters = ff
+        if filters:
+            params['filter'] = json.dumps([filters])
+
+        params['extra'] = 'national-services|collapse|collapse-collect'
+
+        resp = requests.get(f'{BASE}/api/idx/search/cards', params)
+        assert resp.status_code == 200
+        resp = resp.json()
+        if 'search_results' in resp:
+            ret.append(([x['source'] for x in resp['search_results']], resp['search_counts']['_current']['total_overall']))
+        else:
+            ret.append(([], 0))
+    return ret
+
+
+def run_single_benchmark(found, result_mapping, bad_performers):
+
+    def add_to_found(pos, query, id, name, type, used):
+        found_id = f'{query}:{id}'
+        if found_id not in used:
+            item = dict(
+                Service=None,
+                Organization=None,
+                Response=None,
+                Situation=None,
+            )
+            item.update(dict(
+                id=found_id,
+                Benchmark=query,
+                Name=name,
+                Found=True,
+                Type=type,
+                Position=pos+1
+            ))
+            field = type.split(' ')[-1]
+            item[field] = id
+            found.append(item)
+            used.add(found_id)
+        if found_id in result_mapping:
+            return result_mapping[found_id]['Decision']
+
+
+    def func(row):
+        used = set()
+        query = row['Query'].strip()
+        print('Query', query)
+        row['Query'] = query
+        ac = get_autocomplete(query)
+        structured = ac is not None
+        row['Structured'] = structured
+        if structured:
+            row['Upgrade Suggestion'] = None
+        else:
+            row['Upgrade Suggestion'] = search_dym_autocomplete(query) or search_dym(query)
+        search_results = search_cards(query, ac)
+        row['Number of results'] = search_results[2][1]
+
+        all_results = list(enumerate(search_results[0][0])) + list(enumerate(search_results[1][0]))
+        total = 0
+        score = 0
+        for i, card in all_results:
+            decisions = [
+                add_to_found(i, query, card['service_id'], card['service_name'], 'Service', used)
+                if not card['national_service'] else
+                add_to_found(i, query, card['service_id'], card['service_name'], 'National Service', used),
+                add_to_found(i, query, card['organization_id'], card['organization_name'], 'Organization', used),
+                *[add_to_found(i, query, response['id'], response['name'], 'Response', used) for response in card.get('responses', [])],
+                *[add_to_found(i, query, situation['id'], situation['name'], 'Situation', used) for situation in card.get('situations', [])],
+            ]
+            decisions = list(filter(None, decisions))
+            ind_score = 0.89**i
+            total += ind_score
+            if decisions:
+                decisions = Counter(decisions)
+                top = decisions.most_common(1)[0][0]
+                if top == 'Good':
+                    pass
+                elif top == 'Bad':
+                    ind_score = -ind_score
+                else:
+                    assert False
+            else:
+                ind_score = 0
+            score += ind_score
+            if ind_score <= 0:
+                bpid = f'{query}:{card["service_id"]}'
+                if bpid not in bad_performers:
+                    print('BAD PERFORMER', query, card['service_name'], Counter(decisions).most_common() if decisions else None)
+                    bad_performers.add(bpid)
+                
+        row['Score'] = 100 * score / total if total else None
+
+    return func
+
+def run_benchmark():
+    results = DF.Flow(
+        load_from_airtable('appkZFe6v5H63jLuC', 'Results', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.select_fields([AIRTABLE_ID_FIELD, 'id', 'Decision']),
+    ).results()[0][0]
+    result_mapping = {x['id']: x for x in results}
+
+    found = []
+    bad_performers = set()
+    DF.Flow(
+        load_from_airtable('appkZFe6v5H63jLuC', 'Benchmark', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.filter_rows(lambda r: r['Query'] != 'dummy'),
+        run_single_benchmark(found, result_mapping, bad_performers),
+        dump_to_airtable({
+            ('appkZFe6v5H63jLuC', 'Benchmark'): {
+                'resource-name': 'Benchmark',
+                'typecast': True
+            }
+        }, settings.AIRTABLE_API_KEY),
+    ).process()
+
+    for f in found:
+        f[AIRTABLE_ID_FIELD] = result_mapping.get(f['id'], dict()).get(AIRTABLE_ID_FIELD)
+        f['Bad Performer'] = f['id'] in bad_performers
+    found_ids = set(x['id'] for x in found)
+    for f in results:
+        if f['id'] in found_ids:
+            continue
+        f['Found'] = False
+        f['Bad Performer'] = False
+        f['Position'] = None
+        found.append(f)
+    for f in found[:40]:
+        print(f)
+
+    DF.Flow(
+        found,
+        DF.update_resource(-1, name='found'),
+        dump_to_airtable({
+            ('appkZFe6v5H63jLuC', 'Results'): {
+                'resource-name': 'found',
+                'typecast': True
+            }
+        }, settings.AIRTABLE_API_KEY),
+    ).process()
+
+
+
+def operator(*_):
+    logger.info('Running benchmarks')
+    run_benchmark()
+    logger.info('Finished running benchmarks')
+
+
+if __name__ == '__main__':
+    operator(None, None, None)

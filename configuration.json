@@ -84,6 +84,12 @@
             "display": "Copy manual tagging from staging to production",
             "dgp": false,
             "admin": true
+        },
+        {
+            "name": "search-benchmark",
+            "display": "Run search benchmarks",
+            "dgp": false,
+            "admin": true
         }
     ],
     "theme": {
