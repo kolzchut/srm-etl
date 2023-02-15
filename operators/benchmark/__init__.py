@@ -63,20 +63,20 @@ def make_filter(ac):
 
 
 def search_cards(query, ac):
-    params = dict(
-        size=20,
-        offset=0,
-    )
-    ff = dict()
-    if ac is None:
-        params['q'] = query
-        params['minscore'] = 20
-    else:
-        params['q'] = ac['structured_query']
-        ff = make_filter(ac) or ff
-
     ret = []
     for n in (False, True, None):
+        params = dict(
+            size=20,
+            offset=0,
+        )
+        ff = dict()
+        if ac is None:
+            params['q'] = query
+            params['minscore'] = 20
+        else:
+            params['q'] = ac['structured_query']
+            ff = make_filter(ac) or ff
+
         if n is not None:
             filters = dict(**ff, national_service=n)
         else:
