@@ -11,11 +11,11 @@ from srm_tools.logger import logger
 def data_api_sitemap_flow():
     urls = DF.Flow(
         [dict(path='/')],
-        DF.load(f'{settings.DATA_DUMP_DIR}/response_data/datapackage.json'),
-        DF.load(f'{settings.DATA_DUMP_DIR}/place_data/datapackage.json'),
+        DF.load(f'{settings.DATA_DUMP_DIR}/autocomplete/datapackage.json'),
+        # DF.load(f'{settings.DATA_DUMP_DIR}/place_data/datapackage.json'),
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
-        DF.add_field('path', 'string', lambda r: '/r/{id}'.format(**r), resources='responses'),
-        DF.add_field('path', 'string', lambda r: '/p/{key}'.format(**r), resources='places'),
+        DF.add_field('path', 'string', lambda r: '/s/{id}'.format(**r), resources='autocomplete'),
+        # DF.add_field('path', 'string', lambda r: '/p/{key}'.format(**r), resources='places'),
         DF.add_field('path', 'string', lambda r: '/c/{card_id}'.format(**r), resources='card_data'),
         DF.concatenate(dict(path=[]), target=dict(name='sitemap', path='sitemap.csv')),
         DF.set_type('path', transform=lambda v: v.replace("'", '&apos;').replace('"', '&quot;')),
