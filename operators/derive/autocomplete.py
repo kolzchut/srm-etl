@@ -90,6 +90,8 @@ def unwind_templates():
                         low = True
                     if response_id not in direct_responses:
                         low = True
+                    if org_name and row['organization_branch_count'] < 5:
+                        low = True
                     query = template.format(response=response.get('name'), situation=situation.get('name'), org_name=org_name, org_id=org_id, city_name=city_name)
                     if 'None' in query:
                         continue
