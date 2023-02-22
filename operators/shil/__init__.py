@@ -62,7 +62,7 @@ FIELD_MAP = {
         'type': 'string',
         'transform': lambda r: '\n'.join(filter(None, [r['PhoneNumber'], r['PhoneNumber2']])),
     },
-    'email_addresses': 'Email',
+    'email_address': 'Email',
     'address_details': {
         'source': 'Location',
     },

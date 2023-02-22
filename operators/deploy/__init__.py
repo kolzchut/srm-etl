@@ -26,7 +26,7 @@ DEPLOY_CONFIG = [
                'id', ['synonyms'], add_missing=True),
     # Organization Short Names and Situations
     DeploySpec(settings.AIRTABLE_ORGANIZATION_TABLE,
-               'id', ['short_name', 'situation_ids:situations']),
+               'id', ['short_name', 'manual_short_name', 'situation_ids:situations']),
     # Service Manual Tagging
     DeploySpec(settings.AIRTABLE_SERVICE_TABLE,
                'id', ['name_manual']),

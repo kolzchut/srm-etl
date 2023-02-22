@@ -139,7 +139,7 @@ def mde_branch_flow():
             'Branch Address': 'address',
             'Branch Geocode': 'geocode',
             'Branch Phone Number': 'phone_numbers',
-            'Branch Email': 'email_addresses',
+            'Branch Email': 'email_address',
             'Branch Website': 'urls',
             'Org Website': 'org_urls',
         }),
@@ -150,7 +150,7 @@ def mde_branch_flow():
             address=None,
             geocode=None, 
             phone_numbers=None,
-            email_addresses=None,
+            email_address=None,
             urls=None,
             org_urls=None,
             organization=None,
@@ -160,7 +160,7 @@ def mde_branch_flow():
             address=r['address'],
             geocode=r['geocode'],
             phone_numbers=r['phone_numbers'],
-            email_addresses=r['email_addresses'],
+            email_address=r['email_address'],
             urls=r['urls'],
             org_urls=r['org_urls'],
             organization=[r['organization']],
@@ -170,7 +170,7 @@ def mde_branch_flow():
 
     print('COLLECTED {} relevant branches'.format(len(branches)))
     return airtable_updater(settings.AIRTABLE_BRANCH_TABLE, 'manual-data-entry',
-        ['id', 'name', 'organization', 'location', 'address', 'phone_numbers', 'email_addresses', 'urls'],
+        ['id', 'name', 'organization', 'location', 'address', 'phone_numbers', 'email_address', 'urls'],
         branches,
         branch_updater(),
         airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
@@ -225,7 +225,7 @@ def mde_service_flow():
             'Service Description': 'description',
             'Service Conditions': 'payment_details',
             'Service Phone Number': 'phone_numbers',
-            'Service Email': 'email_addresses',
+            'Service Email': 'email_address',
             'Service Website': 'urls',
         }),
         DF.add_field('branch_id', 'string', lambda r: mde_id(r['organization'], r['branch_address'], r['branch_geocode'])),
@@ -239,6 +239,7 @@ def mde_service_flow():
             situations=r['situations_ids'],
             phone_numbers=r['phone_numbers'],
             data_source=r['data_source'],
+            email_address=r['email_address'],
         )),
         DF.add_field('id', 'string', lambda r: mde_id(r['branch_id'], r['name'])),
         DF.select_fields(['id', 'data']),
@@ -246,7 +247,7 @@ def mde_service_flow():
 
     print('COLLECTED {} relevant services'.format(len(services)))
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'manual-data-entry',
-        ['id', 'name', 'description', 'payment_details', 'phone_numbers', 'urls', 'situations', 'responses', 'branches', 'data_sources'],
+        ['id', 'name', 'description', 'payment_details', 'phone_numbers', 'email_address', 'urls', 'situations', 'responses', 'branches', 'data_sources'],
         services,
         service_updater(),
         airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE

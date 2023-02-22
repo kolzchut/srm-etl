@@ -17,10 +17,6 @@ def transform_urls(urls):
     return list(map(transformer, urls.split('\n'))) if urls else None
 
 
-def transform_email_addresses(email_addresses):
-    return email_addresses.split(',') if email_addresses else None
-
-
 def transform_phone_numbers(phone_numbers):
     phone_numbers = phone_numbers.split('\n') if phone_numbers else []
     ret = []
@@ -170,6 +166,8 @@ def preprocess_organizations(select_fields=None, validate=False):
         DF.filter_rows(lambda r: bool(r.get('name')), resources=['organizations']),
         set_staging_pkey('organizations'),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['organizations']),
+        DF.set_type('short_name', transform=lambda v, r: r.get('manual_short_name') or v, resources=['organizations']),
+        DF.delete_fields(['manual_short_name'], resources=['organizations']),
         DF.set_type(
             'phone_numbers',
             type='array',
@@ -194,12 +192,6 @@ def preprocess_branches(select_fields=None, validate=False):
             'phone_numbers',
             type='array',
             transform=transform_phone_numbers,
-            resources=['branches'],
-        ),
-        DF.set_type(
-            'email_addresses',
-            type='array',
-            transform=transform_email_addresses,
             resources=['branches'],
         ),
         remove_whitespaces('branches', 'name'),

@@ -115,7 +115,7 @@ def data_api_es_flow():
             },
         ),
         DF.set_type(
-            'branch_email_addresses',
+            'branch_email_address',
             **{
                 'es:itemType': 'string',
                 'es:index': False,
@@ -123,6 +123,13 @@ def data_api_es_flow():
         ),
         DF.set_type(
             'organization_phone_numbers',
+            **{
+                'es:itemType': 'string',
+                'es:index': False,
+            },
+        ),
+        DF.set_type(
+            'organization_email_address',
             **{
                 'es:itemType': 'string',
                 'es:index': False,
@@ -137,6 +144,13 @@ def data_api_es_flow():
         ),
         DF.set_type(
             'service_phone_numbers',
+            **{
+                'es:itemType': 'string',
+                'es:index': False,
+            },
+        ),
+        DF.set_type(
+            'service_email_address',
             **{
                 'es:itemType': 'string',
                 'es:index': False,

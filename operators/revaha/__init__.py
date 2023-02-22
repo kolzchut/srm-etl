@@ -129,7 +129,7 @@ FIELD_MAP = {
         'transform': transform_phone_numbers,
     },
     'urls': f'{BASE_URL}#{BRANCH_NAME_PREFIX}',
-    'email_addresses': {
+    'email_address': {
         'source': 'email',
         'type': 'string',
         'transform': transform_email_addresses,

@@ -268,6 +268,8 @@ def updateOrgFromSourceData():
         if data is None:
             return
         row['name'] = data['name'].replace(' (חל"צ)', '').replace(' (ע"ר)', '')
+        if data['abbreviatedOrgName']:
+            row['short_name'] = data['abbreviatedOrgName']
         row['kind'] = data['malkarType']
         row['description'] = None
         row['purpose'] = data.get('orgGoal')
@@ -291,7 +293,7 @@ def fetchWildOrgData(ga: GuidestarAPI, skip_orgs):
     ]        
     print('COLLECTED {} relevant organizations'.format(len(all_orgs)))
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'guidestar',
-        ['name', 'kind', 'urls', 'description', 'purpose', 'phone_numbers'],
+        ['name', 'short_name', 'kind', 'urls', 'description', 'purpose', 'phone_numbers'],
         all_orgs,
         updateOrgFromSourceData(),
         airtable_base=settings.AIRTABLE_GUIDESTAR_IMPORT_BASE
