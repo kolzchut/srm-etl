@@ -59,7 +59,7 @@ def updateOrgFromSourceData(ga: GuidestarAPI):
                 try:
                     data = data['data']
                     row['name'] = data['name'].replace(' (חל"צ)', '').replace(' (ע"ר)', '')
-                    row['short_name'] = data['abbreviatedOrgName']
+                    row['short_name'] = data.get('abbreviatedOrgName')
                     row['kind'] = data['malkarType']
                     row['description'] = None
                     row['purpose'] = data.get('orgGoal')
