@@ -37,7 +37,7 @@ def unwind_services(ga: GuidestarAPI, source='entities', existing_orgs = set()):
                     (s['relatedMalkarService'], s) for s in services if s.get('serviceGovName') is not None and s.get('relatedMalkarService') is not None
                 )
                 for service in services:
-                    if service['serviceId'] in govServices is not None:
+                    if service['serviceId'] in govServices:
                         print('GOT RELATED SERVICE', service['serviceId'])
                         service['relatedMalkarService'] = govServices.get(service['serviceId'])
                     if service.get('recordType') != 'GreenInfo':
@@ -226,11 +226,19 @@ def updateServiceFromSourceData(taxonomies):
         if url:
             row['urls'] = f'{url}#מידע נוסף על השירות'
 
+        phone_numbers = data.pop('Phone')
+        if phone_numbers:
+            row['phone_numbers'] = phone_numbers
+
+        email_address = data.pop('Email')
+        if email_address:
+            row['email_address'] = email_address
+
         for k in ('isForCoronaVirus', 'lastModifiedDate', 'serviceId', 'regNum', 'isForBranch'):
             data.pop(k)
         row['situations'] = sorted(situations)
         row['responses'] = sorted(responses)
-        assert all(v in (None, '0') for v in data.values()), repr(data_source_url)
+        assert all(v in (None, '0') for v in data.values()), repr(data_source_url) + ':' + repr(data)
     return DF.Flow(
         func,
     )
@@ -241,7 +249,8 @@ def fetchServiceData(ga, taxonomy):
     existing_orgs = set()
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'guidestar',
-        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations', 'branches', 'data_sources', 'implements'],
+        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 
+        'organizations', 'branches', 'data_sources', 'implements', 'phone_numbers', 'email_address'],
         DF.Flow(
             load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='orgs'),
@@ -412,7 +421,8 @@ def fetchWildServiceData(ga, taxonomy):
     existing_orgs = set()
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'guidestar',
-        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 'organizations', 'branches', 'data_sources', 'implements'],
+        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses',
+         'organizations', 'branches', 'data_sources', 'implements', 'phone_numbes', 'email_address'],
         DF.Flow(
             load_from_airtable(settings.AIRTABLE_GUIDESTAR_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='orgs'),
@@ -465,4 +475,16 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
     logger.info('STARTING Guidestar Scraping')
     logger.addHandler(logging.StreamHandler(sys.stdout))
-    operator(None, None, None)
+    # operator(None, None, None)
+    ga = GuidestarAPI()
+    taxonomy = dict()
+    orgs = [
+        dict(source='entities', id='580019800'),
+    ]
+    DF.Flow(
+        orgs,
+        DF.update_resource(-1, name='orgs'),
+        unwind_services(ga),
+        updateServiceFromSourceData(taxonomy),
+        DF.printer(),
+    ).process()
