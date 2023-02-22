@@ -226,11 +226,11 @@ def updateServiceFromSourceData(taxonomies):
         if url:
             row['urls'] = f'{url}#מידע נוסף על השירות'
 
-        phone_numbers = data.pop('Phone')
+        phone_numbers = data.pop('Phone', data.pop('phone', None))
         if phone_numbers:
             row['phone_numbers'] = phone_numbers
 
-        email_address = data.pop('Email')
+        email_address = data.pop('Email', data.pop('email', None))
         if email_address:
             row['email_address'] = email_address
 
