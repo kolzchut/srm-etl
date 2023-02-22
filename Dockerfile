@@ -1,4 +1,4 @@
-FROM akariv/dgp-app:258f9cce6828bdb6579aaf0a596269c236dc4268
+FROM akariv/dgp-app:6f53f02dc1aece67e6e3cd1c4263de13f556cf38
 
 USER root
 RUN apt-get install -y curl gnupg wget unzip build-essential libsqlite3-dev zlib1g-dev
