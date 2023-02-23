@@ -166,7 +166,7 @@ def preprocess_organizations(select_fields=None, validate=False):
         DF.filter_rows(lambda r: bool(r.get('name')), resources=['organizations']),
         set_staging_pkey('organizations'),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['organizations']),
-        DF.set_type('short_name', transform=lambda v, r: r.get('manual_short_name') or v, resources=['organizations']),
+        DF.set_type('short_name', transform=lambda v, row: row.get('manual_short_name') or v, resources=['organizations']),
         DF.delete_fields(['manual_short_name'], resources=['organizations']),
         DF.set_type(
             'phone_numbers',
