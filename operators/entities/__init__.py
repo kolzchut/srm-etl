@@ -75,6 +75,8 @@ def updateOrgFromSourceData(ga: GuidestarAPI):
                     if data.get('tel2'):
                         phone_numbers.append(data['tel2'])
                     row['phone_numbers'] = '\n'.join(phone_numbers)
+                    if data.get('email'):
+                        row['email_address'] = data['email']
                     break
                 except Exception as e:
                     print('BAD DATA RECEIVED', str(e), regNums, data)
