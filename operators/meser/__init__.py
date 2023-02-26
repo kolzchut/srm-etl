@@ -50,6 +50,7 @@ def operator(*_):
         # Loading data
         DF.load(str(FILENAME), infer_strategy=DF.load.INFER_STRINGS),
         DF.update_resource(-1, name='meser'),
+        DF.filter_rows(lambda r: r['Type'] not in ('משפחתון', 'תמיכה ביתית', 'דירת המשך')),
         DF.select_fields(['NAME',
                           'Misgeret_Id', 'Type', 'Target_Population', 'Second_Classific', 'ORGANIZATIONS_BUSINES_NUM', 'Registered_Business_Id',
                           'Gender_Descr', 'City', 'Street', 'House_Num', 'Telephone', 'GisX', 'GisY']),
