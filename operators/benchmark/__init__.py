@@ -179,7 +179,8 @@ def run_benchmark():
     results = DF.Flow(
         load_from_airtable('appkZFe6v5H63jLuC', 'Results', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
     ).results()[0][0]
-    result_mapping = {x['id']: dict(id=x['id'], Decision=x['Decision']) for x in results}
+    result_mapping = {x['id']: dict(__key=x[AIRTABLE_ID_FIELD], id=x['id'], Decision=x['Decision']) for x in results}
+    print('Loaded', len(result_mapping), 'results')
 
     found = []
     bad_performers = set()
@@ -196,11 +197,13 @@ def run_benchmark():
     ).process()
 
     for f in found:
-        f[AIRTABLE_ID_FIELD] = result_mapping.get(f['id'], dict()).get(AIRTABLE_ID_FIELD)
+        f[AIRTABLE_ID_FIELD] = result_mapping.get(f['id'], dict()).get('__key')
         f['Bad Performer'] = f['id'] in bad_performers
     found_ids = set(x['id'] for x in found)
     for f in results:
         if f['id'] in found_ids:
+            continue
+        if f['id'] == 'dummy':
             continue
         f['Found'] = False
         f['Bad Performer'] = False
