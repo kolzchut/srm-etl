@@ -178,9 +178,8 @@ def run_single_benchmark(found, result_mapping, bad_performers):
 def run_benchmark():
     results = DF.Flow(
         load_from_airtable('appkZFe6v5H63jLuC', 'Results', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-        DF.select_fields([AIRTABLE_ID_FIELD, 'id', 'Decision']),
     ).results()[0][0]
-    result_mapping = {x['id']: x for x in results}
+    result_mapping = {x['id']: dict(id=x['id'], Decision=x['Decision']) for x in results}
 
     found = []
     bad_performers = set()
