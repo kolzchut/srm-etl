@@ -72,9 +72,10 @@ def search_cards(query, ac):
         ff = dict()
         if ac is None:
             params['q'] = query
-            params['minscore'] = 20
+            params['minscore'] = 50
         else:
             params['q'] = ac['structured_query']
+            params['match_operator'] = 'or';
             ff = make_filter(ac) or ff
 
         if n is not None:
