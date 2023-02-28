@@ -13,6 +13,7 @@ def data_api_sitemap_flow():
         [dict(path='/')],
         DF.load(f'{settings.DATA_DUMP_DIR}/autocomplete/datapackage.json'),
         # DF.load(f'{settings.DATA_DUMP_DIR}/place_data/datapackage.json'),
+        DF.filter_rows(lambda r: r['visible'] and not r['low'] and r['score'] > 1, resources='autocomplete'),
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
         DF.add_field('path', 'string', lambda r: '/s/{id}'.format(**r), resources='autocomplete'),
         # DF.add_field('path', 'string', lambda r: '/p/{key}'.format(**r), resources='places'),
