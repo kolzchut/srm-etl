@@ -171,7 +171,7 @@ def autocomplete_flow():
             score=dict(aggregate='count'),
             query=None, query_heb=None, response=None, situation=None, synonyms=None, 
             org_id=None, org_name=None, city_name=None,
-            response_name=None, situation_name=None, structured_query=None, visible=None, low=None,
+            response_name=None, situation_name=None, structured_query=None, visible=None, low=dict(aggregate='min'),
         )),
         DF.add_field('bounds', 'array', **{'es:itemType': 'number', 'es:index': False}),
         get_bounds(),

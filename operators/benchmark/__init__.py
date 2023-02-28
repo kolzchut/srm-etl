@@ -209,9 +209,12 @@ def run_benchmark():
         f['Found'] = False
         f['Bad Performer'] = False
         f['Position'] = None
+        for t in ('Service', 'Organization', 'Response', 'Situation', 'Benchmark'):
+            if f.get(t) and isinstance(f[t], list) and len(f[t]) == 1:
+                f[t] = f[t][0]
+            else:
+                f[t] = None
         found.append(f)
-    for f in found[:40]:
-        print(f)
 
     DF.Flow(
         found,
@@ -222,6 +225,7 @@ def run_benchmark():
                 'typecast': True
             }
         }, settings.AIRTABLE_API_KEY),
+        DF.printer(),
     ).process()
 
 
