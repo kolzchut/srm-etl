@@ -1,4 +1,3 @@
-import hashlib
 from pathlib import Path
 
 from openlocationcode import openlocationcode as olc
@@ -12,6 +11,8 @@ from srm_tools.logger import logger
 from srm_tools.update_table import airtable_updater
 from srm_tools.unwind import unwind
 from srm_tools.hash import hasher
+from srm_tools.datagovil import fetch_datagovil
+
 
 from conf import settings
 
@@ -21,7 +22,7 @@ transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
 
 def alternate_address(row):
     assert '999' not in row['address'], str(row)
-    bad_address = any(not row[f] for f in ['Street', 'House_Num', 'City'])
+    bad_address = any(not row[f] for f in ['Adrees', 'City_Name'])
     has_coord = all(row[f] for f in ['GisX', 'GisY'])
     if bad_address and has_coord:
         x = int(row['GisX'])
@@ -46,30 +47,31 @@ def operator(*_):
     ).results()[0][0]
     tags = {r.pop('tag'): r for r in tags}
 
+    fetch_datagovil('welfare-frames', 'מסגרות רווחה', FILENAME)
+
     DF.Flow(
         # Loading data
         DF.load(str(FILENAME), infer_strategy=DF.load.INFER_STRINGS),
         DF.update_resource(-1, name='meser'),
-        DF.filter_rows(lambda r: r['Type'] not in ('משפחתון', 'תמיכה ביתית', 'דירת המשך')),
-        DF.select_fields(['NAME',
-                          'Misgeret_Id', 'Type', 'Target_Population', 'Second_Classific', 'ORGANIZATIONS_BUSINES_NUM', 'Registered_Business_Id',
-                          'Gender_Descr', 'City', 'Street', 'House_Num', 'Telephone', 'GisX', 'GisY']),
+        DF.select_fields(['Name',
+                          'Misgeret_Id', 'Type_Descr', 'Target_Population_Descr', 'Second_Classific', 
+                          'ORGANIZATIONS_BUSINES_NUM', 'Registered_Business_Id',
+                          'Gender_Descr', 'City_Name', 'Adrees', 'Telephone', 'GisX', 'GisY']),
         # Cleanup
         DF.update_schema(-1, missingValues=['NULL', '-1', 'לא ידוע', 'לא משויך', 'רב תכליתי', '0', '999', '9999']),
         DF.validate(),
-        DF.set_type('House_Num', type='integer', constraints=dict(maximum=998), on_error=DF.schema_validator.clear),
-        DF.set_type('House_Num', type='string', transform=lambda v: str(v) if v else None),
-        DF.set_type('Street', type='string', transform=lambda v, row: v if v != row['City'] else None),
 
         # Adding fields
-        DF.add_field('service_name', 'string', lambda r: r['NAME'].strip()),
-        DF.add_field('branch_name', 'string', lambda r: r['Type'].strip()),
-        DF.add_field('service_description', 'string', lambda r: r['Type'].strip() + (' עבור ' + r['Target_Population'].strip()) if r['Target_Population'] else ''),
+        DF.add_field('service_name', 'string', lambda r: r['Name'].strip()),
+        DF.add_field('branch_name', 'string', lambda r: r['Type_Descr'].strip()),
+        DF.add_field('service_description', 'string', lambda r: r['Type_Descr'].strip() + (' עבור ' + r['Target_Population_Descr'].strip()) if r['Target_Population_Descr'] else ''),
         DF.add_field('organization_id', 'string', lambda r: r['ORGANIZATIONS_BUSINES_NUM'] or r['Registered_Business_Id'] or 'srm0020'),
-        DF.add_field('address', 'string', lambda r: ' '.join(filter(None, [r['Street'], r['House_Num'], r['City']])).replace(' - ', '-')),
+        DF.set_type('Adrees', type='string', transform=lambda v: v.replace('999', '').strip()),
+        DF.set_type('Adrees', type='string', transform=lambda v, row: v if v != row['City_Name'] else None),
+        DF.add_field('address', 'string', lambda r: ' '.join(filter(None, [r['Adrees'], r['City_Name']])).replace(' - ', '-')),
         DF.add_field('branch_id', 'string', lambda r: 'meser-' + hasher(r['address'], r['organization_id'])),
         DF.add_field('location', 'string', alternate_address),
-        DF.add_field('tagging', 'array', lambda r: list(filter(None, [r['Type'], r['Target_Population'], r['Second_Classific'], r['Gender_Descr']]))),
+        DF.add_field('tagging', 'array', lambda r: list(filter(None, [r['Type_Descr'], r['Target_Population_Descr'], r['Second_Classific'], r['Gender_Descr']]))),
         DF.add_field('phone_numbers', 'string', lambda r: '0' + r['Telephone'] if r['Telephone'] and r['Telephone'][0] != '0' else r['Telephone'] or None),
 
         # Combining same services
