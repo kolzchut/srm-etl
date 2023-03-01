@@ -39,6 +39,7 @@ def search_dym(query):
         size=1,
         offset=0,
         extra='did-you-mean',
+        match_operator='or',
         q=query,        
     )
     resp = requests.get(f'{BASE}/api/idx/search/cards', params).json()

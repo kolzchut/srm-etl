@@ -30,8 +30,8 @@ def data_api_es_flow():
                 'es:schema': {
                     'fields': [
                         {'type': 'string', 'name': 'id', 'es:keyword': True},
-                        {'type': 'string', 'name': 'name'},
-                        {'type': 'string', 'name': 'synonyms'},
+                        {'type': 'string', 'name': 'name', 'es:title': True},
+                        {'type': 'string', 'name': 'synonyms', 'es:title': True},
                     ]
                 },
             },
@@ -43,8 +43,8 @@ def data_api_es_flow():
                 'es:schema': {
                     'fields': [
                         {'type': 'string', 'name': 'id', 'es:keyword': True},
-                        {'type': 'string', 'name': 'name'},
-                        {'type': 'string', 'name': 'synonyms'},
+                        {'type': 'string', 'name': 'name', 'es:title': True},
+                        {'type': 'string', 'name': 'synonyms', 'es:title': True},
                     ]
                 },
             },
@@ -56,8 +56,8 @@ def data_api_es_flow():
                 'es:schema': {
                     'fields': [
                         {'type': 'string', 'name': 'id', 'es:keyword': True},
-                        {'type': 'string', 'name': 'name'},
-                        {'type': 'string', 'name': 'synonyms'},
+                        {'type': 'string', 'name': 'name', 'es:title': True},
+                        {'type': 'string', 'name': 'synonyms', 'es:title': True},
                     ]
                 },
             },
@@ -69,8 +69,8 @@ def data_api_es_flow():
                 'es:schema': {
                     'fields': [
                         {'type': 'string', 'name': 'id', 'es:keyword': True},
-                        {'type': 'string', 'name': 'name'},
-                        {'type': 'string', 'name': 'synonyms'},
+                        {'type': 'string', 'name': 'name', 'es:title': True},
+                        {'type': 'string', 'name': 'synonyms', 'es:title': True},
                     ]
                 },
             },
