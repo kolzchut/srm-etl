@@ -74,6 +74,7 @@ def search_cards(query, ac):
         if ac is None:
             params['q'] = query
             params['minscore'] = 50
+            params['match_type'] = 'cross_fields'
         else:
             params['q'] = ac['structured_query']
             params['match_operator'] = 'or';
