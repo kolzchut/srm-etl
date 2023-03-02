@@ -46,13 +46,19 @@ def fix_situations(ids):
 def possible_autocomplete(row):
     autocompletes = set()
     for r in row['responses']:
+        autocompletes.add(r['name'])
         for s in row['situations']:
-            autocompletes.add(r['name'])
+            autocompletes.add(s['name'])
             if s['id'] not in IGNORE_SITUATIONS:
                 if s['id'].split(':')[1] not in ('age_group', 'language'):
                     autocompletes.add(s['name'])
-                autocompletes.add('{} ל{}'.format(r['name'], s['name']))
-    return sorted(autocompletes)
+                autocompletes.add('{} עבור {}'.format(r['name'], s['name']))
+            if row['branch_city']:
+                autocompletes.add('שירותים עבור {} ב{}'.format(s['name'], row['branch_city']))
+                autocompletes.add('{} עבור {} ב{}'.format(r['name'], s['name'], row['branch_city']))
+        if row['branch_city']:
+            autocompletes.add('{} ב{}'.format(r['name'], row['branch_city']))
+    return sorted(set(autocompletes))
 
 
 def srm_data_pull_flow():

@@ -201,7 +201,7 @@ def select_text_fields(row):
             pass
         elif isinstance(obj, dict):
             for k, v in obj.items():
-                if k not in ('data_sources', 'service_urls', 'branch_urls', 'organization_urls'):
+                if k not in ('data_sources', 'service_urls', 'branch_urls', 'organization_urls', 'possible_autocomplete'):
                     yield from _aux(v)
         elif isinstance(obj, list):
             for v in obj:
