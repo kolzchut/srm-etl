@@ -1,6 +1,7 @@
 import json
 from collections import Counter
 import datetime
+import math
 
 import requests
 
@@ -40,7 +41,9 @@ def search_dym(query):
         size=1,
         offset=0,
         extra='did-you-mean',
-        match_operator='or',
+        match_operator='and',
+        match_type='cross_fields',
+        minscore=50,
         q=query,        
     )
     resp = requests.get(f'{BASE}/api/idx/search/cards', params).json()
@@ -48,8 +51,15 @@ def search_dym(query):
     if pa:
         best = pa[0]
         total = resp.get('search_counts', {}).get('_current', {}).get('total_overall') or 0
+        if total < 10:
+            return
+        best_doc_factor = math.log(len(best.get('key')))
+        for item in pa[1:]:
+            item['doc_count'] *= math.log(len(item.get('key'))) / best_doc_factor
+        pa = sorted(pa, key=lambda x: x['doc_count'], reverse=True)
+        best = pa[0]
         best_doc_count = best.get('doc_count') or 0
-        threshold = min(total, SHARD_SIZE) / 3
+        threshold = min(SHARD_SIZE, total) / 3
         if best_doc_count <= SHARD_SIZE and best_doc_count > threshold and 'key' in best:
             return best['key']
 
@@ -139,7 +149,7 @@ def run_single_benchmark(found, result_mapping, bad_performers):
         if structured:
             row['Upgrade Suggestion'] = None
         else:
-            row['Upgrade Suggestion'] = search_dym_autocomplete(query) or search_dym(query)
+            row['Upgrade Suggestion'] = search_dym(query) or search_dym_autocomplete(query)
         search_results = search_cards(query, ac)
         row['Number of results'] = search_results[2][1]
 
