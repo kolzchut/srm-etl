@@ -5,7 +5,7 @@ import requests
 
 import dataflows as DF
 from dataflows_ckan import dump_to_ckan
-import yaml
+import re
 
 from conf import settings
 
@@ -185,7 +185,30 @@ def data_api_es_flow():
             settings.CKAN_API_KEY,
             settings.CKAN_OWNER_ORG,
         ),
+
+        # TESTING FLOW
+        DF.add_field('text', 'array', **{'es:itemType': 'string', 'es:keyword': True}, default=select_text_fields),
+        DF.select_fields(['card_id', 'text']),
+        dump_to_es_and_delete(
+            indexes=dict(testing=[dict(resource_name='cards')]),
+        ),
     )
+
+HEB = re.compile('[א-ת]+[-א-ת"״]+[א-ת]+')
+def select_text_fields(row):
+    def _aux(obj):
+        if not obj:
+            pass
+        elif isinstance(obj, dict):
+            for v in obj.values():
+                yield from _aux(v)
+        elif isinstance(obj, list):
+            for v in obj:
+                yield from _aux(v)
+        elif isinstance(obj, str):
+            yield from HEB.findall(obj)
+    return list(_aux(row))
+
 
 def load_locations_to_es_flow():
     url = settings.LOCATION_BOUNDS_SOURCE_URL
