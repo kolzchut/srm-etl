@@ -28,7 +28,7 @@ def search_dym_autocomplete(query):
       size=1,
       q=query,
       match_operator='and',
-      filter=json.dumps([{'visible': True}]),
+      filter=json.dumps([{'visible': True, 'low': False}]),
     )
     ret = requests.get(f'{BASE}/api/idx/search/autocomplete', params).json()
     if ret and 'search_results' in ret and ret['search_results']:
