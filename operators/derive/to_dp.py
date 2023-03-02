@@ -578,6 +578,10 @@ def card_data_flow():
             resources=['card_data']
         ),
         DF.add_field(
+            'national_service_details', 'string',
+            lambda r: 'ארצי' if r['national_service'] else None,
+        ),
+        DF.add_field(
             'coords', 'string',
             lambda r: '[{},{}]'.format(*r['branch_geometry']) if r['branch_geometry'] else None,
             **{'es:keyword': True},
