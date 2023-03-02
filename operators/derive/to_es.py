@@ -200,8 +200,9 @@ def select_text_fields(row):
         if not obj:
             pass
         elif isinstance(obj, dict):
-            for v in obj.values():
-                yield from _aux(v)
+            for k, v in obj.items():
+                if k not in ('data_sources'):
+                    yield from _aux(v)
         elif isinstance(obj, list):
             for v in obj:
                 yield from _aux(v)
