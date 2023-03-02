@@ -1,5 +1,6 @@
 import json
 from collections import Counter
+import datetime
 
 import requests
 
@@ -75,6 +76,7 @@ def search_cards(query, ac):
             params['q'] = query
             params['minscore'] = 50
             params['match_type'] = 'cross_fields'
+            params['match_operator'] = 'and';
         else:
             params['q'] = ac['structured_query']
             params['match_operator'] = 'or';
@@ -185,15 +187,44 @@ def run_benchmark():
     result_mapping = {x['id']: dict(__key=x[AIRTABLE_ID_FIELD], id=x['id'], Decision=x['Decision']) for x in results}
     print('Loaded', len(result_mapping), 'results')
 
+    history = DF.Flow(
+        load_from_airtable('appkZFe6v5H63jLuC', 'History', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.sort_rows('Date'),
+        DF.join_with_self('History', ['Query'], dict(
+            Query=None,
+            Score=dict(aggregate='last'),
+            Date=dict(aggregate='last'),
+        ))
+    ).results()[0][0]
+    history = {x['Query']: x for x in history}
+
     found = []
     bad_performers = set()
-    DF.Flow(
+    benchmarks = DF.Flow(
         load_from_airtable('appkZFe6v5H63jLuC', 'Benchmark', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.filter_rows(lambda r: r['Query'] != 'dummy'),
         run_single_benchmark(found, result_mapping, bad_performers),
         dump_to_airtable({
             ('appkZFe6v5H63jLuC', 'Benchmark'): {
                 'resource-name': 'Benchmark',
+                'typecast': True
+            }
+        }, settings.AIRTABLE_API_KEY),
+    ).results()[0][0]
+    new_history = []
+    for b in benchmarks:
+        if b['Query'] in history:
+            if b['Score'] == history[b['Query']]['Score']:
+                continue
+        if not b['Score']:
+            continue
+        new_history.append(dict(Query=b['Query'], Score=b['Score'], Date=datetime.datetime.now().isoformat()))
+    DF.Flow(
+        new_history,
+        DF.update_resource(-1, name='History'),
+        dump_to_airtable({
+            ('appkZFe6v5H63jLuC', 'History'): {
+                'resource-name': 'History',
                 'typecast': True
             }
         }, settings.AIRTABLE_API_KEY),
