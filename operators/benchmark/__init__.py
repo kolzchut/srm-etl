@@ -228,7 +228,13 @@ def run_benchmark():
                 continue
         if not b['Score']:
             continue
-        new_history.append(dict(Query=b['Query'], Score=b['Score'], Date=datetime.datetime.now().isoformat()))
+        new_history.append({
+            'Query': b['Query'],
+            'Score': b['Score'],
+            'Upgrade Suggestion': b['Upgrade Suggestion'],
+            'Number of results': b['Number of results'],
+            'Date': datetime.datetime.now().isoformat()
+        })
     DF.Flow(
         new_history,
         DF.update_resource(-1, name='History'),
