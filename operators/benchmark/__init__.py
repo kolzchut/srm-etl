@@ -232,10 +232,9 @@ def run_benchmark():
                 print('Changed record for', b['Query'], b['Score'], '!=', history[b['Query']]['Score'], repr(b['Upgrade Suggestion']), '!=', repr(history[b['Query']]['Upgrade Suggestion']))
             if not b['Upgrade Suggestion'] and not history[b['Query']]['Upgrade Suggestion']:
                 continue
-            if not b['Score'] and not history[b['Query']]['Score']:
-                continue
-            if (b['Score'] - history[b['Query']]['Score']) < 0.1:
-                continue
+            if b['Score'] and history[b['Query']]['Score']:
+                if (b['Score'] - history[b['Query']]['Score']) < 0.1:
+                    continue
         if not b['Score']:
             continue
         new_history.append({
