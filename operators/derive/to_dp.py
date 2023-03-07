@@ -9,6 +9,7 @@ from .autocomplete import IGNORE_SITUATIONS
 
 from . import helpers
 from .manual_fixes import ManualFixes
+from .autotagging import apply_auto_tagging
 
 from srm_tools.logger import logger
 from srm_tools.unwind import unwind
@@ -542,6 +543,8 @@ def card_data_flow():
         DF.set_type('situation_ids', transform=fix_situations, resources=['card_data']),
         DF.add_field('response_ids', 'array', merge_array_fields(['service_responses']), resources=['card_data']),
         DF.set_type('response_ids', transform=map_taxonomy(responses), resources=['card_data']),
+        apply_auto_tagging(),
+
         DF.add_field('situation_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['situation_ids']), resources=['card_data']),
         DF.add_field('response_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_ids']), resources=['card_data']),
         DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses'], resources=['card_data']),
@@ -553,6 +556,7 @@ def card_data_flow():
         DF.set_type('response_ids', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
         DF.set_type('situation_ids_parents', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
         DF.set_type('response_ids_parents', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),        
+
         DF.add_field(
             'response_categories',
             'array',
