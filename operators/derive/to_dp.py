@@ -48,7 +48,6 @@ def possible_autocomplete(row):
     for r in row['responses']:
         autocompletes.add(r['name'])
         for s in row['situations']:
-            autocompletes.add(s['name'])
             if s['id'] not in IGNORE_SITUATIONS:
                 if s['id'].split(':')[1] not in ('age_group', 'language'):
                     autocompletes.add(s['name'])
@@ -58,7 +57,7 @@ def possible_autocomplete(row):
                 autocompletes.add('{} עבור {} ב{}'.format(r['name'], s['name'], row['branch_city']))
         if row['branch_city']:
             autocompletes.add('{} ב{}'.format(r['name'], row['branch_city']))
-    return sorted(set(autocompletes))
+    return sorted(set(filter(None, autocompletes)))
 
 
 def srm_data_pull_flow():
