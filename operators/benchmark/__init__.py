@@ -228,6 +228,8 @@ def run_benchmark():
         if b['Query'] in history:
             if b['Score'] == history[b['Query']]['Score'] and b['Upgrade Suggestion'] == history[b['Query']]['Upgrade Suggestion']:
                 continue
+            if not b['Upgrade Suggestion'] and not history[b['Query']]['Upgrade Suggestion']:
+                continue
         if not b['Score']:
             continue
         new_history.append({
