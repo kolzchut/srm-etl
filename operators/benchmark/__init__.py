@@ -200,11 +200,13 @@ def run_benchmark():
     history = DF.Flow(
         load_from_airtable('appkZFe6v5H63jLuC', 'History', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.sort_rows('Date'),
-        DF.join_with_self('History', ['Query'], dict(
-            Query=None,
-            Score=dict(aggregate='last'),
-            Date=dict(aggregate='last'),
-        ))
+        DF.join_with_self('History', ['Query'], {
+            'Query': None,
+            'Number of results': dict(aggregate='last'),
+            'Upgrade Suggestion': dict(aggregate='last'),
+            'Score': dict(aggregate='last'),
+            'Date': dict(aggregate='last'),
+        })
     ).results()[0][0]
     history = {x['Query']: x for x in history}
 
@@ -224,7 +226,7 @@ def run_benchmark():
     new_history = []
     for b in benchmarks:
         if b['Query'] in history:
-            if b['Score'] == history[b['Query']]['Score']:
+            if b['Score'] == history[b['Query']]['Score'] and b['Upgrade Suggestion'] == history[b['Query']]['Upgrade Suggestion']:
                 continue
         if not b['Score']:
             continue
