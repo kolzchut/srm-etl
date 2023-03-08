@@ -542,7 +542,7 @@ class RSScoreCalc():
             return row
         return DF.Flow(
             DF.add_field('rs_score', 'number', resources=resources),
-            DF.add_field('situation_scores', 'array', resources=resources),
+            DF.add_field('situation_scores', 'array', resources=resources, **{'es:itemType': 'number'}),
             func
         )
 
