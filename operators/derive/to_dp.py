@@ -1,4 +1,6 @@
+import math
 from itertools import chain
+import shutil
 
 import dataflows as DF
 from dataflows_airtable import load_from_airtable
@@ -16,6 +18,9 @@ from srm_tools.unwind import unwind
 from srm_tools.hash import hasher
 
 from operators.derive import manual_fixes
+
+
+CHECKPOINT = 'to_dp'
 
 
 def merge_array_fields(fieldnames):
@@ -495,6 +500,52 @@ def flat_table_flow():
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/flat_table'),
     )
 
+class RSScoreCalc():
+
+    def __init__(self):
+        per_response = DF.Flow(
+            DF.checkpoint(CHECKPOINT),
+            DF.select_fields(['situation_ids', 'response_ids']),
+            unwind('situation_ids', 'situation_id'),
+            unwind('response_ids', 'response_id'),
+            DF.join_with_self('card_data', ['situation_id', 'response_id'], dict(situation_id=None, response_id=None, frequency=dict(aggregate='count'))),
+            DF.add_field('situation_count', 'object', lambda r: dict(situation_id=r['situation_id'], freq=r['frequency']), resources=['card_data']),
+            DF.join_with_self('card_data', ['response_id'], dict(response_id=None, situations=dict(aggregate='array', name='situation_count'))),
+            DF.select_fields(['response_id', 'situations']),
+            DF.printer()
+        ).results()[0][0]
+    
+        self.scores = dict()
+        for r in per_response:
+            total = sum(s['freq'] for s in r['situations']) 
+            for s in r['situations']:
+                self.scores[(s['situation_id'], r['response_id'])] = math.log(total / s['freq'])
+
+
+    def process(self, resources):
+        def func(row):
+            responses = row['responses']
+            situations = row['situations']
+            score = 0
+            s_scores = dict()
+            if responses:
+                for r in responses:
+                    for s in situations:
+                        s_score = self.scores.get((s['id'], r['id']), 0) / len(responses)
+                        score += s_score
+                        s_scores.setdefault(s['id'], 0)
+                        s_scores[s['id']] += s_score
+                row['situations'] = sorted(situations, key=lambda s: s_scores[s['id']], reverse=True)
+                row['situation_scores'] = [s_scores[s['id']] for s in row['situations']]
+                row['situation_ids'] = [s['id'] for s in row['situations']]
+                row['rs_score'] = score 
+            return row
+        return DF.Flow(
+            DF.add_field('rs_score', 'number', resources=resources),
+            DF.add_field('situation_scores', 'array', resources=resources),
+            func
+        )
+
 
 def card_data_flow():
 
@@ -527,7 +578,7 @@ def card_data_flow():
             return list(map(lambda x: taxonomy[x]['id'], filter(lambda y: y in taxonomy, ids)))
         return func
 
-    return DF.Flow(
+    DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/flat_table/datapackage.json'),
         DF.update_package(name='Card Data'),
         DF.update_resource(['flat_table'], name='card_data', path='card_data.csv'),
@@ -544,12 +595,19 @@ def card_data_flow():
         DF.add_field('response_ids', 'array', merge_array_fields(['service_responses']), resources=['card_data']),
         DF.set_type('response_ids', transform=map_taxonomy(responses), resources=['card_data']),
         apply_auto_tagging(),
+        DF.checkpoint(CHECKPOINT),
+    ).process()
 
+    rs_score = RSScoreCalc()
+
+    return DF.Flow(
+        DF.checkpoint(CHECKPOINT),
+        DF.add_field('situations', 'array', lambda r: [situations[s] for s in r['situation_ids']], resources=['card_data']),
+        DF.add_field('responses', 'array', lambda r: [responses[s] for s in r['response_ids']], resources=['card_data']),
+        rs_score.process('card_data'),
         DF.add_field('situation_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['situation_ids']), resources=['card_data']),
         DF.add_field('response_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_ids']), resources=['card_data']),
         DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses'], resources=['card_data']),
-        DF.add_field('situations', 'array', lambda r: [situations[s] for s in r['situation_ids']], resources=['card_data']),
-        DF.add_field('responses', 'array', lambda r: [responses[s] for s in r['response_ids']], resources=['card_data']),
         DF.add_field('situations_parents', 'array', lambda r: [situations[s] for s in r['situation_ids_parents']], resources=['card_data']),
         DF.add_field('responses_parents', 'array', lambda r: [responses[s] for s in r['response_ids_parents']], resources=['card_data']),
         DF.set_type('situation_ids', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
@@ -624,6 +682,8 @@ def card_data_flow():
 
 def operator(*_):
     logger.info('Starting Data Package Flow')
+
+    shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
 
     branch_mapping = dict()
     srm_data_pull_flow().process()
