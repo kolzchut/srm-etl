@@ -119,6 +119,7 @@ def updateServiceFromSourceData(taxonomies):
         payment_required = data.pop('paymentMethod')
         if payment_required == 'Free service':
             row['payment_required'] = 'no'
+            row['payment_details'] = None
         elif payment_required == 'Symbolic cost':
             row['payment_required'] = 'yes'
             row['payment_details'] = 'עלות סמלית'
