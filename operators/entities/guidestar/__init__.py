@@ -4,6 +4,8 @@ from dataflows.base.resource_wrapper import ResourceWrapper
 
 from dataflows_airtable import dump_to_airtable, load_from_airtable, AIRTABLE_ID_FIELD
 
+from openlocationcode import openlocationcode as olc
+
 from srm_tools.update_table import airtable_updater
 from srm_tools.situations import Situations
 
@@ -345,12 +347,13 @@ def unwind_branches(ga:GuidestarAPI):
     )
 
 
-def calc_location_key(row):
+def calc_address(row):
     if row.get('address'):
         return row['address']
     key = ''
     cityName = row.get('cityName')
     if cityName:
+        cityName = cityName.replace(' תאי דואר', '')
         streetName = row.get('streetName')
         if streetName:
             key += f'{streetName} '
@@ -368,6 +371,14 @@ def calc_location_key(row):
 
     return key or None
 
+def calc_location_key(src, dst):
+    y, x = src.get('latitude'), src.get('longitude')
+    if y and x:
+        code = olc.encode(y, x, 11)
+    else:
+        code = None
+    return code or dst['address']
+
 def updateBranchFromSourceData():
     def func(row):
         data = row.get('data')
@@ -376,8 +387,8 @@ def updateBranchFromSourceData():
         # print('data', data)
         # print('row', row)
         row['name'] = data['name']
-        row['address'] = calc_location_key(data)
-        row['location'] = row['address']
+        row['address'] = calc_address(data)
+        row['location'] = calc_location_key(data, row)
         row['address_details'] = data.get('drivingInstructions')
         row['description'] = None
         row['urls'] = None
