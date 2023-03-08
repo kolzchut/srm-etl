@@ -305,7 +305,7 @@ def address_parts(row):
         )
     address = (resolved_address if accurate else orig_address) or orig_address
     city: str = row['branch_city']
-    cc = regex.compile('\m(%s){e<3}' % city)
+    cc = regex.compile('\m(%s){e<2}' % city)
     m = cc.search(address)
     if m:
         prefix = address[:m.start()].strip(' -,\n\t')
