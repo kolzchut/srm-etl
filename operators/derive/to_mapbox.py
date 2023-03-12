@@ -22,12 +22,18 @@ from srm_tools.logger import logger
 
 def upload_tileset(filename, tileset, name):
 
+    with_ids = Path(filename).with_suffix('.with_ids.geojson')
+    with with_ids.open('w') as f:
+        data = json.load(Path(filename).open())
+        for i, feature in enumerate(data['features']):
+            feature['properties']['id'] = i + 1
+        json.dump(data, f)
     mbtiles = Path(filename).with_suffix('.mbtiles')
     if mbtiles.exists():
         mbtiles.unlink()
     mbtiles = str(mbtiles)
     layer_name = tileset.split('.')[-1].replace('-', '_')
-    cmd = ['tippecanoe', '-B6', '-z10', '-o', mbtiles, '-n', name, '-l', layer_name, filename]
+    cmd = ['tippecanoe', '-B6', '-z10', '-o', mbtiles, '-n', name, '-l', layer_name, str(with_ids)]
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode('utf8')
         print(out)
@@ -190,7 +196,6 @@ def geo_data_flow():
         #     force_format=False
         # ),
         DF.delete_fields(['score'], resources=['geo_data']),
-        DF.add_field('id', 'integer', lambda r: int(r['point_id']), resources=['geo_data']),
         DF.duplicate('geo_data', target_name='geo_data_inaccurate', target_path='geo_data_inaccurate.csv'),
         DF.filter_rows(lambda r: r['branch_location_accurate'] is True, resources=['geo_data']),
         DF.filter_rows(lambda r: r['branch_location_accurate'] is False, resources=['geo_data_inaccurate']),        
