@@ -502,6 +502,8 @@ def flat_table_flow():
 
 class RSScoreCalc():
 
+    MAX_SCORE = 30
+
     def __init__(self):
         per_response = DF.Flow(
             DF.checkpoint(CHECKPOINT),
@@ -538,6 +540,10 @@ class RSScoreCalc():
                 row['situations'] = sorted(situations, key=lambda s: s_scores[s['id']], reverse=True)
                 row['situation_scores'] = [s_scores[s['id']] for s in row['situations']]
                 row['situation_ids'] = [s['id'] for s in row['situations']]
+                while score > self.MAX_SCORE:
+                    score -= row['situation_scores'].pop(0)
+                    row['situation_ids'].pop(0)
+                    row['situations'].pop(0)
                 row['rs_score'] = score 
             return row
         return DF.Flow(
