@@ -22,18 +22,12 @@ from srm_tools.logger import logger
 
 def upload_tileset(filename, tileset, name):
 
-    with_ids = Path(filename).with_suffix('.with_ids.geojson')
-    with with_ids.open('w') as f:
-        data = json.load(Path(filename).open())
-        for i, feature in enumerate(data['features']):
-            feature['properties']['id'] = i + 1
-        json.dump(data, f)
     mbtiles = Path(filename).with_suffix('.mbtiles')
     if mbtiles.exists():
         mbtiles.unlink()
     mbtiles = str(mbtiles)
     layer_name = tileset.split('.')[-1].replace('-', '_')
-    cmd = ['tippecanoe', '-B6', '-z10', '-o', mbtiles, '-n', name, '-l', layer_name, str(with_ids)]
+    cmd = ['tippecanoe', '-ai', '-B6', '-z10', '-o', mbtiles, '-n', name, '-l', layer_name, filename]
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode('utf8')
         print(out)
