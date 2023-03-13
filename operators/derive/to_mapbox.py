@@ -27,7 +27,7 @@ def upload_tileset(filename, tileset, name):
         mbtiles.unlink()
     mbtiles = str(mbtiles)
     layer_name = tileset.split('.')[-1].replace('-', '_')
-    cmd = ['tippecanoe', '-B6', '-z10', '-o', mbtiles, '-n', name, '-l', layer_name, filename]
+    cmd = ['tippecanoe', '-ai', '-B6', '-z10', '-o', mbtiles, '-n', name, '-l', layer_name, filename]
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode('utf8')
         print(out)
@@ -190,7 +190,6 @@ def geo_data_flow():
         #     force_format=False
         # ),
         DF.delete_fields(['score'], resources=['geo_data']),
-        DF.add_field('id', 'string', lambda r: r['point_id'], resources=['geo_data']),
         DF.duplicate('geo_data', target_name='geo_data_inaccurate', target_path='geo_data_inaccurate.csv'),
         DF.filter_rows(lambda r: r['branch_location_accurate'] is True, resources=['geo_data']),
         DF.filter_rows(lambda r: r['branch_location_accurate'] is False, resources=['geo_data_inaccurate']),        
