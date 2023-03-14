@@ -297,6 +297,8 @@ def updateOrgFromSourceData():
         if data.get('tel2'):
             phone_numbers.append(data['tel2'])
         row['phone_numbers'] = '\n'.join(phone_numbers)
+        if data.get('email'):
+            row['email_address'] = data['email']
     return func
 
 def fetchWildOrgData(ga: GuidestarAPI, skip_orgs):
@@ -305,7 +307,7 @@ def fetchWildOrgData(ga: GuidestarAPI, skip_orgs):
     ]        
     print('COLLECTED {} relevant organizations'.format(len(all_orgs)))
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'guidestar',
-        ['name', 'short_name', 'kind', 'urls', 'description', 'purpose', 'phone_numbers'],
+        ['name', 'short_name', 'kind', 'urls', 'description', 'purpose', 'phone_numbers', 'email_address'],
         all_orgs,
         updateOrgFromSourceData(),
         airtable_base=settings.AIRTABLE_GUIDESTAR_IMPORT_BASE
