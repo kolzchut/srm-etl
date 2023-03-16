@@ -290,13 +290,13 @@ def merge_duplicate_services():
                 implementing += 1
             else:
                 if org_id in found:
-                    print('ORG {} IMPLEMENTED SERVICES, CHECKING {}: {}'.format(org_id, service_id, list(found[org_id])))
+                    # print('ORG {} IMPLEMENTED SERVICES, CHECKING {}: {}'.format(org_id, service_id, list(found[org_id])))
                     if any(service_id in x for x in found[org_id]):
-                        print('SKIPPING AS ALREADY IMPLEMENTED {}'.format(service_id))
+                        # print('SKIPPING AS ALREADY IMPLEMENTED {}'.format(service_id))
                         skipped_implementing += 1
                         continue
                     if service_id.startswith('soproc:'):
-                        print('SKIPPING AS SOPROC {}'.format(service_id))
+                        # print('SKIPPING AS SOPROC {}'.format(service_id))
                         skipped_soproc += 1
                         continue
             yield row
@@ -581,7 +581,7 @@ def card_data_flow():
     )
     def map_taxonomy(taxonomy):
         def func(ids):
-            return list(map(lambda x: taxonomy[x]['id'], filter(lambda y: y in taxonomy, ids)))
+            return list(set(map(lambda x: taxonomy[x]['id'], filter(lambda y: y in taxonomy, ids))))
         return func
 
     DF.Flow(
