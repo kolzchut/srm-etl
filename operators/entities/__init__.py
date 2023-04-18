@@ -33,9 +33,13 @@ def fetchEntityFromBudgetKey(regNum):
             'בע״מ',
             "בע'מ",
             'ע״ר',
-            'חל״צ'
+            'חל״צ',
+            'ע"',
+            'ע"ר',
+            '()',
         ):
             name = name.replace(x, '')
+        name = name.strip(',.() ')
         name = name.strip()
         rec = dict(
             id=entity['id'],
