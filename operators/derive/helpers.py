@@ -349,6 +349,7 @@ def clean_org_name(name):
         name = name.replace(x, '')
         name = name.strip(',.() ')
         name = name.strip()
+    return name
 
 
 def org_name_parts(row):
