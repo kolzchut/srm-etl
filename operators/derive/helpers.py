@@ -304,9 +304,9 @@ def address_parts(row):
             national=True
         )
     address = (resolved_address if accurate else orig_address) or orig_address
-    city: str = row['branch_city']
+    city: str = row['branch_city'].replace('-', ' ')
     cc = regex.compile('\m(%s){e<2}' % city)
-    m = cc.search(address)
+    m = cc.search(address.replace('-', ' '))
     if m:
         prefix = address[:m.start()].strip(' -,\n\t')
         suffix = address[m.end():].strip(' -,\n\t')
