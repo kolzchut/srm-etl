@@ -667,6 +667,8 @@ def card_data_flow():
                 dict(name='secondary', type='string'),
             ])}
         ),
+        DF.set_type('organization_name', transform=helpers.clean_org_name),
+        DF.set_type('organization_short_name', transform=helpers.clean_org_name),
         DF.add_field(
             'organization_name_parts', 'object', helpers.org_name_parts,
             **{'es:schema': dict(fields=[

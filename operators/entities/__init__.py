@@ -28,19 +28,6 @@ def fetchEntityFromBudgetKey(regNum):
     if len(entity) > 0:
         entity = entity[0]
         name = entity['name']
-        for x in (
-            'בעמ',
-            'בע״מ',
-            "בע'מ",
-            'ע״ר',
-            'חל״צ',
-            'ע"',
-            'ע"ר',
-            '()',
-        ):
-            name = name.replace(x, '')
-        name = name.strip(',.() ')
-        name = name.strip()
         rec = dict(
             id=entity['id'],
             data = dict(

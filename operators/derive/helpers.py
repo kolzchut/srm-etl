@@ -332,6 +332,25 @@ def address_parts(row):
 
 STOPWORDS = ['עמותת ', 'העמותה ל']
 
+
+def clean_org_name(name):
+    if not name:
+        return name
+    for x in (
+        'בעמ',
+        'בע״מ',
+        "בע'מ",
+        'ע״ר',
+        'חל״צ',
+        'ע"',
+        'ע"ר',
+        '()',
+    ):
+        name = name.replace(x, '')
+        name = name.strip(',.() ')
+        name = name.strip()
+
+
 def org_name_parts(row):
     name: str = row['organization_name']
     short_name: str = row['organization_short_name']
