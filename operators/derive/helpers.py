@@ -349,21 +349,24 @@ def clean_org_name(name):
         name = name.replace(x, '')
         name = name.strip(',.() ')
         name = name.strip()
+    for word in STOPWORDS:
+        name = name.replace(word, '')
+    name = name.strip(' -,\n\t')
     return name
 
 
 def org_name_parts(row):
     name: str = row['organization_name']
-    short_name: str = row['organization_short_name'].split('(')[0]
-    cc = regex.compile('\m(%s){e<2}' % short_name)
-    m = cc.search(name)
+    short_name: str = row['organization_short_name']
+    m = None
+    if short_name:
+        short_name = short_name.split('(')[0]
+        cc = regex.compile('\m(%s){e<2}' % short_name)
+        m = cc.search(name)
     if m:
         prefix = name[: m.start()].strip(' -,\n\t')
         suffix = name[m.end() :].strip(' -,\n\t')
         name = prefix + ' ' + suffix
-        for word in STOPWORDS:
-            name = name.replace(word, '')
-        name = name.strip(' -,\n\t')
         return dict(
             primary=short_name, secondary=name
         )
