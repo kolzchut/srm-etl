@@ -354,7 +354,7 @@ def clean_org_name(name):
 
 def org_name_parts(row):
     name: str = row['organization_name']
-    short_name: str = row['organization_short_name']
+    short_name: str = row['organization_short_name'].split('(')[0]
     cc = regex.compile('\m(%s){e<2}' % short_name)
     m = cc.search(name)
     if m:
