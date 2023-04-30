@@ -88,7 +88,9 @@ SERVICES = [
             'organizations': ['srm0020'],
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES,
-            'responses': [],
+            'responses': [
+                'human_services:care',
+            ],
             'situations': [
                 'human_situations:age_group:seniors',
             ]
