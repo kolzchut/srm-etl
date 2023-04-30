@@ -87,7 +87,11 @@ SERVICES = [
             'urls': '',
             'organizations': ['srm0020'],
             'payment_details': PAYMENT_DETAILS,
-            'data_sources': DATA_SOURCES
+            'data_sources': DATA_SOURCES,
+            'responses_manual': [],
+            'situations_manual': [
+                'human_situations:age_group:seniors',
+            ]
         },
     },
     {
@@ -100,7 +104,11 @@ SERVICES = [
             'urls': '',
             'organizations': ['srm0020'],
             'payment_details': PAYMENT_DETAILS,
-            'data_sources': DATA_SOURCES
+            'data_sources': DATA_SOURCES,
+            'responses_manual': [],
+            'situations_manual': [
+                'human_situations:disability',
+            ]
         },
     },
     {
@@ -113,7 +121,13 @@ SERVICES = [
             'urls': '',
             'organizations': ['srm0020'],
             'payment_details': PAYMENT_DETAILS,
-            'data_sources': DATA_SOURCES
+            'data_sources': DATA_SOURCES,
+            'responses_manual': [
+                'human_services:food',
+                'human_services:care',
+                'human_services:legal:advocacy_legal_aid:understand_government_programs',
+            ],
+            'situations_manual': []
         },
     },
 ]

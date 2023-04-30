@@ -44,7 +44,12 @@ SERVICE = {
 
 def normalize_address(r):
     _, city, _, _, street, number, *_ = r['Address'].values()
-    return f'{street} {number}, {city[0]}'
+    if len(city) > 0 and number > 0:
+        return f'{street} {number}, {city[0]}'
+    elif len(city) > 0:
+        return f'{street}, {city[0]}'
+    else:
+        return street
 
 
 def add_newlines(s):
