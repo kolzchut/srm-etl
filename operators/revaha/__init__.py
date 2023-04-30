@@ -88,8 +88,8 @@ SERVICES = [
             'organizations': ['srm0020'],
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES,
-            'responses_manual': [],
-            'situations_manual': [
+            'responses': [],
+            'situations': [
                 'human_situations:age_group:seniors',
             ]
         },
@@ -105,9 +105,12 @@ SERVICES = [
             'organizations': ['srm0020'],
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES,
-            'responses_manual': [],
-            'situations_manual': [
+            'responses': [
+                'human_services:care',
+            ],
+            'situations': [
                 'human_situations:disability',
+                'human_situations:benefit_holders:social_security',
             ]
         },
     },
@@ -122,12 +125,12 @@ SERVICES = [
             'organizations': ['srm0020'],
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES,
-            'responses_manual': [
+            'responses': [
                 'human_services:food',
                 'human_services:care',
                 'human_services:legal:advocacy_legal_aid:understand_government_programs',
             ],
-            'situations_manual': []
+            'situations': []
         },
     },
 ]
