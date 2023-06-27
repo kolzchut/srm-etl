@@ -8,16 +8,16 @@ from thefuzz import fuzz
 
 from conf import settings
 from .autocomplete import IGNORE_SITUATIONS
+from srm_tools.logger import logger
+from srm_tools.unwind import unwind
+from srm_tools.hash import hasher
+from srm_tools.data_cleaning import clean_org_name
+
+from operators.derive import manual_fixes
 
 from . import helpers
 from .manual_fixes import ManualFixes
 from .autotagging import apply_auto_tagging
-
-from srm_tools.logger import logger
-from srm_tools.unwind import unwind
-from srm_tools.hash import hasher
-
-from operators.derive import manual_fixes
 
 
 CHECKPOINT = 'to_dp'
@@ -667,8 +667,8 @@ def card_data_flow():
                 dict(name='secondary', type='string'),
             ])}
         ),
-        DF.set_type('organization_name', transform=helpers.clean_org_name),
-        DF.set_type('organization_short_name', transform=helpers.clean_org_name),
+        DF.set_type('organization_name', transform=clean_org_name),
+        DF.set_type('organization_short_name', transform=clean_org_name),
         DF.add_field(
             'organization_name_parts', 'object', helpers.org_name_parts,
             **{'es:schema': dict(fields=[

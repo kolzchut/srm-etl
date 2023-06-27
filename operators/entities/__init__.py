@@ -12,6 +12,7 @@ from srm_tools.update_table import airtable_updater
 from srm_tools.situations import Situations
 from srm_tools.guidestar_api import GuidestarAPI
 from srm_tools.budgetkey import fetch_from_budgetkey
+from srm_tools.data_cleaning import clean_org_name
 
 from conf import settings
 from srm_tools.logger import logger
@@ -176,11 +177,12 @@ def unwind_branches(ga:GuidestarAPI):
                             ret = dict()
                             ret.update(row)
                             name = row['name']
+                            cleaned_name = clean_org_name(name)
                             ret.update(dict(
                                 id='budgetkey:' + regNum,
                                 data=dict(
                                     name=name,
-                                    address=name,
+                                    address=cleaned_name,
                                     location=name,
                                     organization=[regNum]
                                 )
