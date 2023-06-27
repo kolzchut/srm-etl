@@ -54,7 +54,7 @@ def normalize_address(r):
 
 def add_newlines(s):
     if not s:
-        return s
+        return ''
     for tag in ['p', 'li']:
         s = s.replace(f'</{tag}>', f'</{tag}>\n')
     return s.strip()
