@@ -183,7 +183,7 @@ def unwind_branches(ga:GuidestarAPI):
                                 data=dict(
                                     name=name,
                                     address=cleaned_name,
-                                    location=name,
+                                    location=cleaned_name,
                                     organization=[regNum]
                                 )
                             ))
