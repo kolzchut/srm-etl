@@ -186,12 +186,12 @@ def data_api_es_flow():
             settings.CKAN_OWNER_ORG,
         ),
 
-        # TESTING FLOW
-        DF.add_field('text', 'array', **{'es:itemType': 'string', 'es:keyword': True}, default=select_text_fields),
-        DF.select_fields(['card_id', 'text']),
-        dump_to_es_and_delete(
-            indexes=dict(testing=[dict(resource_name='cards')]),
-        ),
+        # # TESTING FLOW
+        # DF.add_field('text', 'array', **{'es:itemType': 'string', 'es:keyword': True}, default=select_text_fields),
+        # DF.select_fields(['card_id', 'text']),
+        # dump_to_es_and_delete(
+        #     indexes=dict(testing=[dict(resource_name='cards')]),
+        # ),
     )
 
 HEB = re.compile('[א-ת]+[-א-ת"״]+[א-ת]+')
