@@ -138,21 +138,6 @@ def operator(*_):
         airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
     )
 
-
-    DF.Flow(
-            DF.load('temp/meser/denormalized/datapackage.json'),
-            DF.rename_fields({
-                'service_id': 'id',
-                'service_name': 'name',
-                'service_description': 'description',
-            }, resources='meser'),
-            DF.add_field('data_sources', 'string', 'מידע על מסגרות רווחה התקבל ממשרד הרווחה והשירותים החברתיים', resources='meser'),
-            DF.add_field('branches', 'array', lambda r: [r['branch_id']], resources='meser'),
-            DF.select_fields(['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'], resources='meser'),
-            DF.add_field('data', 'object', lambda r: dict((k,v) for k,v in r.items() if k!='id'), resources='meser'),
-            DF.printer()
-    ).process()
-
     airtable_updater(
         settings.AIRTABLE_SERVICE_TABLE,
         'meser', ['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],

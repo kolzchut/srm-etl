@@ -15,7 +15,7 @@ from conf import settings
 from srm_tools.logger import logger
 from srm_tools.processors import ensure_fields, update_mapper
 from srm_tools.update_table import airtable_updater
-from srm_tools.scraping_utils import overcome_blocking
+from srm_tools.gov_data_proxy import collect_gov_rows
 
 
 def transform_phone_numbers(r):
@@ -74,7 +74,6 @@ ORGANIZATION = {
     },
 }
 
-session = requests.Session()
 
 SERVICES = [
     {
@@ -164,48 +163,8 @@ FIELD_MAP = {
 }
 
 
-def gov_data_proxy(template_id, skip):
-    data = {
-        'DynamicTemplateID': template_id,
-        'QueryFilters': {'skip': {'Query': skip}},
-        'From': skip,
-    }
-    timeout = 30
-    resp = overcome_blocking(
-        session,
-        lambda: session.post(
-            settings.GOV_DATA_PROXY,
-            json=data,
-            timeout=timeout,
-        )
-    )
-    response = resp.json()
-    total, results = response['TotalResults'], response['Results']
-
-    return total, results
-
-
 def get_revaha_data():
-    skip = 0
-    # seems to only ever return 10 results in a call
-    skip_by = 10
-    template_id = '23ede39d-968c-4e5c-8098-9c58b037a0c3'
-    total, results = gov_data_proxy(template_id, skip)
-
-    while len(results) < total:
-        skip += skip_by
-        for _ in range(3):
-            _, batch = gov_data_proxy(template_id, skip)
-            if len(batch) > 0:
-                results.extend(batch)
-                print(f'SKIPPED {skip}, GOT {len(results)}, TOTAL {total}')
-                break
-            time.sleep(10)
-        else:
-            break
-    print('FETCHED {} REVAHA RECORDS'.format(len(results)))
-    assert len(results) > 0
-    return results
+    return collect_gov_rows('23ede39d-968c-4e5c-8098-9c58b037a0c3')
 
 
 def revaha_organization_data_flow():

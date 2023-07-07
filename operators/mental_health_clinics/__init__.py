@@ -8,18 +8,25 @@ from conf import settings
 from operators.shil import ORGANIZATION
 from srm_tools.update_table import airtable_updater
 from srm_tools.processors import update_mapper
-
+from srm_tools.gov_data_proxy import collect_gov_rows
 
 FIELD_RENAME = {
-    'שם המרפאה': 'name',
-    'ישוב': 'city',
-    'כתובת': 'street_address',
-    'טלפון': 'phone_numbers',
-    'למבוטחי איזו קופה.+': 'hmo',
-    'מבוגרים / ילדים': 'age_group',
-    'סוגי התערבויות.+': 'interventions',
-    'מומחיות המרפאה.+': 'expertise',
-    'המתנה ממוצעת לאינטק.+': 'intake_wait',
+    'name': 'clinic_name',
+    'city': 'city',
+    'age_group': 'audience',
+    'intake_wait': 'intake_wait',
+    'phone_numbers': 'phone',
+    'expertise': 'specialization',
+    'interventions': 'intervention_type',
+    'street_address': 'street',
+    'hmo': 'HMO_code',
+}
+HMOS = {
+    '1': 'לאומית',
+    '2': 'מכבי',
+    '3': 'כללית',
+    '4': 'מאוחדת',
+    '5': 'כל הקופות',
 }
 MISSING_VALUES = [
     'אין מומחיות מיוחדת',
@@ -133,8 +140,6 @@ def description(row):
             ret += title + ': ' + ', '.join(set(snippet)) + '\n\n'
     return ret
 
-FILENAME = Path(__file__).resolve().with_name('mentalhealthclinics.xlsx')
-
 
 def clinic_hash(row):
     items = [
@@ -149,11 +154,19 @@ def clinic_hash(row):
 
 def operator(*_):
     # Prepare data
-    DF.Flow(
+    def ren(k, v):
+        return DF.add_field(k, 'string', default=lambda row: row['Data'].pop(v, None))
+    def del_data(row):
+        for k in ['follow_up_wait', 'group_therapy_wait', 'individual_therapy_wait', ]:
+            row['Data'].pop(k, None)
+        DF.Flow(
         # Load and clean
-        DF.load(str(FILENAME), name='clinics'),
+        collect_gov_rows('70c0b6fd-0c36-4b7a-a087-3157123403d9'),
+        DF.update_resource(-1, name='clinics'),
+        *[ren(k, v) for k, v in FIELD_RENAME.items()],
+        del_data,
+        DF.set_type('hmo', transform=HMOS.get),
         DF.select_fields(FIELD_RENAME.keys(), resources=-1),
-        DF.rename_fields(FIELD_RENAME, resources=-1),
         DF.update_schema(-1, missingValues=MISSING_VALUES),
         DF.validate(on_error=DF.schema_validator.clear),
 
