@@ -211,6 +211,8 @@ def updateServiceFromSourceData(taxonomies):
                     methods.append('בשיחת זום')
                 elif item == '':
                     pass
+                elif item == 'Other':
+                    pass
                 else:
                     assert False, 'remoteDelivery {!r}: {!r}'.format(item, remoteDelivery)
 

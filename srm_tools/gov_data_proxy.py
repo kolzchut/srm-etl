@@ -52,3 +52,4 @@ def collect_gov_rows(template_id):
                 break
         print(f'FETCHED {total} FOR {template_id}')
         assert total > 0
+    return func
