@@ -32,8 +32,8 @@ def unwind_services(ga: GuidestarAPI, source='entities', existing_orgs = set()):
                 existing_orgs.add(regNum)
 
                 branches = ga.branches(regNum)
-                if len(branches) == 0:
-                    continue
+                # if len(branches) == 0:
+                #     continue
                 services = ga.services(regNum)
                 govServices = dict(
                     (s['relatedMalkarService'], s) for s in services if s.get('serviceGovName') is not None and s.get('relatedMalkarService') is not None
@@ -85,163 +85,170 @@ def updateServiceFromSourceData(taxonomies):
                         }, settings.AIRTABLE_API_KEY),
                     ).process()
 
-    def func(row):
-        if 'data' not in row:
-            # print('NO DATA', row)
-            return
-        data = row['data']
+    def func(rows):
+        for row in rows:
+            if 'data' not in row:
+                # print('NO DATA', row)
+                yield row
+                continue
 
-        responses = set()
-        situations = set()
+            data = row['data']
 
-        row['name'] = data.pop('serviceName')
-        row['description'] = data.pop('voluntaryDescription') or data.pop('description')
-        data_source_url = f'https://www.guidestar.org.il/organization/{data["organization_id"]}/services'
-        row['data_sources'] = f'מידע נוסף אפשר למצוא ב<a target="_blank" href="{data_source_url}">גיידסטאר - אתר העמותות של ישראל</a>'
-        orgId = data.pop('organization_id')
-        actual_branch_ids = data.pop('actual_branch_ids')
-        row['branches'] = ['guidestar:' + b['branchId'] for b in (data.pop('branches') or []) if b['branchId'] in actual_branch_ids]
-        if len(row['branches']) == 0:
-            row['branches'] = ['guidestar:' + bid for bid in actual_branch_ids]
+            responses = set()
+            situations = set()
 
-        record_type = data.pop('recordType')
-        assert record_type == 'GreenInfo'
-        for k in list(data.keys()):
-            if k.startswith('youth'):
+            row['name'] = data.pop('serviceName')
+            row['description'] = data.pop('voluntaryDescription') or data.pop('description')
+            data_source_url = f'https://www.guidestar.org.il/organization/{data["organization_id"]}/services'
+            row['data_sources'] = f'מידע נוסף אפשר למצוא ב<a target="_blank" href="{data_source_url}">גיידסטאר - אתר העמותות של ישראל</a>'
+            orgId = data.pop('organization_id')
+            actual_branch_ids = data.pop('actual_branch_ids')
+            row['branches'] = ['guidestar:' + b['branchId'] for b in (data.pop('branches') or []) if b['branchId'] in actual_branch_ids]
+            if len(row['branches']) == 0:
+                row['branches'] = ['guidestar:' + bid for bid in actual_branch_ids]
+
+            record_type = data.pop('recordType')
+            assert record_type == 'GreenInfo'
+            for k in list(data.keys()):
+                if k.startswith('youth'):
+                    data.pop(k)
+
+            relatedMalkarService = data.pop('relatedMalkarService') or {}
+
+            update_from_taxonomy([data.pop('serviceTypeName')], responses, situations)
+            update_from_taxonomy((data.pop('serviceTargetAudience') or '').split(';'), responses, situations)
+            update_from_taxonomy(['soproc:' + relatedMalkarService.get('serviceGovId', '')], responses, situations)
+
+            payment_required = data.pop('paymentMethod')
+            if payment_required == 'Free service':
+                row['payment_required'] = 'no'
+                row['payment_details'] = None
+            elif payment_required == 'Symbolic cost':
+                row['payment_required'] = 'yes'
+                row['payment_details'] = 'עלות סמלית'
+            elif payment_required == 'Full payment':
+                row['payment_required'] = 'yes'
+                row['payment_details'] = 'השירות ניתן בתשלום'
+            elif payment_required == 'Government funded':
+                row['payment_required'] = 'yes'
+                row['payment_details'] = 'השירות מסובסד על ידי הממשלה'
+            else:
+                assert False, payment_required + ' ' + repr(row)
+
+            service_terms = data.pop('serviceTerms')
+            if service_terms:
+                if row.get('payment_details'):
+                    row['payment_details'] += ', ' + service_terms
+                else:
+                    row['payment_details'] = service_terms
+
+            details = []
+            areas = []
+            national = False
+
+            area = (data.pop('area') or '').split(';')
+            for item in area:
+                if item == 'In Branches':
+                    areas.append('בסניפי הארגון')
+                elif item == 'Country wide':
+                    areas.append('בתיאום מראש ברחבי הארץ')
+                    national = True
+                elif item == 'Customer Place':
+                    areas.append('בבית הלקוח')
+                elif item == 'Remote Service':
+                    areas.append('שירות מרחוק')
+                    national = True
+                elif item == 'Via Phone or Mail':
+                    areas.append('במענה טלפוני, צ׳אט או בדוא"ל')
+                    national = True
+                elif item == 'Web Service':
+                    areas.append('בשירות אינטרנטי מקוון')
+                    national = True
+                elif item == 'Customer Appointment':
+                    areas.append('במפגשים קבוצתיים או אישיים')
+                elif item == 'Program':
+                    areas.append('תוכנית ייעודית בהרשמה מראש')
+                elif item in ('Not relevant', ''):
+                    pass
+                else:
+                    assert False, 'area {}: {!r}'.format(area, row)
+
+            if len(areas) > 1:
+                details.append('השירות ניתן: ' + ', '.join(areas))
+            elif len(areas) == 1:
+                details.append('השירות ניתן ' + ''.join(areas))
+
+            if national:
+                row['branches'] = [f'guidestar:{orgId}:national']
+            if len(row['branches']) == 0:
+                continue
+
+            when = data.pop('whenServiceActive')
+            if when == 'All Year':
+                details.append('השירות ניתן בכל השנה')
+            elif when == 'Requires Signup':
+                details.append('השירות ניתן בהרשמה מראש')
+            elif when == 'Time Limited':
+                details.append('השירות מתקיים בתקופה מוגבלת')
+            elif when == 'Criteria Based':
+                details.append('השירות ניתן על פי תנאים או קריטריונים')
+            elif when is None:
+                pass
+            else:
+                assert False, 'when {}: {!r}'.format(when, row)
+
+            remoteDelivery = (data.pop('remoteServiceDelivery') or '').split(';')
+            # Phone, Chat / Email / Whatsapp, Internet, Zoom / Hybrid, Other
+            methods = []
+            for item in remoteDelivery:
+                if item == 'Phone':
+                    methods.append('טלפון')
+                elif item == 'Chat / Email / Whatsapp':
+                    methods.append('בצ׳אט, דוא"ל או וואטסאפ')
+                elif item == 'Internet':
+                    methods.append('אתר אינטרנט')
+                elif item == 'Zoom / Hybrid':
+                    methods.append('בשיחת זום')
+                elif item == '':
+                    pass
+                else:
+                    assert False, 'remoteDelivery {!r}: {!r}'.format(item, remoteDelivery)
+
+            remoteDeliveryOther = data.pop('RemoteServiceDelivery_Other')
+            if remoteDeliveryOther:
+                methods.append(remoteDeliveryOther)
+
+            if len(methods) > 0:
+                details.append('שירות מרחוק באמצעות: ' + ', '.join(methods))
+
+            if relatedMalkarService:
+                relatedId = relatedMalkarService.get('serviceGovId')
+                relatedOffice = relatedMalkarService.get('serviceOffice')
+                print('GOT RELATED: id={}, office={}'.format(relatedId, relatedOffice))
+                if relatedId and relatedOffice:
+                    row['implements'] = f'soproc:{relatedId}#{relatedOffice}'
+
+            row['details'] = '\n<br/>\n'.join(details)
+            url = data.pop('url')
+            url = fix_url(url)
+            if url:
+                row['urls'] = f'{url}#מידע נוסף על השירות'
+
+            phone_numbers = data.pop('Phone', data.pop('phone', None))
+            if phone_numbers:
+                row['phone_numbers'] = phone_numbers
+
+            email_address = data.pop('Email', data.pop('email', None))
+            if email_address:
+                row['email_address'] = email_address
+
+            for k in ('isForCoronaVirus', 'lastModifiedDate', 'serviceId', 'regNum', 'isForBranch'):
                 data.pop(k)
+            row['situations'] = sorted(situations)
+            row['responses'] = sorted(responses)
+            assert all(v in (None, '0') for v in data.values()), repr(data_source_url) + ':' + repr(data)
+            yield row
 
-        relatedMalkarService = data.pop('relatedMalkarService') or {}
-
-        update_from_taxonomy([data.pop('serviceTypeName')], responses, situations)
-        update_from_taxonomy((data.pop('serviceTargetAudience') or '').split(';'), responses, situations)
-        update_from_taxonomy(['soproc:' + relatedMalkarService.get('serviceGovId', '')], responses, situations)
-
-        payment_required = data.pop('paymentMethod')
-        if payment_required == 'Free service':
-            row['payment_required'] = 'no'
-            row['payment_details'] = None
-        elif payment_required == 'Symbolic cost':
-            row['payment_required'] = 'yes'
-            row['payment_details'] = 'עלות סמלית'
-        elif payment_required == 'Full payment':
-            row['payment_required'] = 'yes'
-            row['payment_details'] = 'השירות ניתן בתשלום'
-        elif payment_required == 'Government funded':
-            row['payment_required'] = 'yes'
-            row['payment_details'] = 'השירות מסובסד על ידי הממשלה'
-        else:
-            assert False, payment_required + ' ' + repr(row)
-
-        service_terms = data.pop('serviceTerms')
-        if service_terms:
-            if row.get('payment_details'):
-                row['payment_details'] += ', ' + service_terms
-            else:
-                row['payment_details'] = service_terms
-
-        details = []
-        areas = []
-        national = False
-
-        area = (data.pop('area') or '').split(';')
-        for item in area:
-            if item == 'In Branches':
-                areas.append('בסניפי הארגון')
-            elif item == 'Country wide':
-                areas.append('בתיאום מראש ברחבי הארץ')
-                national = True
-            elif item == 'Customer Place':
-                areas.append('בבית הלקוח')
-            elif item == 'Remote Service':
-                areas.append('שירות מרחוק')
-                national = True
-            elif item == 'Via Phone or Mail':
-                areas.append('במענה טלפוני, צ׳אט או בדוא"ל')
-                national = True
-            elif item == 'Web Service':
-                areas.append('בשירות אינטרנטי מקוון')
-                national = True
-            elif item == 'Customer Appointment':
-                areas.append('במפגשים קבוצתיים או אישיים')
-            elif item == 'Program':
-                areas.append('תוכנית ייעודית בהרשמה מראש')
-            elif item in ('Not relevant', ''):
-                pass
-            else:
-                assert False, 'area {}: {!r}'.format(area, row)
-
-        if len(areas) > 1:
-            details.append('השירות ניתן: ' + ', '.join(areas))
-        elif len(areas) == 1:
-            details.append('השירות ניתן ' + ''.join(areas))
-
-        if national:
-            row['branches'] = [f'guidestar:{orgId}:national']
-
-        when = data.pop('whenServiceActive')
-        if when == 'All Year':
-            details.append('השירות ניתן בכל השנה')
-        elif when == 'Requires Signup':
-            details.append('השירות ניתן בהרשמה מראש')
-        elif when == 'Time Limited':
-            details.append('השירות מתקיים בתקופה מוגבלת')
-        elif when == 'Criteria Based':
-            details.append('השירות ניתן על פי תנאים או קריטריונים')
-        elif when is None:
-            pass
-        else:
-            assert False, 'when {}: {!r}'.format(when, row)
-
-        remoteDelivery = (data.pop('remoteServiceDelivery') or '').split(';')
-        # Phone, Chat / Email / Whatsapp, Internet, Zoom / Hybrid, Other
-        methods = []
-        for item in remoteDelivery:
-            if item == 'Phone':
-                methods.append('טלפון')
-            elif item == 'Chat / Email / Whatsapp':
-                methods.append('בצ׳אט, דוא"ל או וואטסאפ')
-            elif item == 'Internet':
-                methods.append('אתר אינטרנט')
-            elif item == 'Zoom / Hybrid':
-                methods.append('בשיחת זום')
-            elif item == '':
-                pass
-            else:
-                assert False, 'remoteDelivery {!r}: {!r}'.format(item, remoteDelivery)
-
-        remoteDeliveryOther = data.pop('RemoteServiceDelivery_Other')
-        if remoteDeliveryOther:
-            methods.append(remoteDeliveryOther)
-
-        if len(methods) > 0:
-            details.append('שירות מרחוק באמצעות: ' + ', '.join(methods))
-
-        if relatedMalkarService:
-            relatedId = relatedMalkarService.get('serviceGovId')
-            relatedOffice = relatedMalkarService.get('serviceOffice')
-            print('GOT RELATED: id={}, office={}'.format(relatedId, relatedOffice))
-            if relatedId and relatedOffice:
-                row['implements'] = f'soproc:{relatedId}#{relatedOffice}'
-
-        row['details'] = '\n<br/>\n'.join(details)
-        url = data.pop('url')
-        url = fix_url(url)
-        if url:
-            row['urls'] = f'{url}#מידע נוסף על השירות'
-
-        phone_numbers = data.pop('Phone', data.pop('phone', None))
-        if phone_numbers:
-            row['phone_numbers'] = phone_numbers
-
-        email_address = data.pop('Email', data.pop('email', None))
-        if email_address:
-            row['email_address'] = email_address
-
-        for k in ('isForCoronaVirus', 'lastModifiedDate', 'serviceId', 'regNum', 'isForBranch'):
-            data.pop(k)
-        row['situations'] = sorted(situations)
-        row['responses'] = sorted(responses)
-        assert all(v in (None, '0') for v in data.values()), repr(data_source_url) + ':' + repr(data)
     return DF.Flow(
         func,
     )

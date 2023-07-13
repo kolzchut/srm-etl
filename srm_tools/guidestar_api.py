@@ -56,7 +56,7 @@ class GuidestarAPI():
                     includingInactiveMalkars='false',
                     isDesc='false',
                     sort='regNum',
-                    filter=f'branchCount>0;servicesCount>0;regNum>{minRegNum}'
+                    filter=f'servicesCount>0;regNum>{minRegNum}'
                 )
                 resp = self.to_json(lambda: requests.get(f'{self.BASE}/organizations', params=params, headers=self.headers(), timeout=self.TIMEOUT))
                 for row in resp:

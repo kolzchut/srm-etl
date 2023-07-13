@@ -131,8 +131,8 @@ def mde_branch_flow():
     branches = DF.Flow(
         DF.checkpoint(CHECKPOINT),
         DF.update_resource(-1, name='branches'),
-        DF.select_fields(['Org Id', 'Org Name', 'Branch Details', 'Branch Address', 'Branch Geocode', 
-                          'Branch Phone Number', 'Branch Email', 'Branch Website', 'Org Website']),
+        DF.select_fields(['Org Id', 'Branch Details', 'Branch Address', 'Branch Geocode', 
+                          'Branch Phone Number', 'Branch Email', 'Branch Website']),
         DF.rename_fields({
             'Org Id': 'organization',
             'Branch Details': 'name',
@@ -141,7 +141,6 @@ def mde_branch_flow():
             'Branch Phone Number': 'phone_numbers',
             'Branch Email': 'email_address',
             'Branch Website': 'urls',
-            'Org Website': 'org_urls',
         }),
         DF.add_field('id', 'string', lambda r: mde_id(r['organization'], r['address'], r['geocode'])),
         DF.join_with_self('branches', ['id'], dict(
@@ -152,7 +151,6 @@ def mde_branch_flow():
             phone_numbers=None,
             email_address=None,
             urls=None,
-            org_urls=None,
             organization=None,
         )),
         DF.add_field('data', 'object', lambda r: dict(
@@ -162,7 +160,6 @@ def mde_branch_flow():
             phone_numbers=r['phone_numbers'],
             email_address=r['email_address'],
             urls=r['urls'],
-            org_urls=r['org_urls'],
             organization=[r['organization']],
         )),
         DF.select_fields(['id', 'data']),
