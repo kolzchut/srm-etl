@@ -159,7 +159,7 @@ def operator(*_):
     def del_data(row):
         for k in ['follow_up_wait', 'group_therapy_wait', 'individual_therapy_wait', ]:
             row['Data'].pop(k, None)
-        DF.Flow(
+    DF.Flow(
         # Load and clean
         collect_gov_rows('70c0b6fd-0c36-4b7a-a087-3157123403d9'),
         DF.update_resource(-1, name='clinics'),
