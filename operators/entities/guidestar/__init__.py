@@ -120,7 +120,7 @@ def updateServiceFromSourceData(taxonomies):
             update_from_taxonomy(['soproc:' + relatedMalkarService.get('serviceGovId', '')], responses, situations)
 
             payment_required = data.pop('paymentMethod')
-            if payment_required == 'Free service':
+            if payment_required in ('Free service', None):
                 row['payment_required'] = 'no'
                 row['payment_details'] = None
             elif payment_required == 'Symbolic cost':
