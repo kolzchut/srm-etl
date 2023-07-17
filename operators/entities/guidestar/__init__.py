@@ -289,7 +289,7 @@ def updateOrgFromSourceData():
         if data is None:
             return
         row['name'] = data['name'].replace(' (חל"צ)', '').replace(' (ע"ר)', '')
-        if data['abbreviatedOrgName']:
+        if data.get('abbreviatedOrgName'):
             row['short_name'] = data['abbreviatedOrgName']
         row['kind'] = data['malkarType']
         row['description'] = None
