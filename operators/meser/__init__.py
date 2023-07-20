@@ -50,7 +50,7 @@ def operator(*_):
 
     with tempfile.TemporaryDirectory() as td:
         dirname = td
-        source_data = Path(td).joinpath('data.csv')
+        source_data = os.path.join(td, 'data.csv')
 
         fetch_datagovil('welfare-frames', 'מסגרות רווחה', source_data)
 
