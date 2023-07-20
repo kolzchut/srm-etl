@@ -27,7 +27,7 @@ The ETL System we use is based on the DGP-APP Platform
 - `DATABASE_URL`: Connection string for the `auth` database
 - `DATASETS_DATABASE_URL`: Connection string for the `datasets` database
 - `ETLS_DATABASE_URL`: Connection string for the `etls` database
-- `AIRFLOW__CORE__SQL_ALCHEMY_CONN`: Connection string for the `airflow` database
+- `AIRFLOW__DATABASE__SQL_ALCHEMY_CONN`: Connection string for the `airflow` database
 
 **Scraper Specific**:
 

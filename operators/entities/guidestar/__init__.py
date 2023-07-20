@@ -423,7 +423,7 @@ def fetchWildBranchData(ga):
     airtable_updater(settings.AIRTABLE_BRANCH_TABLE, 'guidestar',
         ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
         DF.Flow(
-            load_from_airtable(settings.AIRTABLE_GUIDESTAR_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
+            load_from_airtable(settings.AIRTABLE_GUIDESTAR_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='orgs'),
             DF.filter_rows(lambda r: r['source'] == 'guidestar', resources='orgs'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),

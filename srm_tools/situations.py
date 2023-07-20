@@ -16,7 +16,7 @@ class Situations():
     def situations(self):
         if self._situations is None:
             self._situations = DF.Flow(
-                load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_SITUATION_TABLE, settings.AIRTABLE_VIEW)
+                load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_SITUATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY)
             ).results()[0][0]
         return self._situations
 

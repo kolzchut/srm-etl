@@ -238,7 +238,7 @@ def fetchBranchData(ga):
     print('FETCHING ALL ORGANIZATION BRANCHES')
 
     DF.Flow(
-        load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW),
+        load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='orgs'),
         DF.filter_rows(lambda r: r['source'] == 'entities', resources='orgs'),
         DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
