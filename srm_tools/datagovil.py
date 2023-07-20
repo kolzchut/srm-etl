@@ -15,5 +15,5 @@ def fetch_datagovil(dataset, resource_name, temp_file_name):
         if r.status_code == 200:
             r.raw.decode_content = True
             shutil.copyfileobj(r.raw, outfile)
-    print('SAVED from data.gov.il:', dataset, 'to', temp_file_name, 'size:', os.path.getsize(temp_file_name)
+    print('SAVED from data.gov.il:', dataset, 'to', temp_file_name, 'size:', os.path.getsize(temp_file_name))
 
