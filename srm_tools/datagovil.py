@@ -3,7 +3,7 @@ import requests
 import shutil
 
 def fetch_datagovil(dataset_name, resource_name, temp_file_name):
-    dataset = requests.get(f'https://data.gov.il/api/action/package_search?q={dataset}').json()['result']['results']
+    dataset = requests.get(f'https://data.gov.il/api/action/package_search?q={dataset_name}').json()['result']['results']
     dataset = [d for d in dataset if d['name'] == dataset_name][0]
     try:
         resource = next(r for r in dataset['resources'] if r['name'] == resource_name)
