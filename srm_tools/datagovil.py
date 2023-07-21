@@ -2,8 +2,9 @@ import os
 import requests
 import shutil
 
-def fetch_datagovil(dataset, resource_name, temp_file_name):
-    dataset = requests.get(f'https://data.gov.il/api/action/package_search?q={dataset}').json()['result']['results'][0]
+def fetch_datagovil(dataset_name, resource_name, temp_file_name):
+    dataset = requests.get(f'https://data.gov.il/api/action/package_search?q={dataset}').json()['result']['results']
+    dataset = [d for d in dataset if d['name'] == dataset_name][0]
     try:
         resource = next(r for r in dataset['resources'] if r['name'] == resource_name)
     except:
@@ -15,5 +16,5 @@ def fetch_datagovil(dataset, resource_name, temp_file_name):
         if r.status_code == 200:
             r.raw.decode_content = True
             shutil.copyfileobj(r.raw, outfile)
-    print('SAVED from data.gov.il:', dataset, 'to', temp_file_name, 'size:', os.path.getsize(temp_file_name))
+    print('SAVED from data.gov.il:', dataset_name, 'to', temp_file_name, 'size:', os.path.getsize(temp_file_name))
 
