@@ -41,11 +41,14 @@ def update_from_source(spec, source_index):
     def func(rows):
         for row in rows:
             id = row[spec.id_field]
-            source = source_index.get(id)
+            source = source_index.pop(id, None)
             if source is not None:
                 if any(row.get(k) != v for k, v in source.items()):
                     row.update(source)
                     yield row
+        if spec.add_missing:
+            for source in source_index.values():
+                yield source
     return func
 
 
@@ -59,7 +62,7 @@ def operator(*_):
             load_from_airtable(settings.AIRTABLE_ALTERNATE_BASE, spec.table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.select_fields([spec.id_field] + select_fields),
         ).results()[0][0]
-        source = dict((row.pop(spec.id_field), row) for row in source)
+        source = dict((row[spec.id_field], row) for row in source)
 
         DF.Flow(
             load_from_airtable(settings.AIRTABLE_BASE, spec.table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
@@ -68,8 +71,6 @@ def operator(*_):
             update_from_source(spec, source),
 
             DF.rename_fields(rename_fields) if rename_fields else None,
-
-            DF.delete_fields([spec.id_field]),
 
             DF.printer(),
             
