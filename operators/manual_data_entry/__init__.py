@@ -18,7 +18,7 @@ CHECKPOINT = 'mde'
 # PREPARE
 def slugify_org_id():
     def func(row):
-        id = row['Org Id'] or row['Org Name']
+        id = row.get('Org Id') or row.get('Org Name')
         row['Org Id'] = slugify(id, separator='-', lowercase=True)
         if VERIFY_ORG_ID.match(row['Org Id']) is None:
             h = hasher(row['Org Id'])
@@ -36,7 +36,7 @@ def handle_national_services():
 def mde_prepare():
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-        DF.filter_rows(lambda r: (r['Org Id'] or r['Org Name']) and r['Org Id'] != 'dummy'),
+        DF.filter_rows(lambda r: (r.get('Org Id') or r.get('Org Name')) and r.get('Org Id') != 'dummy'),
         slugify_org_id(),
         handle_national_services(),
         DF.checkpoint(CHECKPOINT)

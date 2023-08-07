@@ -25,6 +25,7 @@ def backup():
             )
             for t in TABLES_TO_BACK_UP
         ],
+        DF.validate(),
         DF.update_package(title='Manual Input Backup', name='backup'),
         dump_to_ckan(
             settings.CKAN_HOST,
