@@ -28,7 +28,7 @@ def slugify_org_id():
 
 def handle_national_services():
     def func(row):
-        if row['National Service?']:
+        if row.get('National Service?'):
             row['Branch Address'] = 'שירות ארצי'
     return func
 
