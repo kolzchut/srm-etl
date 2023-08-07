@@ -9,6 +9,7 @@ MODULES = [
     's3transfer',
     's3transfer.utils',
     's3transfer.tasks',
+    'airflow.task',
 ]
 for module in MODULES:
     logging.getLogger(module).setLevel(logging.INFO)
