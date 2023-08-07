@@ -63,8 +63,8 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
         DF.Flow(
             load_from_airtable(curation_base, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='orgs'),
-            DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
-            DF.filter_rows(lambda r: r['decision'] not in ('Rejected', 'Suspended'), resources='orgs'),
+            DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='orgs'),
+            DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='orgs'),
             collect_ids(updated_orgs, ignore_orgs),
             DF.delete_fields(['source', 'status'], resources=-1),
             fetch_mapper(),
@@ -90,8 +90,8 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
         DF.Flow(
             load_from_airtable(curation_base, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='branches'),
-            DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='branches'),
-            DF.filter_rows(lambda r: r['decision'] not in ('Rejected', 'Suspended'), resources='branches'),
+            DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='branches'),
+            DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='branches'),
             DF.set_type('location', type='array', transform=lambda v: [updated_locations.get(v, v)]),
             filter_by_items(updated_orgs, ['organization']),
             DF.filter_rows(lambda r: len(r['organization'] or []) > 0),
@@ -115,8 +115,8 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
         DF.Flow(
             load_from_airtable(curation_base, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='services'),
-            DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='services'),
-            DF.filter_rows(lambda r: r['decision'] not in ('Rejected', 'Suspended'), resources='services'),
+            DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='services'),
+            DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='services'),
             filter_by_items(updated_orgs, ['organizations']),
             filter_by_items(updated_branches, ['branches']),
             DF.filter_rows(lambda r: len(r['organizations'] or []) > 0 or len(r['branches'] or []) > 0),
