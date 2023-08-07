@@ -64,6 +64,7 @@ def airtable_updater_flow(table, source_id, table_fields, fetch_data_flow, updat
     return DF.Flow(
         load_from_airtable(airtable_base or settings.AIRTABLE_BASE, table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='current'),
+        DF.validate(),
         DF.filter_rows(lambda r: r.get('source') in (source_id, 'dummy'), resources='current'),
 
         DF.add_field('_current_hash', 'string', hash_row(table_fields), resources='current'),
