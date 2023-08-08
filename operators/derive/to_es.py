@@ -210,7 +210,6 @@ def select_text_fields(row):
             yield from HEB.findall(obj)
     return list(_aux(row))
 
-
 def load_locations_to_es_flow():
     url = settings.LOCATION_BOUNDS_SOURCE_URL
     scores = dict(
@@ -230,6 +229,7 @@ def load_locations_to_es_flow():
             DF.update_package(title='Bounds for Locations in Israel', name='bounds-for-locations'),
             DF.update_resource(-1, name='places'),
             # DF.set_type('name', **{'es:autocomplete': True}),
+            DF.add_field('query', 'string', lambda r: sorted(r['name'], key=lambda v: len(v), reverse=True)[0]),
             DF.add_field('score', 'number', calc_score),
             DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/place_data'),
             dump_to_es_and_delete(
@@ -288,7 +288,6 @@ def load_responses_to_es_flow():
         # DF.printer()
     )
 
-
 def load_situations_to_es_flow():
     
     def print_top(row):
@@ -333,7 +332,6 @@ def load_situations_to_es_flow():
         ),
         # DF.printer()
     )
-
 
 def load_organizations_to_es_flow():
     return DF.Flow(
