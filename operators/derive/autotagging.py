@@ -12,9 +12,9 @@ def apply_auto_tagging():
             'Query': 'query',
         }),
         DF.add_field('fields', 'array', lambda r: [x for x in [
-            'organization_name' if r['In Org Name'] else None,
-            'organization_purpose' if r['In Org Purpose'] else None,
-            'service_name' if r['In Service Name'] else None,
+            'organization_name' if r.get('In Org Name') else None,
+            'organization_purpose' if r.get('In Org Purpose') else None,
+            'service_name' if r.get('In Service Name') else None,
         ] if x]),
         DF.select_fields(['fields', 'query', 'situation_ids', 'response_ids']),
     ).results()[0][0]

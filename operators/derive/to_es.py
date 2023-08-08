@@ -265,7 +265,7 @@ def load_responses_to_es_flow():
         DF.join('card_data', ['id'], 'responses', ['id'], dict(
             count=None
         )),
-        DF.filter_rows(lambda r: r['status'] == 'ACTIVE'),
+        DF.filter_rows(lambda r: r.get('status') == 'ACTIVE'),
         DF.filter_rows(lambda r: r['count'] is not None),
         DF.select_fields(['id', 'name', 'synonyms', 'breadcrumbs', 'count']),
         DF.set_type('id', **{'es:keyword': True}),
@@ -312,7 +312,7 @@ def load_situations_to_es_flow():
         DF.join('card_data', ['id'], 'situations', ['id'], dict(
             count=None
         )),
-        DF.filter_rows(lambda r: r['status'] == 'ACTIVE'),
+        DF.filter_rows(lambda r: r.get('status') == 'ACTIVE'),
         DF.filter_rows(lambda r: r['count'] is not None),
         DF.select_fields(['id', 'name', 'synonyms', 'breadcrumbs', 'count']),
         DF.set_type('id', **{'es:keyword': True}),

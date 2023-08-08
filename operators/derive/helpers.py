@@ -75,7 +75,7 @@ def filter_dummy_data():
 
 
 def filter_active_data():
-    return DF.filter_rows(lambda r: r['status'] != 'INACTIVE')
+    return DF.filter_rows(lambda r: r.get('status') != 'INACTIVE')
 
 
 def set_staging_pkey(resource_name):
@@ -337,8 +337,10 @@ def org_name_parts(row):
     m = None
     if short_name:
         short_name = short_name.split('(')[0]
-        cc = regex.compile('\m(%s){e<2}' % short_name)
-        m = cc.search(name)
+        short_name = short_name.replace(')', '').strip()
+        if short_name:
+            cc = regex.compile('\m(%s){e<2}' % short_name)
+            m = cc.search(name)
     if m:
         prefix = name[: m.start()].strip(' -,\n\t')
         suffix = name[m.end() :].strip(' -,\n\t')

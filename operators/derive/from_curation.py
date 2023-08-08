@@ -119,7 +119,7 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
             DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='services'),
             filter_by_items(updated_orgs, ['organizations']),
             filter_by_items(updated_branches, ['branches']),
-            DF.filter_rows(lambda r: len(r['organizations'] or []) > 0 or len(r['branches'] or []) > 0),
+            DF.filter_rows(lambda r: len(r.get('organizations') or []) > 0 or len(r.get('branches') or []) > 0),
             DF.delete_fields(['source', 'status'], resources=-1),
             fetch_mapper(),
         ),
