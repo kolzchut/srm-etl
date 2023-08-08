@@ -225,7 +225,7 @@ def mde_service_flow():
             'Service Email': 'email_address',
             'Service Website': 'urls',
         }),
-        DF.add_field('branch_id', 'string', lambda r: mde_id(r['organization'], r['branch_address'], r['branch_geocode'])),
+        DF.add_field('branch_id', 'string', lambda r: mde_id(r['organization'], r.get('branch_address'), r.get('branch_geocode'))),
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
             description=r.get('description'),
