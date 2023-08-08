@@ -340,7 +340,7 @@ def unwind_branches(ga:GuidestarAPI):
                     if branch.get('placeNickname'):
                         branch['name'] = branch['placeNickname']
                     else:
-                        branch['name'] = (row['short_name'] or row['name']) + ' - ' + branch['cityName']
+                        branch['name'] = (row.get('short_name') or row.get('name')) + ' - ' + branch['cityName']
                     yield ret
                 national = {}
                 national.update(row)

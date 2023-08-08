@@ -49,7 +49,7 @@ def org_updater():
             return
         data = row['data']
         row['name'] = data['name']
-        row['short_name'] = row['short_name'] or data['short_name']
+        row['short_name'] = row.get('short_name') or data['short_name']
         if row.get('urls'):
             urls = row['urls'].split('\n')
         else:
