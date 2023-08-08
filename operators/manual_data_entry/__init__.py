@@ -112,7 +112,7 @@ def branch_updater():
         if not row.get('data'):
             return
         data = row['data']
-        data['location'] = data['geocode'] or data['address']
+        data['location'] = data.get('geocode') or data.get('address')
         urls = []
         combined = []
         if data.get('urls'):
@@ -142,7 +142,7 @@ def mde_branch_flow():
             'Branch Email': 'email_address',
             'Branch Website': 'urls',
         }),
-        DF.add_field('id', 'string', lambda r: mde_id(r['organization'], r['address'], r['geocode'])),
+        DF.add_field('id', 'string', lambda r: mde_id(r['organization'], r.get('address'), r.get('geocode'))),
         DF.join_with_self('branches', ['id'], dict(
             id=None, 
             name=None, 
