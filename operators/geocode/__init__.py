@@ -138,7 +138,7 @@ def operator(*_):
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='locations'),
         DF.filter_rows(lambda r: any((not r.get(f)) for f in ('resolved_lat', 'resolved_lon', 'resolved_city'))),
-        DF.filter_rows(lambda r: r['status'] not in ('NOT_FOUND', )),
+        DF.filter_rows(lambda r: r.get('status') not in ('NOT_FOUND', )),
         DF.select_fields([AIRTABLE_ID_FIELD, 'id', 'status', 'provider', 'alternate_address', 'accuracy', 'resolved_lat', 'resolved_lon', 'resolved_address', 'resolved_city']),
         DF.set_type('resolved_l.+', type='number', transform=lambda v: float(v) if v is not None else None),
         geocode(get_session()),
