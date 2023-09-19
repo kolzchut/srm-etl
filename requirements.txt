@@ -1,4 +1,4 @@
-dataflows>=0.3.4
+dataflows>=0.4.0
 dataflows-airtable>=0.2.1
 dataflows-elasticsearch>=0.1.1
 dataflows-ckan>=0.3.5
