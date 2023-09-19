@@ -24,6 +24,7 @@ def operator(*args):
         DF.update_resource(-1, name='presets', path='presets.csv'),
         enumerate_rows(),
         DF.set_primary_key(['id']),
+        DF.select_fields(['id', 'title', 'preset', 'example']),
         dump_to_es_and_delete(
             indexes=dict(srm__presets=[dict(resource_name='presets')]),
         ),

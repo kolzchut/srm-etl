@@ -477,7 +477,7 @@ def operator(name, params, pipeline):
 
     print('FETCHING SOPROC MAPPING')
     soproc_mappings = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, 'soproc-service-tagging', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_SOPROC_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.select_fields(['id', 'situation_ids', 'response_ids']),
     ).results()[0][0]
     taxonomy.update(dict(

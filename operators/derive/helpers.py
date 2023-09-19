@@ -1,5 +1,6 @@
 from collections import Counter
 import dataflows as DF
+from dataflows_airtable import AIRTABLE_ID_FIELD
 from dataflows.helpers.resource_matcher import ResourceMatcher
 import re
 import regex
@@ -79,7 +80,7 @@ def filter_active_data():
 
 
 def set_staging_pkey(resource_name):
-    return DF.rename_fields({'__airtable_id': 'key'}, resources=[resource_name])
+    return DF.rename_fields({AIRTABLE_ID_FIELD: 'key'}, resources=[resource_name])
 
 
 def update_taxonomy_with_parents(v):
@@ -181,12 +182,16 @@ def preprocess_organizations(select_fields=None, validate=False):
     )
 
 
-def preprocess_branches(select_fields=None, validate=False):
+def preprocess_branches(validate=False):
+    select_fields = [
+        'key', 'id', 'source', 'status', 'name', 'organization', 'location', 'address', 'address_details', 'description', 'phone_numbers', 'email_address', 'urls', 'manual_url', 'fixes', 'situations', 'services'
+    ]
     return DF.Flow(
         DF.update_resource(['Branches'], name='branches', path='branches.csv'),
         filter_dummy_data(),
         filter_active_data(),
         set_staging_pkey('branches'),
+        DF.select_fields(select_fields, resources=['branches']),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['branches']),
         DF.set_type(
             'phone_numbers',
@@ -195,16 +200,19 @@ def preprocess_branches(select_fields=None, validate=False):
             resources=['branches'],
         ),
         remove_whitespaces('branches', 'name'),
-        DF.select_fields(select_fields, resources=['branches']) if select_fields else None,
         DF.validate() if validate else None,
     )
 
 
-def preprocess_locations(select_fields=None, validate=False):
+def preprocess_locations(validate=False):
+    select_fields = [
+        'key', 'id', 'status', 'provider', 'accuracy', 'alternate_address', 'resolved_lat', 'resolved_lon', 'resolved_address', 'resolved_city', 'fixed_lat', 'fixed_lon'
+    ]
     return DF.Flow(
         DF.update_resource(['Locations'], name='locations', path='locations.csv'),
         filter_dummy_data(),
         set_staging_pkey('locations'),
+        DF.select_fields(select_fields, resources=['locations']),
         DF.add_field(
             'national_service', 'boolean',
             lambda r: r['accuracy'] == 'NATIONAL_SERVICE',
@@ -245,7 +253,6 @@ def preprocess_locations(select_fields=None, validate=False):
             lambda r: r.get('resolved_address') or r['id'],
             resources=['locations'],
         ),
-        DF.select_fields(select_fields, resources=['locations']) if select_fields else None,
     )
 
 
