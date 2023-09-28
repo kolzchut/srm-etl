@@ -104,8 +104,6 @@ def updateServiceFromSourceData(taxonomies):
             orgId = data.pop('organization_id')
             actual_branch_ids = data.pop('actual_branch_ids')
             row['branches'] = ['guidestar:' + b['branchId'] for b in (data.pop('branches') or []) if b['branchId'] in actual_branch_ids]
-            if len(row['branches']) == 0:
-                row['branches'] = ['guidestar:' + bid for bid in actual_branch_ids]
 
             record_type = data.pop('recordType')
             assert record_type == 'GreenInfo'
@@ -150,6 +148,8 @@ def updateServiceFromSourceData(taxonomies):
             for item in area:
                 if item == 'In Branches':
                     areas.append('בסניפי הארגון')
+                    if len(row['branches']) == 0:
+                        row['branches'] = ['guidestar:' + bid for bid in actual_branch_ids]
                 elif item == 'Country wide':
                     areas.append('בתיאום מראש ברחבי הארץ')
                     national = True
@@ -179,7 +179,7 @@ def updateServiceFromSourceData(taxonomies):
                 details.append('השירות ניתן ' + ''.join(areas))
 
             if national:
-                row['branches'] = [f'guidestar:{orgId}:national']
+                row['branches'].append(f'guidestar:{orgId}:national')
             if len(row['branches']) == 0:
                 continue
 
