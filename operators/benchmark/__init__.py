@@ -14,11 +14,12 @@ from dataflows_airtable import load_from_airtable, AIRTABLE_ID_FIELD, dump_to_ai
 from conf import settings
 
 BASE = 'https://srm-staging-api.whiletrue.industries'
+TIMEOUT = 20
 
 
 def get_autocomplete(query):
     query = query.replace(' ', '_')
-    resp = requests.get(f'{BASE}/api/idx/get/{query}?type=autocomplete')
+    resp = requests.get(f'{BASE}/api/idx/get/{query}?type=autocomplete', timeout=TIMEOUT)
     if resp.status_code == 200:
         return resp.json()
     else:
@@ -31,7 +32,7 @@ def search_dym_autocomplete(query):
       match_operator='and',
       filter=json.dumps([{'visible': True, 'low': False}]),
     )
-    ret = requests.get(f'{BASE}/api/idx/search/autocomplete', params).json()
+    ret = requests.get(f'{BASE}/api/idx/search/autocomplete', params, timeout=TIMEOUT).json()
     if ret and 'search_results' in ret and ret['search_results']:
         return ret['search_results'][0]['source']['query']
 
@@ -46,7 +47,7 @@ def search_dym(query):
         minscore=50,
         q=query,        
     )
-    resp = requests.get(f'{BASE}/api/idx/search/cards', params).json()
+    resp = requests.get(f'{BASE}/api/idx/search/cards', params, timeout=TIMEOUT).json()
     pa = resp.get('possible_autocomplete')
     if pa:
         best = pa[0]
@@ -101,7 +102,7 @@ def search_cards(query, ac):
 
         params['extra'] = 'national-services|collapse|collapse-collect'
 
-        resp = requests.get(f'{BASE}/api/idx/search/cards', params)
+        resp = requests.get(f'{BASE}/api/idx/search/cards', params, timeout=TIMEOUT)
         assert resp.status_code == 200
         resp = resp.json()
         if 'search_results' in resp:
