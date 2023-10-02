@@ -1,0 +1,60 @@
+{
+  "bytes": 6461,
+  "count_of_rows": 322,
+  "hash": "574404d829a9589269203777a0bd863a",
+  "profile": "data-package",
+  "resources": [
+    {
+      "bytes": 6461,
+      "dialect": {
+        "caseSensitiveHeader": false,
+        "delimiter": ",",
+        "doubleQuote": true,
+        "header": true,
+        "lineTerminator": "\r\n",
+        "quoteChar": "\"",
+        "skipInitialSpace": false
+      },
+      "encoding": "utf-8",
+      "format": "csv",
+      "hash": "19f11dbf7a8dcf26fc6aacbf1a79e96d",
+      "name": "otzma-noshmim",
+      "path": "otzma-noshmim.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "format": "default",
+            "name": "semel_machlaka",
+            "type": "any"
+          },
+          {
+            "falseValues": [
+              "False"
+            ],
+            "format": "default",
+            "name": "noshmim",
+            "trueValues": [
+              "True"
+            ],
+            "type": "boolean"
+          },
+          {
+            "falseValues": [
+              "False"
+            ],
+            "format": "default",
+            "name": "otzma",
+            "trueValues": [
+              "True"
+            ],
+            "type": "boolean"
+          }
+        ],
+        "missingValues": [
+          ""
+        ]
+      }
+    }
+  ]
+}

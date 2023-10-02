@@ -36,20 +36,6 @@ def sort_dict_by_keys(row):
     return dict(sorted(row.items(), key=lambda i: i[0]))
 
 
-def make_unique_id_from_values(row):
-    keys = sorted(row.keys())
-    values = [row[k] for k in keys]
-    input = ''.join(
-        [
-            slugify.slugify(str(v if v is not None else '').strip(), lowercase=True, separator='')
-            for v in values
-        ]
-    ).encode('utf-8')
-    sha = hashlib.sha1()
-    sha.update(input)
-    return f'{DATA_SOURCE_ID}:{sha.hexdigest()}'
-
-
 BASE_URL = (
     'https://www.gov.il/he/departments/dynamiccollectors/molsa-social-departmentsd-list?skip=0'
 )
@@ -115,29 +101,77 @@ SERVICES = [
             ]
         },
     },
-    {
-        'id': 'revaha-aid',
-        'data': {
-            'name': 'תמיכה וייעוץ ליחידים ומשפחות מטעם המחלקה לשירותים חברתיים',
-            'source': DATA_SOURCE_ID,
-            'description': 'השירות מסייע לילדים, בני נוער, משפחות, יחידים, מוגבלים, זקנים, עולים חדשים ולכל פרט/קבוצה החפצים בקבלת סיוע. המחלקות לשירותים חברתיים  מעניקות מידע, יעוץ, טיפול, שירותים סוציאליים, הכוונה, תיווך לקבלת שירות, שילוב במסגרות ושירותי עזר בבית - בהתאם לכללי נזקקות וזכאות ולאפשרויות התקציביות.',
-            'payment_required': 'no',
-            'urls': '',
-            'organizations': ['srm0020'],
-            'payment_details': PAYMENT_DETAILS,
-            'data_sources': DATA_SOURCES,
-            'responses': [
-                'human_services:food',
-                'human_services:care',
-                'human_services:legal:advocacy_legal_aid:understand_government_programs',
-            ],
-            'situations': []
-        },
-    },
 ]
 
+SERVICE_MAP = {
+    'noshmim': {
+        'id': 'rehava-noshmim',
+        'data': {
+            'name': 'נושמים לרווחה',
+            'source': DATA_SOURCE_ID,
+            'description': '''מטרות תוכנית 'נושמים לרווחה' הן:
+
+-  שיפור המצב הכלכלי של משפחות החיות בעוני ובהדרה (הרחקה חברתית) והעלאת העצמאות ביכולת לספק את הצרכים הבסיסיים
+- הגדלת ההזדמנויות של המשפחה להגיע למגוון שירותים, מצבים ופעולות בחברה שעשויים לקדם א מצבם החברתי-כלכלי (לדוגמה רמת בתי ספר נמוכה בישוב או העדר מסגרות להכשרה מקצועית, קושי לקבל משכנתא או הלוואה בריבית נמוכה, העדר תחבורה ציבורית ועוד)
+- העשרת הידע והמוניטין המגדירים את מעמד המשפחה ("הון סימבולי")
+- יצירת תחושת רווחה אישית ומשפחתית.
+
+התוכנית מיועדת ליחידים ולמשפחות שמתמודדות עם מכשולים רבים, מיעוט הזדמנויות לשנות את מצבם וקושי במיצוי זכויות ובשימוש במשאבי הקהילה והממסד.
+''',
+            'payment_required': 'no',
+            'urls': 'https://clickrevaha.molsa.gov.il/product-page/178',
+            'organizations': [],
+            'payment_details': 'יש לפנות לעובד/ת הסוציאלית של המשפחה',
+            'data_sources': DATA_SOURCES,
+            'responses': [
+                'human_services:legal:advocacy_legal_aid:understand_government_programs',
+                'human_services:money:financial_assistance',
+                'human_services:money:financial_education',
+                'human_services:care:guidance',
+            ],
+            'situations': [
+                'human_situations:household:families',
+                'human_situations:income:low_income',
+            ]
+        }
+    },
+    'otzma': {
+        'id': 'rehava-otzma',
+        'data': {
+            'name': 'מרכז עוצמה',
+            'source': DATA_SOURCE_ID,
+            'description': '''מטרת השירות היא הנגשת סיוע ליחידים ולמשפחות החיים בעוני, בדרכים הבאות:
+
+- שיפור באיכות החיים
+- הפחתת רמת המחסור החומרי-כלכלי
+- העלאת רמת התעסוקה, הכשרה או השכלה ומיצוי זכויות
+- הגדלת ההון הסימבולי - המתבטא בשילוב מיטבי בקהילה
+- הגברת העצמאות, הבאה לידי ביטוי ביכולת לספק צרכים בסיסיים.
+
+השירות מיועד ליחידים ולמשפחות, המוכרים למחלקות לשירותים חברתיים, המתמודדים עם מציאות חיים של עוני והדרה.
+''',
+            'payment_required': 'no',
+            'urls': 'https://clickrevaha.molsa.gov.il/product-page/179',
+            'organizations': [],
+            'payment_details': 'יש לפנות למחלקה לשירותים חברתיים הסמוכה למקום המגורים',
+            'data_sources': DATA_SOURCES,
+            'responses': [
+                'human_services:care:guidance',
+                'human_services:legal:advocacy_legal_aid:understand_government_programs',
+            ],
+            'situations': [
+                'human_situations:household:families',
+                'human_situations:income:low_income',
+            ]
+        }
+    }
+}
+
 FIELD_MAP = {
-    'id': 'id',
+    'id': {
+        'type': 'string',
+        'transform': lambda r: f'{DATA_SOURCE_ID}:{r["semel_machlaka"]}',
+    },
     # covered by airtable updater
     # 'source': {'transform': lambda r: DATA_SOURCE_ID},
     'name': {'transform': lambda r: f'{BRANCH_NAME_PREFIX} {r["source_location"]}'},
@@ -177,6 +211,28 @@ def revaha_organization_data_flow():
         airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
     )
 
+def update_services():
+    extra = DF.Flow(
+        DF.load(str(Path(__file__).with_name('otzma-noshmim') / 'datapackage.json')),        
+    ).results()[0][0]
+    extra = dict(
+        ('{}:{}'.format(DATA_SOURCE_ID, x.pop('semel_machlaka')), x) for x in extra
+    )
+
+    print('update_services, extra keys {}, service map: {}'.format(list(extra.keys())[:10], list(SERVICE_MAP.keys())))
+
+    def func(services, row):
+        id = row['id']
+        if id in extra:
+            v = extra[id]
+            for k, vv in v.items():
+                if vv and k in SERVICE_MAP:
+                    service = SERVICE_MAP[k]['id']
+                    if service not in services:
+                        services.append(service)
+        return services
+    
+    return DF.set_type('services', transform=func, resources=['branches'])
 
 def revaha_fetch_branch_data_flow(data=None):
     return DF.Flow(
@@ -184,9 +240,9 @@ def revaha_fetch_branch_data_flow(data=None):
         DF.update_resource(-1, name='branches', path='branches.csv'),
         DF.rename_fields({'location': 'source_location'}, resources=['branches']),
         sort_dict_by_keys,
-        DF.add_field('id', 'string', make_unique_id_from_values, resources=['branches']),
         *ensure_fields(FIELD_MAP, resources=['branches']),
         DF.select_fields(FIELD_MAP.keys(), resources=['branches']),
+        update_services(),
         DF.add_field(
             'data',
             'object',
@@ -232,11 +288,14 @@ def revaha_branch_data_flow():
 
 
 def revaha_service_data_flow():
+    services = SERVICES
+    services.extend(list(SERVICE_MAP.values()))
+
     return airtable_updater(
         settings.AIRTABLE_SERVICE_TABLE,
         DATA_SOURCE_ID,
-        list(SERVICES[0]['data'].keys()),
-        SERVICES,
+        list(services[0]['data'].keys()),
+        services,
         update_mapper(),
         airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
     )
