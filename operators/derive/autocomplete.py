@@ -62,7 +62,7 @@ def unwind_templates():
     def func(rows):
         for row in rows:
             # print(row)
-            for template in TEMPLATES:
+            for importance, template in enumerate(TEMPLATES):
                 responses = row['responses_parents'] if '{response}' in template else [dict()]
                 situations = row['situations_parents'] if '{situation}' in template else [dict()]
                 direct_responses = row['response_ids'] + [None]
@@ -118,6 +118,7 @@ def unwind_templates():
                         'structured_query': structured_query,
                         'visible': visible,
                         'low': low,
+                        'importance': importance,
                     }
 
 
@@ -166,12 +167,16 @@ def autocomplete_flow():
         DF.add_field('structured_query', 'string'),
         DF.add_field('visible', 'boolean'),
         DF.add_field('low', 'boolean'),
+        DF.add_field('importance', 'integer'),
         unwind_templates(),
+        DF.sort_rows('{importance}'),
         DF.join_with_self('autocomplete', ['query'], fields=dict(
             score=dict(aggregate='count'),
-            query=None, query_heb=None, response=None, situation=None, synonyms=None, 
-            org_id=None, org_name=None, city_name=None,
-            response_name=None, situation_name=None, structured_query=None, visible=None, low=dict(aggregate='min'),
+            query=None, query_heb=dict(aggregate='first'), 
+            response=dict(aggregate='first'), situation=dict(aggregate='first'), synonyms=dict(aggregate='first'), 
+            org_id=dict(aggregate='first'), org_name=dict(aggregate='first'), city_name=dict(aggregate='first'),
+            response_name=dict(aggregate='first'), situation_name=dict(aggregate='first'), structured_query=dict(aggregate='first'), 
+            visible=dict(aggregate='first'), low=dict(aggregate='min'),
         )),
         DF.add_field('bounds', 'array', **{'es:itemType': 'number', 'es:index': False}),
         get_bounds(),
