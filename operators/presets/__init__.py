@@ -10,7 +10,7 @@ from ..derive.es_utils import dump_to_es_and_delete
 def enumerate_rows():
     def func(rows):
         for idx, row in enumerate(rows):
-            row['score'] = idx + 10
+            row['score'] = 100 - idx
             yield row
     return DF.Flow(
         DF.add_field('score', 'number', 0),
@@ -24,7 +24,7 @@ def operator(*args):
         DF.update_resource(-1, name='presets', path='presets.csv'),
         enumerate_rows(),
         DF.set_primary_key(['id']),
-        DF.select_fields(['id', 'title', 'preset', 'example', 'emergency']),
+        DF.select_fields(['id', 'title', 'preset', 'example', 'emergency', 'score']),
         dump_to_es_and_delete(
             indexes=dict(srm__presets=[dict(resource_name='presets')]),
         ),
