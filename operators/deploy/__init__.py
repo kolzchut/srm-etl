@@ -18,7 +18,7 @@ class DeploySpec:
 DEPLOY_CONFIG = [
     # Presets
     DeploySpec(settings.AIRTABLE_PRESETS_TABLE, 
-               'id', ['title', 'preset', 'example'], add_missing=True),
+               'id', ['title', 'preset', 'example', 'emergency'], add_missing=True),
     # Situations and Responses
     DeploySpec(settings.AIRTABLE_SITUATION_TABLE,
                'id', ['synonyms'], add_missing=True),

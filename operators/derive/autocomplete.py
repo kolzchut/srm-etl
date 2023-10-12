@@ -169,10 +169,10 @@ def autocomplete_flow():
         DF.add_field('low', 'boolean'),
         DF.add_field('importance', 'integer'),
         unwind_templates(),
-        DF.sort_rows('{importance}'),
+        DF.sort_rows(['importance']),
         DF.join_with_self('autocomplete', ['query'], fields=dict(
             score=dict(aggregate='count'),
-            query=None, query_heb=dict(aggregate='first'), 
+            query=None, query_heb=dict(aggregate='first'), importance=dict(aggregate='first'),
             response=dict(aggregate='first'), situation=dict(aggregate='first'), synonyms=dict(aggregate='first'), 
             org_id=dict(aggregate='first'), org_name=dict(aggregate='first'), city_name=dict(aggregate='first'),
             response_name=dict(aggregate='first'), situation_name=dict(aggregate='first'), structured_query=dict(aggregate='first'), 
