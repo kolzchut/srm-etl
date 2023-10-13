@@ -10,7 +10,7 @@ from ..derive.es_utils import dump_to_es_and_delete
 def enumerate_rows():
     def func(rows):
         for idx, row in enumerate(rows):
-            row['score'] = 100 - idx
+            row['score'] = idx
             yield row
     return DF.Flow(
         DF.add_field('score', 'number', 0),
