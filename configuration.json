@@ -119,6 +119,10 @@
             "display": "Hourly"
         },
         {
+            "name": "7 */3 * * *",
+            "display": "3-Hourly"
+        },
+        {
             "name": "manual",
             "display": "Manual"
         }

@@ -73,6 +73,8 @@ def handle_taxonomies(taxonomies):
         responses = set()
         situations = set()
         for t in row['taxonomies']:
+            if not t:
+                continue
             t = t.strip()
             if t in taxonomies:
                 responses.update(taxonomies[t]['response_ids'] or [])
