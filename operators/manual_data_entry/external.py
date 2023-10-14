@@ -120,7 +120,7 @@ def main():
         DF.checkpoint(CHECKPOINT)
     ).process()
 
-    load_manual_data(DF.Flow(DF.checkpoint(CHECKPOINT)), data_sources)
+    load_manual_data(DF.Flow(DF.checkpoint(CHECKPOINT)), data_sources, 'external-manual-data')
 
 
 if __name__ == '__main__':
