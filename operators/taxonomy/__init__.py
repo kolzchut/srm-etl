@@ -1,4 +1,5 @@
 import yaml
+from itertools import chain
 
 import requests
 
@@ -39,12 +40,26 @@ def handle_node(node, breadcrumbs=None):
         yield from handle_node(child, breadcrumbs + [name])
 
 
-def fetch_taxonomy(key, languages=('he', )):
+INTERNAL_RESPONSES = [
+    dict(
+        id='human_services:internal_emergency_services',
+        data=dict(
+            name='מצב חירום',
+            description='',
+            name_en='State of Emergency',
+            description_en='',
+            breadcrumbs='מצב חירום',
+        )
+    )
+]
+
+
+def fetch_taxonomy(key, extra=[]):
     taxonomy = requests.get(settings.OPENELIGIBILITY_YAML_URL).content
     taxonomy = yaml.load(taxonomy, Loader=yaml.SafeLoader)
     root = [t for t in taxonomy if t['slug'] == key][0]
     return DF.Flow(
-        handle_node(root),
+        chain(handle_node(root), extra),
         DF.set_type('data', type='object', resources=-1),
     )
 
@@ -61,7 +76,7 @@ def operator(*_):
     airtable_updater(
         settings.AIRTABLE_RESPONSE_TABLE, 'openeligibility',
         ['name', 'name_en', 'description', 'description_en', 'breadcrumbs'],
-        fetch_taxonomy('human_services'),
+        fetch_taxonomy('human_services', INTERNAL_RESPONSES),
         DF.Flow(
             lambda row: row.update(row.get('data', {})),
         )
