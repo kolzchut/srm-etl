@@ -44,11 +44,11 @@ INTERNAL_RESPONSES = [
     dict(
         id='human_services:internal_emergency_services',
         data=dict(
-            name='מצב חירום',
+            name='שירותים למצב החירום',
             description='',
             name_en='State of Emergency',
             description_en='',
-            breadcrumbs='מצב חירום',
+            breadcrumbs='שירותים למצב החירום',
         )
     )
 ]
