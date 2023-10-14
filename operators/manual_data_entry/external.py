@@ -73,6 +73,7 @@ def handle_taxonomies(taxonomies):
         responses = set()
         situations = set()
         for t in row['taxonomies']:
+            t = t.strip()
             if t in taxonomies:
                 responses.update(taxonomies[t]['response_ids'] or [])
                 situations.update(taxonomies[t]['situation_ids'] or [])
@@ -102,7 +103,7 @@ def main():
         DF.select_fields(['name', 'response_ids', 'situation_ids'])
     ).results()[0][0]
     taxonomies = dict(
-        (r.pop('name'), r)
+        (r.pop('name').strip(), r)
         for r in taxonomies
     )
     print(taxonomies)
