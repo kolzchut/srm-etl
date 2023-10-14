@@ -5,6 +5,7 @@ from dataflows_airtable import load_from_airtable
 from conf import settings
 from srm_tools.logger import logger
 from .mde_utils import load_manual_data
+from .external import main as load_external_data
 
 
 def mde_prepare():
@@ -27,6 +28,12 @@ def operator(*_):
     load_manual_data(source_flow, data_sources)
 
     logger.info('Finished Manual Data Entry Flow')
+
+    logger.info('Starting External Manual Data Entry Flow')
+
+    load_external_data()
+
+    logger.info('Finished External Manual Data Entry Flow')
 
 
 if __name__ == '__main__':
