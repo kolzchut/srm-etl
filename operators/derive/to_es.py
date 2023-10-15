@@ -15,14 +15,23 @@ from .es_utils import dump_to_es_and_delete
 from srm_tools.logger import logger
 from srm_tools.unwind import unwind
 
-
+def card_score(row):
+    branch_count = row['organization_branch_count'] or 1
+    score = 1 + branch_count**0.5
+    national_service = bool(row['national_service'])
+    if national_service:
+        score *= 10
+    response_ids = row['response_ids'] or []
+    if 'human_services:internal_emergency_services' in response_ids:
+        score *= 10
+    return score
 
 def data_api_es_flow():
     return DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
         DF.update_package(title='Card Data', name='srm_card_data'),
         DF.update_resource('card_data', name='cards'),
-        DF.add_field('score', 'number', lambda r: 1 + (r['organization_branch_count'] or 0)**0.5, resources=['cards']),
+        DF.add_field('score', 'number', card_score, resources=['cards']),
         DF.set_type(
             'situations',
             **{
