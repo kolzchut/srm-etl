@@ -24,7 +24,11 @@ def gov_data_proxy(template_id, skip):
             timeout=timeout,
         )
     )
-    response = resp.json()
+    try:
+        response = resp.json()
+    except:
+        print(resp.content)
+        raise
     total, results = response['TotalResults'], response['Results']
 
     return total, results

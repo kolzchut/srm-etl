@@ -92,7 +92,7 @@ def handle_taxonomies(taxonomies):
 
 def main():
     data_sources = DF.Flow(
-        DFA.load_from_airtable('app4yocYm963dR5Tt', 'Sources', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DFA.load_from_airtable('app4yocYm963dR5Tt', 'Sheets', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.select_fields(['Source Name', 'Source Legalese'])
     ).results()[0][0]
     data_sources = dict(
@@ -113,7 +113,7 @@ def main():
     shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
 
     DF.Flow(
-        DFA.load_from_airtable('app4yocYm963dR5Tt', 'Sources', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DFA.load_from_airtable('app4yocYm963dR5Tt', 'Sheets', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.filter_rows(lambda r: r['Status'] == 'בייצור'),
         fetch_google_spreadsheet(),
         DF.delete_fields([DFA.AIRTABLE_ID_FIELD, 'Status', 'Google Spreadsheet', 'Source Legalese', 'Source Name']),
