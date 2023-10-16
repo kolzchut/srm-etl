@@ -83,7 +83,7 @@ def unwind_templates():
                         continue
                     if city_name and VERIFY_CITY_NAME.match(city_name) is None:
                         continue
-                    if situation_id is not None and len(situation_id.split(':')) < 3:
+                    if situation_id is not None and len(situation_id.split(':')) < 3 and situation_id != 'human_situations:armed_forces':
                         continue
                     low = False
                     if situation_id not in direct_situations:
