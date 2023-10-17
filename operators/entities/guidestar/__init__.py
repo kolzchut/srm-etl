@@ -113,6 +113,8 @@ def updateServiceFromSourceData(taxonomies):
 
             relatedMalkarService = data.pop('relatedMalkarService') or {}
 
+            if 'serviceTypeNum' in data:
+                update_from_taxonomy([data.pop('serviceTypeNum')], responses, situations)
             update_from_taxonomy([data.pop('serviceTypeName')], responses, situations)
             update_from_taxonomy((data.pop('serviceTargetAudience') or '').split(';'), responses, situations)
             update_from_taxonomy(['soproc:' + relatedMalkarService.get('serviceGovId', '')], responses, situations)
