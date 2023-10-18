@@ -17,10 +17,17 @@ from srm_tools.unwind import unwind
 
 def card_score(row):
     branch_count = row['organization_branch_count'] or 1
-    score = 1 + branch_count**0.5
     national_service = bool(row['national_service'])
     if national_service:
-        score *= 10
+        score = 1
+        phone_numbers = list(filter(None, (row['service_phone_numbers'] or []) + (row['organization_phone_numbers'] or [])))
+        if phone_numbers:
+            phone_number = phone_numbers[0]
+            score = (10 - len(phone_number)) * 10
+            if score < 1:
+                score = 1
+    else:
+        score = 1 + branch_count**0.5
     response_ids = row['response_ids'] or []
     if 'human_services:internal_emergency_services' in response_ids:
         score *= 10
