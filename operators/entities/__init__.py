@@ -78,8 +78,8 @@ def updateOrgFromSourceData(ga: GuidestarAPI):
                 data = fetchEntityFromBudgetKey(row['id'])
                 if data is not None:
                     row.update(data['data'])
-                else:
-                    print('NOT FOUND', regNums)
+                # else:
+                #     print('NOT FOUND', regNums)
             yield row
     return func
 
@@ -158,7 +158,7 @@ def unwind_branches(ga:GuidestarAPI):
                     }
                     yield national
                 else:
-                    print('FETCHING FROM GUIDESTAR', regNum)
+                    # print('FETCHING FROM GUIDESTAR', regNum)
                     ret = list(ga.organizations(regNums=[regNum]))
                     if len(ret) > 0 and ret[0]['data'].get('fullAddress'):
                         data = ret[0]['data']
@@ -172,7 +172,8 @@ def unwind_branches(ga:GuidestarAPI):
                             )
                         )
                     else:
-                        print('FETCHING FROM BUDGETKEY', regNum, ret)
+                        if ret:
+                            print('FETCHING FROM BUDGETKEY', regNum, ret)
                         if row['kind'] not in ('עמותה', 'חל"צ'):
                             ret = dict()
                             ret.update(row)

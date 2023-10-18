@@ -1,3 +1,4 @@
+import datetime
 import logging
 import dataflows as DF
 from dataflows.base.resource_wrapper import ResourceWrapper
@@ -231,6 +232,15 @@ def updateServiceFromSourceData(taxonomies):
                 print('GOT RELATED: id={}, office={}'.format(relatedId, relatedOffice))
                 if relatedId and relatedOffice:
                     row['implements'] = f'soproc:{relatedId}#{relatedOffice}'
+
+            startDate = data.pop('startDate', None)
+            endDate = data.pop('endDate', None)
+            if startDate:
+                startDate = datetime.datetime.fromisoformat(startDate[:19]).date().strftime('%d/%m/%Y')
+                details.append('תאריך התחלה: ' + startDate)
+            if endDate:
+                endDate = datetime.datetime.fromisoformat(endDate[:19]).date().strftime('%d/%m/%Y')
+                details.append('תאריך סיום: ' + endDate)
 
             row['details'] = '\n<br/>\n'.join(details)
             url = data.pop('url')
