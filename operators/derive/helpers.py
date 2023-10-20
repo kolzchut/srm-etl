@@ -5,7 +5,7 @@ from dataflows.helpers.resource_matcher import ResourceMatcher
 import re
 import regex
 
-ACCURATE_TYPES = ('ROOFTOP', 'RANGE_INTERPOLATED', 'STREET_MID_POINT', 'ADDR_V1') #'POI_MID_POINT')
+ACCURATE_TYPES = ('ROOFTOP', 'RANGE_INTERPOLATED', 'STREET_MID_POINT', 'ADDR_V1', 'ADDRESS_POINT_NEW') #'POI_MID_POINT')
 DIGIT = re.compile('\d')
 ENGLISH = re.compile('[a-zA-Z+]')
 
