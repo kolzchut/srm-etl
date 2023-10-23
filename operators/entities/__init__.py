@@ -199,6 +199,7 @@ def calc_address(row):
     cityName = row.get('cityName')
     if cityName:
         cityName = cityName.replace(' תאי דואר', '')
+        cityName = cityName.replace('- ללא כתובת', '')
         streetName = row.get('streetName')
         if streetName:
             key += f'{streetName} '
