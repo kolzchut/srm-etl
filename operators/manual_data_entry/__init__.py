@@ -11,7 +11,7 @@ from .external import main as load_external_data
 def mde_prepare():
     source_flow = DF.Flow(
         load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-        DF.filter_rows(lambda r: (r.get('Org Id') or r.get('Org Name')) and r.get('Org Id') != 'dummy'),
+        DF.filter_rows(lambda r: (r.get('Org Id') or r.get('Org Name')) and r.get('Org Id') != 'dummy' and r.get('Status') == 'בייצור'),
     )
 
     data_sources = DF.Flow(
