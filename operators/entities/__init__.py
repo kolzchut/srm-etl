@@ -199,7 +199,6 @@ def calc_address(row):
     cityName = row.get('cityName')
     if cityName:
         cityName = cityName.replace(' תאי דואר', '')
-        cityName = cityName.replace('- ללא כתובת', '')
         streetName = row.get('streetName')
         if streetName:
             key += f'{streetName} '
@@ -210,7 +209,7 @@ def calc_address(row):
         key += f'{cityName} '
     
     alternateAddress = row.get('alternateAddress')
-    if alternateAddress:
+    if alternateAddress and alternateAddress != 'ללא כתובת':
         if alternateAddress not in key:
             key += f' - {alternateAddress}'
     key = key.strip()
