@@ -50,7 +50,7 @@ def fetch_google_spreadsheet():
                         emit['Org Email'] = row.get('Org Email')
                         emit['Org Website'] = row.get('Org Website')
                     emit['Data Source'] = row['Source Name']
-                    emit['taxonomies'] = [service['קטגוריה'], service['אוכלוסיית יעד'], service['שפה'], service.get('שפה-2'), service.get('שפה-3'), service.get('שפה-4')]
+                    emit['taxonomies'] = [service['קטגוריה'], service['אוכלוסיית יעד'], service['שפה'], service.get('שפה-2'), service.get('שפה-3'), service.get('שפה-4'), service.get('שפה-5')]
                     yield emit
 
     return DF.Flow(
