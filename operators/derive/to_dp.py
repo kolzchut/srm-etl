@@ -46,6 +46,12 @@ def fix_situations(ids):
         hebrew = 'human_situations:language:hebrew_speaking'
         if hebrew in ids:
             ids = [s for s in ids if s != hebrew]
+        arab_society = 'human_situations:sectors:arabs'
+        bedouin = 'human_situations:sectors:bedouin'
+        arabic = 'human_situations:language:arabic_speaking'
+        if arab_society in ids or bedouin in ids:
+            if arabic not in ids:
+                ids.append(arabic)
     return ids
 
 
