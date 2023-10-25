@@ -70,7 +70,7 @@ def operator(*_):
             DF.add_field('service_name', 'string', lambda r: r['Name'].strip()),
             DF.add_field('branch_name', 'string', lambda r: r['Type_Descr'].strip()),
             DF.add_field('service_description', 'string', lambda r: r['Type_Descr'].strip() + (' עבור ' + r['Target_Population_Descr'].strip()) if r['Target_Population_Descr'] else ''),
-            DF.add_field('organization_id', 'string', lambda r: r['ORGANIZATIONS_BUSINES_NUM'] or r['Registered_Business_Id'] or 'srm0020'),
+            DF.add_field('organization_id', 'string', lambda r: r['ORGANIZATIONS_BUSINES_NUM'] or r['Registered_Business_Id'] or '500106406'),
             DF.set_type('Adrees', type='string', transform=lambda v: v.replace('999', '').strip()),
             DF.set_type('Adrees', type='string', transform=lambda v, row: v if v != row['City_Name'] else None),
             DF.add_field('address', 'string', lambda r: ' '.join(filter(None, [r['Adrees'], r['City_Name']])).replace(' - ', '-')),
