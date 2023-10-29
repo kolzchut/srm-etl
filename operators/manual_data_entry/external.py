@@ -39,6 +39,10 @@ def fetch_google_spreadsheet():
                         emit['Org Name'] = service['שם המפעיל']
                         emit['Org Short Name'] = None
                         emit['Org Id'] = service['מספר תאגיד']
+                        if not emit['Org Id']:
+                            continue
+                        if emit['Org Id'].strip() == 'יוזמה פרטית':
+                            emit['Org Id'] = None
                         emit['Org Phone Number'] = service['מספר טלפון תקני (2)']
                         emit['Org Email'] = service['אימייל (2)']
                         emit['Org Website'] = service['אתר אינטרנט']
