@@ -14,6 +14,7 @@ def fetch_google_spreadsheet():
         for row in rows:
             URL = row.get('Google Spreadsheet')
             if URL:
+                print('Loading data from', URL, '...')
                 services = DF.Flow(
                     DF.load(URL, headers=2, deduplicate_headers=True),
                     DF.filter_rows(lambda r: bool(r['שם השירות'])),
