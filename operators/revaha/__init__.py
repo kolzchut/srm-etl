@@ -47,10 +47,10 @@ PAYMENT_DETAILS = 'נדרש תיאום מראש'
 BRANCH_NAME_PREFIX = 'מחלקה לשירותים חברתיים'
 
 ORGANIZATION = {
-    'id': '500106406',
+    'id': 'srm0020',
     'data': {
         'name': 'משרד הרווחה והביטחון החברתי',
-        'short_name': 'משרד הרווחה',
+        'short_name': 'מחלקת רווחה',
         'source': DATA_SOURCE_ID,
         'kind': 'משרד ממשלתי',
         'phone_numbers': '118',
@@ -70,7 +70,7 @@ SERVICES = [
             'description': 'השירות מסייע לילדים, בני נוער, משפחות, יחידים, מוגבלים, זקנים, עולים חדשים ולכל פרט/קבוצה החפצים בקבלת סיוע. המחלקות לשירותים חברתיים  מעניקות מידע, יעוץ, טיפול, שירותים סוציאליים, הכוונה, תיווך לקבלת שירות, שילוב במסגרות ושירותי עזר בבית - בהתאם לכללי נזקקות וזכאות ולאפשרויות התקציביות.',
             'payment_required': 'no',
             'urls': f'{BASE_URL}#{BRANCH_NAME_PREFIX}',
-            'organizations': ['500106406'],
+            'organizations': ['srm0020'],
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES,
             'responses': [
@@ -89,7 +89,7 @@ SERVICES = [
             'description': 'השירות לאוכלוסיית התושבים הוותיקים ובני משפחותיהם ניתן במחלקות לשירותים חברתיים וכולל מיצוי זכויות, מידע על מסגרות יומיות ,שירותי סעד, עובדים זרים, דיור מוגן ומסגרות מוסדיות זמניות וקבועות.',
             'payment_required': 'no',
             'urls': f'{BASE_URL}#{BRANCH_NAME_PREFIX}',
-            'organizations': ['500106406'],
+            'organizations': ['srm0020'],
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES,
             'responses': [
@@ -108,7 +108,7 @@ SERVICES = [
             'description': 'השירות לאנשים  עם מוגבלות ובני משפחותיהם ניתן במחלקות לשירותים חברתיים ומיועד לאנשים עם פיגור שכלי, אוטיזם, מוגבלויות פיזיות וחושיות (עיוורון וחירשות) ולבני משפחותיהם. למימוש הזכאות לשירותים יש צורך בהכרה של משרד הרווחה והשירותים החברתיים.',
             'payment_required': 'no',
             'urls': f'{BASE_URL}#{BRANCH_NAME_PREFIX}',
-            'organizations': ['500106406'],
+            'organizations': ['srm0020'],
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES,
             'responses': [
