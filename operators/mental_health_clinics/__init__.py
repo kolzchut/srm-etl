@@ -8,7 +8,7 @@ from conf import settings
 from operators.shil import ORGANIZATION
 from srm_tools.update_table import airtable_updater
 from srm_tools.processors import update_mapper
-from srm_tools.gov_data_proxy import collect_gov_rows
+from srm_tools.datagovil import fetch_datagovil_datastore
 
 FIELD_RENAME = {
     'name': 'clinic_name',
@@ -155,13 +155,13 @@ def clinic_hash(row):
 def operator(*_):
     # Prepare data
     def ren(k, v):
-        return DF.add_field(k, 'string', default=lambda row: row['Data'].pop(v, None))
+        return DF.add_field(k, 'string', default=lambda row: row.pop(v, None))
     def del_data(row):
         for k in ['follow_up_wait', 'group_therapy_wait', 'individual_therapy_wait', ]:
-            row['Data'].pop(k, None)
+            row.pop(k, None)
     DF.Flow(
         # Load and clean
-        collect_gov_rows('70c0b6fd-0c36-4b7a-a087-3157123403d9'),
+        fetch_datagovil_datastore('mentalhealthclinics', 'מרפאות בריאות הנפש - משרד הבריאות'),
         DF.update_resource(-1, name='clinics'),
         *[ren(k, v) for k, v in FIELD_RENAME.items()],
         del_data,

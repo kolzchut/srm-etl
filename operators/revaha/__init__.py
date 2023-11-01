@@ -12,10 +12,10 @@ from dataflows_airtable import load_from_airtable
 from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
 from conf import settings
+from srm_tools.datagovil import fetch_datagovil_datastore
 from srm_tools.logger import logger
 from srm_tools.processors import ensure_fields, update_mapper
 from srm_tools.update_table import airtable_updater
-from srm_tools.gov_data_proxy import collect_gov_rows
 
 
 def transform_phone_numbers(r):
@@ -217,7 +217,7 @@ FIELD_MAP = {
 
 
 def get_revaha_data():
-    return collect_gov_rows('23ede39d-968c-4e5c-8098-9c58b037a0c3')
+    return fetch_datagovil_datastore('social-departments', 'המחלקות לשירותים חברתיים')
 
 
 def revaha_organization_data_flow():
@@ -255,7 +255,7 @@ def update_services():
 
 def revaha_fetch_branch_data_flow(data=None):
     return DF.Flow(
-        (obj['Data'] for obj in data or get_revaha_data()),
+        get_revaha_data(),
         DF.update_resource(-1, name='branches', path='branches.csv'),
         DF.rename_fields({'location': 'source_location'}, resources=['branches']),
         sort_dict_by_keys,
