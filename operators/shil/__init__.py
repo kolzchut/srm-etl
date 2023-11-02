@@ -43,7 +43,10 @@ SERVICE = {
 
 
 def normalize_address(r):
-    _, city, _, _, street, number, *_ = r['Address'].values()
+    address = r['Address'] or {}
+    city = address.get('City') or []
+    street = address.get('Street') or ''
+    number = address.get('HouseNumber') or 0
     if len(city) > 0 and number > 0:
         return f'{street} {number}, {city[0]}'
     elif len(city) > 0:
