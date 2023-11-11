@@ -13,3 +13,4 @@ openlocationcode
 thefuzz
 python-Levenshtein
 dgp-oauth2==1.2.0rc1
+authlib
