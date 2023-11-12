@@ -12,5 +12,5 @@ regex
 openlocationcode
 thefuzz
 python-Levenshtein
-dgp-oauth2==1.2.0rc7
+dgp-oauth2==1.2.0rc8
 authlib
