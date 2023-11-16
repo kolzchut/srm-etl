@@ -55,7 +55,7 @@ def upload_tileset(filename, tileset, name):
         name=name
     )
     upload = requests.post(settings.MAPBOX_CREATE_UPLOAD, params=AUTH, json=data).json()
-    # print(upload)
+    print('UPLOAD:', upload)
     assert not upload.get('error')
     while True:
         status = requests.get(settings.MAPBOX_UPLOAD_STATUS + upload['id'], params=AUTH).json()
