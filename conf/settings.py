@@ -50,9 +50,9 @@ MAPBOX_UPLOAD_CREDENTIALS = 'https://api.mapbox.com/uploads/v1/srm-kolzchut/cred
 MAPBOX_CREATE_UPLOAD = 'https://api.mapbox.com/uploads/v1/srm-kolzchut'
 MAPBOX_UPLOAD_STATUS = 'https://api.mapbox.com/uploads/v1/srm-kolzchut/'
 
-MAPBOX_TILESET_ID = get_env('ETL_MAPBOX_TILESET_ID', 'srm-kolzchut.geo-data')
+MAPBOX_TILESET_ID = get_env('ETL_MAPBOX_TILESET_ID', 'srm-kolzchut.point-data')
 MAPBOX_TILESET_NAME = get_env('ETL_MAPBOX_TILESET_NAME', 'SRM Geo Data')
-MAPBOX_TILESET_INACCURATE_ID = get_env('ETL_MAPBOX_TILESET_INACCURATE_ID', 'srm-kolzchut.geo-data-inaccurate')
+MAPBOX_TILESET_INACCURATE_ID = get_env('ETL_MAPBOX_TILESET_INACCURATE_ID', 'srm-kolzchut.point-data-inaccurate')
 MAPBOX_TILESET_INACCURATE_NAME = get_env('ETL_MAPBOX_TILESET_INACCURATE_NAME', 'SRM Geo Data Inaccurate')
 
 GOOGLE_MAPS_API_KEY = get_env('ETL_GOOGLE_MAPS_API_KEY')
