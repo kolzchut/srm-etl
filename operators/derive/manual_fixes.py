@@ -52,39 +52,34 @@ class ManualFixes():
                     fixed_value = fix['fixed_value']
                     self.status.setdefault(fix_id, {
                         AIRTABLE_ID_FIELD: fix_id,
-                        'etl_status': 'Invalid'
+                        'etl_status': 'Obsolete'
                     })
                     status = self.status[fix_id]
-                    if field in row:
-                        status['etl_status'] = 'Obsolete'
-                        self.used.add(fix_id)
-                        actual_value = row.get(field)
-                        extra_field = None
-                        extra_value = None
-                        if field == 'responses':
-                            current_value = self.response_ids(current_value)
-                            extra_field = 'response_ids'
-                            extra_value = [x.strip() for x in fixed_value.split(',')]
-                            fixed_value = self.response_ids(fixed_value)
-                            actual_value = sorted(actual_value)
-                        elif field == 'situations':
-                            current_value = self.situation_ids(current_value)
-                            extra_field = 'situation_ids'
-                            extra_value = [x.strip() for x in fixed_value.split(',')]
-                            fixed_value = self.situation_ids(fixed_value)
-                            actual_value = sorted(actual_value)
+                    self.used.add(fix_id)
+                    actual_value = row.get(field)
+                    extra_field = None
+                    extra_value = None
+                    if field == 'responses':
+                        current_value = self.response_ids(current_value)
+                        extra_field = 'response_ids'
+                        extra_value = [x.strip() for x in fixed_value.split(',')]
+                        fixed_value = self.response_ids(fixed_value)
+                        actual_value = sorted(actual_value or [])
+                    elif field == 'situations':
+                        current_value = self.situation_ids(current_value)
+                        extra_field = 'situation_ids'
+                        extra_value = [x.strip() for x in fixed_value.split(',')]
+                        fixed_value = self.situation_ids(fixed_value)
+                        actual_value = sorted(actual_value or [])
 
-                        if actual_value == current_value:
-                            row[field] = fixed_value
-                            if extra_field is not None and extra_field in row:
-                                row[extra_field] = extra_value
-                            print('FIXED!', fix_id, field, actual_value, '->', fixed_value)
-                            status['etl_status'] = 'Active'
-                        else:
-                            print('NOT FIXED!', fix_id, field, actual_value, '!=', current_value)
+                    if actual_value == current_value:
+                        row[field] = fixed_value
+                        if extra_field is not None and extra_field in row:
+                            row[extra_field] = extra_value
+                        print('FIXED!', fix_id, field, actual_value, '->', fixed_value)
+                        status['etl_status'] = 'Active'
                     else:
-                        print('FIELD NOT FOUND!', fix_id, field, current_value)
-
+                        print('NOT FIXED!', fix_id, field, actual_value, '!=', current_value)
 
         return DF.Flow(
             func,
