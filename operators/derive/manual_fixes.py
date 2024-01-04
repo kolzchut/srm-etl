@@ -34,13 +34,13 @@ class ManualFixes():
         slugs = slugs or ''
         slugs = [s.strip() for s in slugs.split(',')]
         self.responses = self.fetch_aux_table(self.responses, settings.AIRTABLE_RESPONSE_TABLE)
-        return sorted(self.responses[k][AIRTABLE_ID_FIELD] for k in slugs)
+        return sorted(self.responses[k][AIRTABLE_ID_FIELD] for k in slugs if k in self.responses)
 
     def situation_ids(self, slugs):
         slugs = slugs or ''
         slugs = [s.strip() for s in slugs.split(',')]
         self.situations = self.fetch_aux_table(self.situations, settings.AIRTABLE_SITUATION_TABLE)
-        return sorted(self.situations[k][AIRTABLE_ID_FIELD] for k in slugs)
+        return sorted(self.situations[k][AIRTABLE_ID_FIELD] for k in slugs if k in self.situations)
 
     def apply_manual_fixes(self):
         def func(row):
