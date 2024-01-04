@@ -50,11 +50,13 @@ class ManualFixes():
                     field = fix['field']
                     current_value = fix['current_value']
                     fixed_value = fix['fixed_value']
+                    self.status.setdefault(fix_id, {
+                        AIRTABLE_ID_FIELD: fix_id,
+                        'etl_status': 'Invalid'
+                    })
+                    status = self.status[fix_id]
                     if field in row:
-                        status = self.status.setdefault(fix_id, {
-                            AIRTABLE_ID_FIELD: fix_id,
-                            'etl_status': 'Obsolete'
-                        })
+                        status['etl_status'] = 'Obsolete'
                         self.used.add(fix_id)
                         actual_value = row.get(field)
                         extra_field = None
@@ -76,10 +78,12 @@ class ManualFixes():
                             row[field] = fixed_value
                             if extra_field is not None and extra_field in row:
                                 row[extra_field] = extra_value
-                            print('FIXED!', field, actual_value, '->', fixed_value)
+                            print('FIXED!', fix_id, field, actual_value, '->', fixed_value)
                             status['etl_status'] = 'Active'
                         else:
-                            print('NOT FIXED!', field, actual_value, '!=', current_value)
+                            print('NOT FIXED!', fix_id, field, actual_value, '!=', current_value)
+                    else:
+                        print('FIELD NOT FOUND!', fix_id, field, current_value)
 
 
         return DF.Flow(
