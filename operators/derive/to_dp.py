@@ -641,6 +641,7 @@ def card_data_flow():
             resources=['card_data'],
             **{'es:keyword': True},
         ),
+        DF.filter_rows(lambda r: r['response_category'] is not None, resources=['card_data']),
         DF.set_type('responses', transform=lambda v, row: helpers.reorder_responses_by_category(v, row['response_category'])),
         DF.filter_rows(lambda r: helpers.validate_geometry(r['branch_geometry']) or r['national_service'], resources=['card_data']),
         DF.add_field('possible_autocomplete', 'array', default=possible_autocomplete, resources=['card_data'], **{'es:itemType': 'string', 'es:keyword': True}),
