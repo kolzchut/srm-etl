@@ -76,9 +76,10 @@ class ManualFixes():
 
                     if actual_value == current_value:
                         row[field] = fixed_value
+                        print('FIXED!', fix_id, field, actual_value, '->', fixed_value)
                         if extra_field is not None and extra_field in row:
                             row[extra_field] = extra_value
-                        print('FIXED!', fix_id, field, actual_value, '->', fixed_value)
+                            print('FIXED EXTRA!', fix_id, extra_field, actual_value, '->', extra_value)
                         status['etl_status'] = 'Active'
                     else:
                         print('NOT FIXED!', fix_id, field, actual_value, '!=', current_value)
