@@ -26,6 +26,8 @@ def card_score(row):
             score = (10 - len(phone_number)) * 10
             if score < 1:
                 score = 1
+            if phone_number.startswith('1') and score < 50:
+                score = 50
     else:
         score = 1 + branch_count**0.5
     response_ids = row['response_ids'] or []
