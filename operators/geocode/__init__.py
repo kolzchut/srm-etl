@@ -25,7 +25,7 @@ def geocode(session):
         row['status'] = 'VALID'
         row['resolved_lat'] = row['resolved_lon'] = None
 
-        if keyword == 'שירות ארצי':
+        if keyword == 'שירות ארצי' or keyword == 'בכל הארץ':
             row['accuracy'] = 'NATIONAL_SERVICE'
             row['provider'] = 'national'
             row['resolved_address'] = 'שירות ארצי'
