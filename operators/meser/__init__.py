@@ -31,7 +31,7 @@ def alternate_address(row):
         lon, lat = transformer.transform(x, y)
         pc = olc.encode(lon, lat, 11)
         return pc
-    return row['address']
+    return row['address'].strip()
 
 
 def good_company(r):

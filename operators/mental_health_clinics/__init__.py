@@ -178,7 +178,7 @@ def operator(*_):
         DF.set_type('phone_numbers', transform=lambda v: '\n'.join(phone_number.findall(str(v))) if v else None, resources=-1),
         DF.set_type('intake_wait', type='string', transform=lambda v: str(v) if v else None, resources=-1),
         DF.add_field('address', 'string', lambda r: f'{r["street_address"]}, {r["city"]}' if r['city'] not in r['street_address'] else r['street_address'], resources=-1),
-        DF.add_field('location', 'string', lambda r: r['address'], resources=-1),
+        DF.add_field('location', 'string', lambda r: r['address'].strip() if r['address'] else None, resources=-1),
         DF.delete_fields(['street_address', 'city'], resources=-1),
 
         DF.add_field('id', 'string', clinic_hash, resources=-1),

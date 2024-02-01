@@ -110,6 +110,8 @@ def branch_updater():
             return
         data = row['data']
         data['location'] = data.get('geocode') or data.get('address')
+        if data.get('location'):
+            data['location'] = data['location'].strip()
         urls = []
         combined = []
         if data.get('urls'):
