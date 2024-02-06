@@ -145,19 +145,7 @@ def unwind_branches(ga:GuidestarAPI):
                     ret['data'] = data
                     ret['id'] = 'guidestar:' + branch['branchId']
                     yield ret
-                if len(branches) > 0:
-                    national = {}
-                    national.update(row)
-                    national['id'] = 'guidestar:' + regNum + ':national'
-                    national['data'] = {
-                        'branchId': national['id'],
-                        'organization': regNum,
-                        'name': row['name'],
-                        'address': 'שירות ארצי',
-                        'location': 'שירות ארצי',
-                    }
-                    yield national
-                else:
+                if not branches:
                     # print('FETCHING FROM GUIDESTAR', regNum)
                     ret = list(ga.organizations(regNums=[regNum]))
                     if len(ret) > 0 and ret[0]['data'].get('fullAddress'):
@@ -189,6 +177,18 @@ def unwind_branches(ga:GuidestarAPI):
                                 )
                             ))
                             yield ret
+                national = {}
+                national.update(row)
+                national['id'] = 'guidestar:' + regNum + ':national'
+                national['data'] = {
+                    'branchId': national['id'],
+                    'organization': regNum,
+                    'name': row['name'],
+                    'address': 'שירות ארצי',
+                    'location': 'שירות ארצי',
+                }
+                yield national
+
     return DF.Flow(
         DF.add_field('data', 'object', resources='orgs'),
         func,
