@@ -29,7 +29,7 @@ def alternate_address(row):
         x = int(row['GisX'])
         y = int(row['GisY'])
         lon, lat = transformer.transform(x, y)
-        pc = olc.encode(lon, lat, 11)
+        pc = olc.encode(lat, lon, 11)
         return pc
     return row['address'].strip()
 
