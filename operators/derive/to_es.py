@@ -19,20 +19,21 @@ def card_score(row):
     branch_count = row['organization_branch_count'] or 1
     national_service = bool(row['national_service'])
     if national_service:
-        score = 1
+        score = 10
         phone_numbers = list(filter(None, (row['service_phone_numbers'] or []) + (row['organization_phone_numbers'] or [])))
         if phone_numbers:
             phone_number = phone_numbers[0]
-            score = (10 - len(phone_number)) * 10
-            if score < 1:
-                score = 1
-            if phone_number.startswith('1') and score < 50:
+            if len(phone_numbers) <= 5 or phone_number.startswith('1'):
                 score = 50
     else:
-        score = 1 + branch_count**0.5
+        score = 1 + branch_count / 10
     response_ids = row['response_ids'] or []
     if 'human_services:internal_emergency_services' in response_ids:
         score *= 10
+    organization_kind = row['organization_kind']
+    if organization_kind in ('משרד ממשלתי', 'רשות מקומית'):
+        score *= 5
+
     return score
 
 def data_api_es_flow():
