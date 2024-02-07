@@ -26,7 +26,7 @@ def update_mapper():
 
     return func
 
-def fetch_mapper():
+def fetch_mapper(fields=None):
     def func(rows):
         if rows.res.name == 'current':
             yield from rows
@@ -34,6 +34,9 @@ def fetch_mapper():
             for row in rows:
                 id = row.pop('id')
                 row.pop(AIRTABLE_ID_FIELD, None)
+                if fields:
+                    for f in fields:
+                        row.setdefault(f, None)
                 data = row
                 yield dict(
                     id=id,
