@@ -53,7 +53,7 @@ def geocode(session):
             assert resp['ResultType'] in (1, ), str(resp)
             accuracy = resp['DescLayerID'].replace('NEW', '').strip('_')
             assert accuracy in (
-                'POI_MID_POINT', 'ADDR_V1', 'NEIGHBORHOODS_AREA', 'SETL_MID_POINT', 'STREET_MID_POINT', 'ADDRESS_POINT'), str(resp)
+                'POI_MID_POINT', 'ADDR_V1', 'NEIGHBORHOODS_AREA', 'SETL_MID_POINT', 'STREET_MID_POINT', 'ADDRESS_POINT', 'ADDRESS'), str(resp)
             row['accuracy'] = accuracy
             row['provider'] = 'govmap'
             row['resolved_address'] = resp['ResultLable']
