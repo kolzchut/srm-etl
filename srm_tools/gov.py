@@ -38,6 +38,7 @@ def get_gov_api(url, skip):
         except:
             total, results = 0, tuple()
             retries = retries - 1
+            print(f'Gov API access blocked. Retrying in 3 minutes. {retries} retries left.')
             time.sleep(wait_when_blocked)
 
     if total == 0:

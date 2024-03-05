@@ -239,7 +239,7 @@ def operator(*_):
         ['name', 'short_name', 'phone_numbers', 'urls'],
         ORGS.values(),
         update_mapper(),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
     airtable_updater(
@@ -248,7 +248,7 @@ def operator(*_):
         ['name', 'address', 'location', 'description', 'phone_numbers', 'organization'],
         branches,
         update_mapper(),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
     airtable_updater(
@@ -257,7 +257,7 @@ def operator(*_):
         ['name', 'branches', 'situations', 'responses', 'data_sources'],
         services,
         update_mapper(),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
 

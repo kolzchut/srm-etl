@@ -130,8 +130,7 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
 
 def operator(*_):
     logger.info('Copying data from curation tables')
-    entity_ids = copy_from_curation_base(settings.AIRTABLE_ENTITIES_IMPORT_BASE, 'entities')
-    copy_from_curation_base(settings.AIRTABLE_GUIDESTAR_IMPORT_BASE, 'guidestar', entity_ids)
+    copy_from_curation_base(settings.AIRTABLE_DATA_IMPORT_BASE, 'entities')
     logger.info('Finished Copying data from curation tables')
 
 

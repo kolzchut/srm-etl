@@ -48,7 +48,7 @@ def fetchOrgData():
         ['last_tag_date'],
         regNums, update_mapper(), 
         manage_status=False,
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
 def soprocServices(services):
@@ -105,7 +105,7 @@ def fetchServiceData():
         ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers', 'organizations', 'data_sources', 'soproc-service-tagging'],
         soprocServices(social_service_activities),
         updateFromSourceData(),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
 

@@ -42,7 +42,7 @@ def operator(*_):
     logger.info('Starting Meser Data Flow')
 
     tags = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, 'meser-tagging', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.filter_rows(lambda r: r['tag'] != 'dummy'),
         DF.select_fields(['tag', 'response_ids', 'situation_ids']),
     ).results()[0][0]
@@ -120,7 +120,7 @@ def operator(*_):
             ),
             update_mapper(),
             manage_status=False,
-            airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+            airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
 
         airtable_updater(
@@ -140,7 +140,7 @@ def operator(*_):
                 DF.printer()
             ),
             update_mapper(),
-            airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+            airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
 
         airtable_updater(
@@ -160,7 +160,7 @@ def operator(*_):
                 DF.printer()
             ),
             update_mapper(),
-            airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+            airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
 
         DF.Flow(
@@ -172,7 +172,7 @@ def operator(*_):
             DF.filter_rows(lambda r: r['tag'] not in tags),
             DF.filter_rows(lambda r: bool(r['tag'])),
             dump_to_airtable({
-                (settings.AIRTABLE_ENTITIES_IMPORT_BASE, 'meser-tagging'): {
+                (settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging'): {
                     'resource-name': 'tagging',
                 }
             }, settings.AIRTABLE_API_KEY)

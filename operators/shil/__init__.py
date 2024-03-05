@@ -130,7 +130,7 @@ def shil_organization_data_flow():
         list(ORGANIZATION['data'].keys()),
         [ORGANIZATION],
         update_mapper(),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
 
@@ -141,7 +141,7 @@ def shil_service_data_flow():
         list(SERVICE['data'].keys()),
         [SERVICE],
         update_mapper(),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
 
@@ -164,7 +164,7 @@ def shil_branch_data_flow():
             DF.select_fields(['id', 'data'], resources=['branches']),
         ),
         update_mapper(),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
 

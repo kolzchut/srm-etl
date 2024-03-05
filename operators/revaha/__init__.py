@@ -232,7 +232,7 @@ def revaha_organization_data_flow():
         list(ORGANIZATION['data'].keys()),
         [ORGANIZATION],
         update_mapper(),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
 def update_services():
@@ -307,7 +307,7 @@ def revaha_branch_data_flow():
             update_mapper(),
             update_urls_from_db()
         ),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
 
@@ -321,7 +321,7 @@ def revaha_service_data_flow():
         list(services[0]['data'].keys()),
         services,
         update_mapper(),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
 

@@ -34,7 +34,7 @@ def fetchKZOrgData():
         ['last_tag_date'],
         regNums, update_mapper(), 
         manage_status=False,
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
 

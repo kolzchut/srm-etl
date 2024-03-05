@@ -1,3 +1,4 @@
+import datetime
 import dateutil.parser
 
 import dataflows as DF
@@ -9,18 +10,15 @@ from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 from openlocationcode import openlocationcode as olc
 
 from srm_tools.update_table import airtable_updater
-from srm_tools.situations import Situations
 from srm_tools.guidestar_api import GuidestarAPI
 from srm_tools.budgetkey import fetch_from_budgetkey
 from srm_tools.data_cleaning import clean_org_name
+from srm_tools.processors import update_mapper
 
 from conf import settings
 from srm_tools.logger import logger
 from srm_tools.url_utils import fix_url
 
-from .guidestar import operator as guidestar
-
-situations = Situations()
 
 
 ## ORGANIZATIONS
@@ -95,13 +93,13 @@ def recent_org(row):
 
 def fetchOrgData(ga):
     DF.Flow(
-        load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='orgs'),
         DF.filter_rows(lambda row: row.get('source') == 'entities'),
         DF.select_fields([AIRTABLE_ID_FIELD, 'id', 'kind']),
         updateOrgFromSourceData(ga),
         dump_to_airtable({
-            (settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE): {
+            (settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE): {
                 'resource-name': 'orgs',
             }
         }, settings.AIRTABLE_API_KEY)
@@ -239,7 +237,7 @@ def fetchBranchData(ga):
     print('FETCHING ALL ORGANIZATION BRANCHES')
 
     DF.Flow(
-        load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='orgs'),
         DF.filter_rows(lambda r: r['source'] == 'entities', resources='orgs'),
         DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
@@ -255,17 +253,325 @@ def fetchBranchData(ga):
             unwind_branches(ga),
         ),
         updateBranchFromSourceData(),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE,
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE,
         manage_status=False
     )
 
 
+## SERVICES
+def unwind_services(ga: GuidestarAPI, source='entities'):
+    def func(rows: ResourceWrapper):
+        if rows.res.name != 'orgs':
+            yield from rows        
+        else:
+            count = 0
+            for _, row in enumerate(rows):
+                if row['source'] != source:
+                    continue
+                regNum = row['id']
+
+                branches = ga.branches(regNum)
+                # if len(branches) == 0:
+                #     continue
+                services = ga.services(regNum)
+                govServices = dict(
+                    (s['relatedMalkarService'], s) for s in services if s.get('serviceGovName') is not None and s.get('relatedMalkarService') is not None
+                )
+                for service in services:
+                    if service['serviceId'] in govServices:
+                        print('GOT RELATED SERVICE', service['serviceId'])
+                        service['relatedMalkarService'] = govServices.get(service['serviceId'])
+                    if service.get('recordType') != 'GreenInfo':
+                        continue
+                    if not service.get('serviceName'):
+                        continue
+                    ret = dict()
+                    ret.update(row)
+                    ret['data'] = service
+                    ret['data']['organization_id'] = regNum
+                    ret['data']['actual_branch_ids'] = [b['branchId'] for b in branches]
+                    ret['id'] = 'guidestar:' + service['serviceId']
+                    count += 1
+                    if count % 10 == 0:
+                        print('COLLECTED {} organization\'s {} services'.format(len(existing_orgs), count))
+                    yield ret
+    return DF.Flow(
+        DF.add_field('data', 'object', resources='orgs'),
+        func,
+        DF.delete_fields(['source', 'status']),
+    )
+
+
+def updateServiceFromSourceData(taxonomies):
+    def update_from_taxonomy(names, responses, situations):
+        for name in names:
+            if name:
+                try:
+                    mapping = taxonomies[name]
+                    responses.update(mapping['response_ids'] or [])
+                    situations.update(mapping['situation_ids'] or [])
+                except KeyError:
+                    print('WARNING: no mapping for {}'.format(name))
+                    taxonomies[name] = dict(response_ids=[], situation_ids=[])
+                    DF.Flow(
+                        [dict(name=name)],
+                        DF.update_resource(-1, name='taxonomies'),
+                        dump_to_airtable({
+                            (settings.AIRTABLE_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_GUIDESTAR_TABLE): {
+                                'resource-name': 'taxonomies',
+                                'typecast': True
+                            }
+                        }, settings.AIRTABLE_API_KEY),
+                    ).process()
+
+    def func(rows):
+        for row in rows:
+            if 'data' not in row:
+                # print('NO DATA', row)
+                yield row
+                continue
+
+            data = row['data']
+
+            responses = set()
+            situations = set()
+
+            row['name'] = data.pop('serviceName')
+            row['description'] = data.pop('voluntaryDescription') or data.pop('description')
+            data_source_url = f'https://www.guidestar.org.il/organization/{data["organization_id"]}/services'
+            row['data_sources'] = f'מידע נוסף אפשר למצוא ב<a target="_blank" href="{data_source_url}">גיידסטאר - אתר העמותות של ישראל</a>'
+            orgId = data.pop('organization_id')
+            actual_branch_ids = data.pop('actual_branch_ids')
+            row['branches'] = ['guidestar:' + b['branchId'] for b in (data.pop('branches') or []) if b['branchId'] in actual_branch_ids]
+
+            record_type = data.pop('recordType')
+            assert record_type == 'GreenInfo'
+            for k in list(data.keys()):
+                if k.startswith('youth'):
+                    data.pop(k)
+
+            relatedMalkarService = data.pop('relatedMalkarService') or {}
+
+            if 'serviceTypeNum' in data:
+                update_from_taxonomy([data.pop('serviceTypeNum')], responses, situations)
+            update_from_taxonomy([data.pop('serviceTypeName')], responses, situations)
+            update_from_taxonomy((data.pop('serviceTargetAudience') or '').split(';'), responses, situations)
+            update_from_taxonomy(['soproc:' + relatedMalkarService.get('serviceGovId', '')], responses, situations)
+
+            payment_required = data.pop('paymentMethod')
+            if payment_required in ('Free service', None):
+                row['payment_required'] = 'no'
+                row['payment_details'] = None
+            elif payment_required == 'Symbolic cost':
+                row['payment_required'] = 'yes'
+                row['payment_details'] = 'עלות סמלית'
+            elif payment_required == 'Full payment':
+                row['payment_required'] = 'yes'
+                row['payment_details'] = 'השירות ניתן בתשלום'
+            elif payment_required == 'Government funded':
+                row['payment_required'] = 'yes'
+                row['payment_details'] = 'השירות מסובסד על ידי הממשלה'
+            else:
+                assert False, payment_required + ' ' + repr(row)
+
+            service_terms = data.pop('serviceTerms')
+            if service_terms:
+                if row.get('payment_details'):
+                    row['payment_details'] += ', ' + service_terms
+                else:
+                    row['payment_details'] = service_terms
+
+            details = []
+            areas = []
+            national = False
+
+            area = (data.pop('area') or '').split(';')
+            for item in area:
+                if item == 'In Branches':
+                    areas.append('בסניפי הארגון')
+                    if len(row['branches']) == 0:
+                        row['branches'] = ['guidestar:' + bid for bid in actual_branch_ids]
+                elif item == 'Country wide':
+                    areas.append('בתיאום מראש ברחבי הארץ')
+                    national = True
+                elif item == 'Customer Place':
+                    areas.append('בבית הלקוח')
+                elif item == 'Remote Service':
+                    areas.append('שירות מרחוק')
+                    national = True
+                elif item == 'Via Phone or Mail':
+                    areas.append('במענה טלפוני, צ׳אט או בדוא"ל')
+                    national = True
+                elif item == 'Web Service':
+                    areas.append('בשירות אינטרנטי מקוון')
+                    national = True
+                elif item == 'Customer Appointment':
+                    areas.append('במפגשים קבוצתיים או אישיים')
+                elif item == 'Program':
+                    areas.append('תוכנית ייעודית בהרשמה מראש')
+                elif item in ('Not relevant', ''):
+                    pass
+                else:
+                    assert False, 'area {}: {!r}'.format(area, row)
+
+            if len(areas) > 1:
+                details.append('השירות ניתן: ' + ', '.join(areas))
+            elif len(areas) == 1:
+                details.append('השירות ניתן ' + ''.join(areas))
+
+            if national:
+                row['branches'].append(f'guidestar:{orgId}:national')
+            if len(row['branches']) == 0:
+                continue
+
+            when = data.pop('whenServiceActive')
+            if when == 'All Year':
+                details.append('השירות ניתן בכל השנה')
+            elif when == 'Requires Signup':
+                details.append('השירות ניתן בהרשמה מראש')
+            elif when == 'Time Limited':
+                details.append('השירות מתקיים בתקופה מוגבלת')
+            elif when == 'Criteria Based':
+                details.append('השירות ניתן על פי תנאים או קריטריונים')
+            elif when is None:
+                pass
+            else:
+                assert False, 'when {}: {!r}'.format(when, row)
+
+            remoteDelivery = (data.pop('remoteServiceDelivery') or '').split(';')
+            # Phone, Chat / Email / Whatsapp, Internet, Zoom / Hybrid, Other
+            methods = []
+            for item in remoteDelivery:
+                if item == 'Phone':
+                    methods.append('טלפון')
+                elif item == 'Chat / Email / Whatsapp':
+                    methods.append('בצ׳אט, דוא"ל או וואטסאפ')
+                elif item == 'Internet':
+                    methods.append('אתר אינטרנט')
+                elif item == 'Zoom / Hybrid':
+                    methods.append('בשיחת זום')
+                elif item == '':
+                    pass
+                elif item == 'Other':
+                    pass
+                else:
+                    assert False, 'remoteDelivery {!r}: {!r}'.format(item, remoteDelivery)
+
+            remoteDeliveryOther = data.pop('RemoteServiceDelivery_Other')
+            if remoteDeliveryOther:
+                methods.append(remoteDeliveryOther)
+
+            if len(methods) > 0:
+                details.append('שירות מרחוק באמצעות: ' + ', '.join(methods))
+
+            if relatedMalkarService:
+                relatedId = relatedMalkarService.get('serviceGovId')
+                relatedOffice = relatedMalkarService.get('serviceOffice')
+                print('GOT RELATED: id={}, office={}'.format(relatedId, relatedOffice))
+                if relatedId and relatedOffice:
+                    row['implements'] = f'soproc:{relatedId}#{relatedOffice}'
+
+            startDate = data.pop('startDate', None)
+            endDate = data.pop('endDate', None)
+            if startDate:
+                startDate = datetime.datetime.fromisoformat(startDate[:19]).date().strftime('%d/%m/%Y')
+                details.append('תאריך התחלה: ' + startDate)
+            if endDate:
+                endDate = datetime.datetime.fromisoformat(endDate[:19]).date().strftime('%d/%m/%Y')
+                details.append('תאריך סיום: ' + endDate)
+
+            row['details'] = '\n<br/>\n'.join(details)
+            url = data.pop('url')
+            url = fix_url(url)
+            if url:
+                row['urls'] = f'{url}#מידע נוסף על השירות'
+
+            phone_numbers = data.pop('Phone', data.pop('phone', None))
+            if phone_numbers:
+                row['phone_numbers'] = phone_numbers
+
+            email_address = data.pop('Email', data.pop('email', None))
+            if email_address:
+                row['email_address'] = email_address
+
+            for k in ('isForCoronaVirus', 'lastModifiedDate', 'serviceId', 'regNum', 'isForBranch'):
+                data.pop(k)
+            row['situations'] = sorted(situations)
+            row['responses'] = sorted(responses)
+            assert all(v in (None, '0') for v in data.values()), repr(data_source_url) + ':' + repr(data)
+            yield row
+
+    return DF.Flow(
+        func,
+    )
+
+
+def fetchServiceData(ga, taxonomy):
+    print('FETCHING ALL ORGANIZATION SERVICES')
+
+    airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'guidestar',
+        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'situations', 'responses', 
+        'organizations', 'branches', 'data_sources', 'implements', 'phone_numbers', 'email_address'],
+        DF.Flow(
+            load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            DF.update_resource(-1, name='orgs'),
+            DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
+            DF.select_fields(['id', 'name', 'source'], resources='orgs'),
+            unwind_services(ga),
+            # DF.checkpoint('unwind_services'),
+        ),
+        DF.Flow(
+            updateServiceFromSourceData(taxonomy),
+            # lambda rows: (r for r in rows if 'drop' in r), 
+        ),
+        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+    )
+
+
+def getGuidestarOrgs(ga):
+    today = datetime.date.today().isoformat()
+    regNums = [
+        dict(id=org['id'], data=dict(id=org['id'], last_tag_date=today))
+        for org in ga.organizations()
+    ]
+
+    print('COLLECTED {} guidestar organizations'.format(len(regNums)))
+    airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'entities',
+        ['last_tag_date'],
+        regNums, update_mapper(), 
+        manage_status=False,
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
+    )
+
+
 def operator(name, params, pipeline):
-    logger.info('STARTING Entity Scraping')
+    logger.info('STARTING Entity + Guidestar Scraping')
+
+    taxonomy = dict()
+    print('FETCHING TAXONOMY MAPPING')
+    taxonomy = DF.Flow(
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_GUIDESTAR_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        # DF.printer(),
+        DF.select_fields(['name', 'situation_ids', 'response_ids']),
+    ).results()[0][0]
+    taxonomy = dict(
+        (r.pop('name'), r) for r in taxonomy
+    )
+
+    print('FETCHING SOPROC MAPPING')
+    soproc_mappings = DF.Flow(
+        load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_SOPROC_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.select_fields(['id', 'situation_ids', 'response_ids']),
+    ).results()[0][0]
+    taxonomy.update(dict(
+        (r.pop('id'), r) for r in soproc_mappings
+    ))
+
     ga = GuidestarAPI()
+    getGuidestarOrgs(ga)
     fetchOrgData(ga)
     fetchBranchData(ga)
-    guidestar(name, params, pipeline)
+    fetchServiceData(ga, taxonomy)
 
 
 if __name__ == '__main__':
