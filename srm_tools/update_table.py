@@ -61,6 +61,7 @@ def airtable_updater_flow(table, source_id, table_fields, fetch_data_flow, updat
         Needs to add a new resource with two fields - 'id' (unique row id) and 'data' (object with the newly fetched data).
     :param update_data_flow: Flow to use to map the 'data' field into the table standard fields.
     """
+    print('UPDATING', airtable_base or settings.AIRTABLE_BASE, table, source_id, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY)
     return DF.Flow(
         load_from_airtable(airtable_base or settings.AIRTABLE_BASE, table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='current'),

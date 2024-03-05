@@ -16,7 +16,6 @@ from srm_tools.data_cleaning import clean_org_name
 from operators.derive import manual_fixes
 
 from . import helpers
-from .manual_fixes import ManualFixes
 from .autotagging import apply_auto_tagging
 
 
@@ -74,7 +73,6 @@ def possible_autocomplete(row):
 
 def srm_data_pull_flow():
     """Pull curated data from the data staging area."""
-    manual_fixes = ManualFixes()
 
     return DF.Flow(
         load_from_airtable(
@@ -95,7 +93,6 @@ def srm_data_pull_flow():
         load_from_airtable(
             settings.AIRTABLE_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY
         ),
-        manual_fixes.apply_manual_fixes(),
         DF.update_package(name='SRM Data'),
         helpers.preprocess_responses(validate=True),
         helpers.preprocess_situations(validate=True),

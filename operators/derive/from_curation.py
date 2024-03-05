@@ -4,6 +4,7 @@ from srm_tools.logger import logger
 from srm_tools.processors import fetch_mapper, update_mapper
 from srm_tools.update_table import airtable_updater
 from dataflows_airtable import load_from_airtable, AIRTABLE_ID_FIELD, dump_to_airtable
+from .manual_fixes import ManualFixes
 
 from conf import settings
 
@@ -26,19 +27,18 @@ def filter_by_items(mapping, fields):
     return func
 
 
-def collect_ids(mapping, ignore_ids=set()):
+def collect_ids(mapping):
     def func(rows):
         if rows.res.name == 'current':
             yield from rows
         else:
             for row in rows:
-                if row['id'] not in ignore_ids:
-                    mapping[row.get(AIRTABLE_ID_FIELD)] = row['id']
-                    yield row
+                mapping[row.get(AIRTABLE_ID_FIELD)] = row['id']
+                yield row
     return func
 
 
-def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
+def copy_from_curation_base(curation_base, source_id):
     logger.info(f'COPYING Data from {curation_base}')
     updated_orgs = dict()
     updated_branches = dict()
@@ -58,6 +58,9 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
             }, settings.AIRTABLE_API_KEY),
         ).process()
 
+
+    manual_fixes = ManualFixes()
+
     fields = ['name', 'short_name', 'kind', 'urls', 'phone_numbers', 'email_address', 'description', 'purpose']
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, source_id, fields,
         DF.Flow(
@@ -65,7 +68,8 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
             DF.update_resource(-1, name='orgs'),
             DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='orgs'),
             DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='orgs'),
-            collect_ids(updated_orgs, ignore_orgs),
+            manual_fixes.apply_manual_fixes(),
+            collect_ids(updated_orgs),
             DF.delete_fields(['source', 'status'], resources=-1),
             fetch_mapper(fields=fields),
         ),
@@ -92,6 +96,7 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
             DF.update_resource(-1, name='branches'),
             DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='branches'),
             DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='branches'),
+            manual_fixes.apply_manual_fixes(),
             DF.set_type('location', type='array', transform=lambda v: [updated_locations.get(v, v)]),
             filter_by_items(updated_orgs, ['organization']),
             DF.filter_rows(lambda r: len(r['organization'] or []) > 0),
@@ -117,6 +122,7 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
             DF.update_resource(-1, name='services'),
             DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='services'),
             DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='services'),
+            manual_fixes.apply_manual_fixes(),
             filter_by_items(updated_orgs, ['organizations']),
             filter_by_items(updated_branches, ['branches']),
             DF.filter_rows(lambda r: len(r.get('organizations') or []) > 0 or len(r.get('branches') or []) > 0),
@@ -125,8 +131,8 @@ def copy_from_curation_base(curation_base, source_id, ignore_orgs=set()):
         ),
         update_mapper()
     )
-    return set(updated_orgs.values())
     
+    manual_fixes.finalize()
 
 def operator(*_):
     logger.info('Copying data from curation tables')

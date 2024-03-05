@@ -9,7 +9,7 @@ class ManualFixes():
 
     def __init__(self) -> None:
         self.manual_fixes = DF.Flow(
-            load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_MANUAL_FIXES_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_MANUAL_FIXES_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         ).results()[0][0]
         logger.info(f'Got {len(self.manual_fixes)} manual fix records')
         self.manual_fixes = dict(
@@ -63,30 +63,29 @@ class ManualFixes():
                     extra_value = None
                     if field == 'responses':
                         current_value = self.response_ids(current_value)
-                        extra_field = 'response_ids'
-                        extra_value = [x.strip() for x in fixed_value.split(',')]
+                        # extra_field = 'response_ids'
+                        # extra_value = [x.strip() for x in fixed_value.split(',')]
                         fixed_value = self.response_ids(fixed_value)
                         actual_value = sorted(actual_value or [])
                     elif field == 'situations':
                         current_value = self.situation_ids(current_value)
-                        extra_field = 'situation_ids'
-                        extra_value = [x.strip() for x in fixed_value.split(',')]
+                        # extra_field = 'situation_ids'
+                        # extra_value = [x.strip() for x in fixed_value.split(',')]
                         fixed_value = self.situation_ids(fixed_value)
                         actual_value = sorted(actual_value or [])
 
                     if actual_value == current_value:
                         row[field] = fixed_value
                         print('FIXED!', fix_id, field, actual_value, '->', fixed_value)
-                        if extra_field is not None:
-                            row[extra_field] = extra_value
-                            print('FIXED EXTRA!', fix_id, extra_field, actual_value, '->', extra_value)
+                        # if extra_field is not None:
+                        #     row[extra_field] = extra_value
+                        #     print('FIXED EXTRA!', fix_id, extra_field, actual_value, '->', extra_value)
                         status['etl_status'] = 'Active'
                     else:
                         print('NOT FIXED!', fix_id, field, actual_value, '!=', current_value)
 
         return DF.Flow(
             func,
-            DF.finalizer(self.finalize)
         )
 
     def finalize(self):
@@ -97,7 +96,7 @@ class ManualFixes():
                 records,
                 DF.update_resource(-1, name='manual_fixes'),
                 dump_to_airtable({
-                    (settings.AIRTABLE_BASE, settings.AIRTABLE_MANUAL_FIXES_TABLE): {
+                    (settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_MANUAL_FIXES_TABLE): {
                         'resource-name': 'manual_fixes',
                         'typecast': True
                     }
