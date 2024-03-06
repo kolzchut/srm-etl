@@ -293,7 +293,7 @@ def unwind_services(ga: GuidestarAPI, source='entities'):
                     ret['id'] = 'guidestar:' + service['serviceId']
                     count += 1
                     if count % 10 == 0:
-                        print('COLLECTED {} organization\'s {} services'.format(len(existing_orgs), count))
+                        print('COLLECTED {} services'.format(count))
                     yield ret
     return DF.Flow(
         DF.add_field('data', 'object', resources='orgs'),
