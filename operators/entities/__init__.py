@@ -524,7 +524,7 @@ def fetchServiceData(ga, taxonomy):
             updateServiceFromSourceData(taxonomy),
             # lambda rows: (r for r in rows if 'drop' in r), 
         ),
-        airtable_base=settings.AIRTABLE_ENTITIES_IMPORT_BASE
+        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
 
@@ -560,7 +560,7 @@ def operator(name, params, pipeline):
 
     print('FETCHING SOPROC MAPPING')
     soproc_mappings = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_ENTITIES_IMPORT_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_SOPROC_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_SOPROC_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.select_fields(['id', 'situation_ids', 'response_ids']),
     ).results()[0][0]
     taxonomy.update(dict(
