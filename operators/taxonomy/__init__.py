@@ -20,13 +20,16 @@ def handle_tx(s, lang=None):
         return s.get('tx', {}).get(lang) or s['source']
 
 
-def handle_node(node, breadcrumbs=None):
+def handle_node(node, breadcrumbs=None, renames=[]):
     if breadcrumbs is None:
         breadcrumbs = []
     name = handle_tx(node['name'], 'he')
     if len(breadcrumbs) > 0:
+        slug = node['slug']
+        for src, dst in renames:
+            slug = slug.replace(src, dst)
         record = dict(
-            id=node['slug'],
+            id=slug,
             data=dict(
                 name=name,
                 description=handle_tx(node.get('description'), 'he'),
@@ -37,7 +40,7 @@ def handle_node(node, breadcrumbs=None):
         )
         yield record
     for child in node.get('items', []):
-        yield from handle_node(child, breadcrumbs + [name])
+        yield from handle_node(child, breadcrumbs + [name], renames=renames)
 
 
 INTERNAL_RESPONSES = [
@@ -54,12 +57,12 @@ INTERNAL_RESPONSES = [
 ]
 
 
-def fetch_taxonomy(keys, extra=[]):
+def fetch_taxonomy(keys, extra=[], renames=[]):
     taxonomy = requests.get(settings.OPENELIGIBILITY_YAML_URL).content
     taxonomy = yaml.load(taxonomy, Loader=yaml.SafeLoader)
     roots = [[t for t in taxonomy if t['slug'] == key][0] for key in keys]
     return DF.Flow(
-        chain(*(handle_node(root) for root in roots), extra),
+        chain(*(handle_node(root, renames=renames) for root in roots), extra),
         DF.set_type('data', type='object', resources=-1),
     )
 
