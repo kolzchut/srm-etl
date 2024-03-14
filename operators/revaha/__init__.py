@@ -143,7 +143,7 @@ SERVICE_MAP = {
 התוכנית מיועדת ליחידים ולמשפחות שמתמודדות עם מכשולים רבים, מיעוט הזדמנויות לשנות את מצבם וקושי במיצוי זכויות ובשימוש במשאבי הקהילה והממסד.
 ''',
             'payment_required': 'no',
-            'urls': 'https://clickrevaha.molsa.gov.il/product-page/178',
+            # 'urls': 'https://clickrevaha.molsa.gov.il/product-page/178',
             'organizations': [],
             'payment_details': 'יש לפנות לעובד/ת הסוציאלית של המשפחה',
             'data_sources': DATA_SOURCES,
@@ -175,7 +175,7 @@ SERVICE_MAP = {
 השירות מיועד ליחידים ולמשפחות, המוכרים למחלקות לשירותים חברתיים, המתמודדים עם מציאות חיים של עוני והדרה.
 ''',
             'payment_required': 'no',
-            'urls': 'https://clickrevaha.molsa.gov.il/product-page/179',
+            # 'urls': 'https://clickrevaha.molsa.gov.il/product-page/179',
             'organizations': [],
             'payment_details': 'יש לפנות למחלקה לשירותים חברתיים הסמוכה למקום המגורים',
             'data_sources': DATA_SOURCES,

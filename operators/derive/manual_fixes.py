@@ -89,6 +89,7 @@ class ManualFixes():
         )
 
     def finalize(self):
+        print('FINALIZING', self.used, self.status)
         records = [self.status[id] for id in self.used]
         if len(records) > 0:
             logger.info(f'Updating {len(records)} manual fix records')

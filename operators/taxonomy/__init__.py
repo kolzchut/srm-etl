@@ -54,12 +54,12 @@ INTERNAL_RESPONSES = [
 ]
 
 
-def fetch_taxonomy(key, extra=[]):
+def fetch_taxonomy(keys, extra=[]):
     taxonomy = requests.get(settings.OPENELIGIBILITY_YAML_URL).content
     taxonomy = yaml.load(taxonomy, Loader=yaml.SafeLoader)
-    root = [t for t in taxonomy if t['slug'] == key][0]
+    roots = [[t for t in taxonomy if t['slug'] == key][0] for key in keys]
     return DF.Flow(
-        chain(handle_node(root), extra),
+        chain(*(handle_node(root) for root in roots), extra),
         DF.set_type('data', type='object', resources=-1),
     )
 
@@ -68,7 +68,7 @@ def operator(*_):
     airtable_updater(
         settings.AIRTABLE_SITUATION_TABLE, 'openeligibility',
         ['name', 'name_en', 'description', 'description_en', 'breadcrumbs'],
-        fetch_taxonomy('human_situations'),
+        fetch_taxonomy(['human_situations']),
         DF.Flow(
             lambda row: row.update(row.get('data', {})),
         )
@@ -76,7 +76,7 @@ def operator(*_):
     airtable_updater(
         settings.AIRTABLE_RESPONSE_TABLE, 'openeligibility',
         ['name', 'name_en', 'description', 'description_en', 'breadcrumbs'],
-        fetch_taxonomy('human_services', INTERNAL_RESPONSES),
+        fetch_taxonomy(['human_services', 'human_places'], INTERNAL_RESPONSES, [('human_places:', 'human_services:place:')]),
         DF.Flow(
             lambda row: row.update(row.get('data', {})),
         )
