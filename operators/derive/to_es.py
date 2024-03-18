@@ -32,8 +32,8 @@ def card_score(row):
         else:
             score += branch_count**0.5
     response_ids = row['response_ids'] or []
-    if 'human_services:internal_emergency_services' in response_ids:
-        score *= 10
+    # if 'human_services:internal_emergency_services' in response_ids:
+    #     score *= 10
     organization_kind = row['organization_kind']
     if organization_kind in ('משרד ממשלתי', 'רשות מקומית'):
         score *= 5
