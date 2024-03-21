@@ -53,6 +53,16 @@ INTERNAL_RESPONSES = [
             description_en='',
             breadcrumbs='שירותים למצב החירום',
         )
+    ),
+    dict(
+        id='human_services:place',
+        data=dict(
+            name='מקומות',
+            description='',
+            name_en='Places',
+            description_en='',
+            breadcrumbs='מקומות',
+        )
     )
 ]
 
