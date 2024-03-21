@@ -155,7 +155,7 @@ SERVICE_MAP = {
             ],
             'situations': [
                 'human_situations:household:families',
-                'human_situations:income:low_income',
+                'human_situations:deprivation:low_income',
             ]
         }
     },
@@ -185,7 +185,7 @@ SERVICE_MAP = {
             ],
             'situations': [
                 'human_situations:household:families',
-                'human_situations:income:low_income',
+                'human_situations:deprivation:low_income',
             ]
         }
     }
