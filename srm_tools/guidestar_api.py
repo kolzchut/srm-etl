@@ -3,6 +3,7 @@ import json
 import time
 import requests
 from requests.api import head
+import kvfile
 
 from conf import settings
 
@@ -17,6 +18,9 @@ class GuidestarAPI():
 
     def __init__(self):
         self.branch_cache = dict()
+        self.org_cache = kvfile.KVFile(location='guidestar_org_cache')
+        self.branch_cache = kvfile.KVFile(location='guidestar_branch_cache')
+        self.service_cache = kvfile.KVFile(location='guidestar_service_cache')
 
     def to_json(self, callable):
         resp = None
@@ -46,61 +50,124 @@ class GuidestarAPI():
             self._headers = self.login(settings.GUIDESTAR_USERNAME, settings.GUIDESTAR_PASSWORD)
         return self._headers
 
-    def organizations(self, limit=None, regNums=None, filter=True):
+    def organizations(self, limit=None, regNums=None, filter=True, cacheOnly=True):
+        count = 0
+        if not regNums:
+            _regNums = list(self.org_cache.keys())
+        else:
+            _regNums = regNums
+        for regNum in _regNums:
+            count += 1
+            row = self.org_cache.get(regNum, default=None)
+            if row is None:
+                continue
+            if row.get('errorMsg') is not None:
+                errorMsg = row['errorMsg']
+                if errorMsg != 'Not Found':
+                    print(f'GUIDESTAR ERROR FETCHING ORGANIZATION {regNum}: {errorMsg}')
+                continue
+            yield dict(id=regNum, data=row)
+            if limit and count == limit:
+                break
+    
+    def fetchCaches(self):
+        # Orgs
         minRegNum = '0'
         done = False
         count = 0
         while not done:
-            # print('minRegNum', minRegNum)
-            if not regNums:
-                _regNums = []
-                params = dict(
-                    includingInactiveMalkars='false',
-                    isDesc='false',
-                    sort='regNum',
-                    filter=f'servicesCount>0;regNum>{minRegNum}'
-                )
-                resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizations', params=params))
-                for row in resp:
-                    regNum = row['regNum']
-                    _regNums.append(regNum)
-                if len(resp) == 0:
-                    done = True
-                else:
-                    newMin = resp[-1]['regNum']
-                    assert newMin > minRegNum, '{!r} should be bigger than {!r}'.format(newMin, minRegNum)
-                    minRegNum = newMin
-            else:
-                _regNums = regNums
-                done = True
-            for regNum in _regNums:
+            params = dict(
+                includingInactiveMalkars='false',
+                isDesc='false',
+                sort='regNum',
+                fullObject='true',
+                filter=f'servicesCount>0;regNum>{minRegNum}'
+            )
+            resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizations', params=params))
+            for row in resp:
+                regNum = row['regNum']
+                self.org_cache.set(regNum, row)
                 count += 1
-                row = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizations/{regNum}'))
-                # print(row)
-                if row.get('errorMsg') is not None:
-                    errorMsg = row['errorMsg']
-                    if errorMsg != 'Not Found':
-                        print(f'GUIDESTAR ERROR FETCHING ORGANIZATION {regNum}: {errorMsg}')
-                    continue
-                yield dict(id=regNum, data=row)
-                if limit and count == limit:
-                    done = True
-                    break
-                if count % 25 == 0:
-                    print(f'{count} organizations fetched')
-    
+            if len(resp) == 0:
+                done = True
+            else:
+                newMin = resp[-1]['regNum']
+                assert newMin > minRegNum, '{!r} should be bigger than {!r}'.format(newMin, minRegNum)
+                minRegNum = newMin
+            if count % 250 == 0:
+                print(f'{count} organizations fetched')
+
+        # Branches
+        minBranchId = None
+        done = False
+        count = 0
+        while not done:
+            params = dict(
+                isDesc='false',
+                sort='branchId',
+            )
+            if minBranchId is not None:
+                params['filter'] = f'branchId>{minBranchId}'
+            resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizationBranches', params=params))
+            for row in resp:
+                regNum = row.pop('regNum')
+                rec = self.branch_cache.get(regNum, default=[])
+                rec.append(row)
+                self.branch_cache.set(regNum, rec)
+                count += 1
+            if len(resp) == 0:
+                done = True
+            else:
+                newMin = resp[-1]['branchId']
+                assert minBranchId is None or newMin > minBranchId, '{!r} should be bigger than {!r}'.format(newMin, minBranchId)
+                minBranchId = newMin
+            if count % 1000 == 0:
+                print(f'{count} branches fetched')
+
+        # Services
+        minServiceId = None
+        done = False
+        count = 0
+        while not done:
+            params = dict(
+                isDesc='false',
+                sort='serviceId',
+            )
+            if minServiceId is not None:
+                params['filter'] = f'serviceId>{minServiceId}'
+            resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizationServices', params=params))
+            for row in resp:
+                regNum = row.pop('regNum')
+                rec = self.service_cache.get(regNum, default=[])
+                rec.append(row)
+                self.service_cache.set(regNum, rec)
+                count += 1
+            if len(resp) == 0:
+                done = True
+            else:
+                newMin = resp[-1]['serviceId']
+                assert minServiceId is None or newMin > minServiceId, '{!r} should be bigger than {!r}'.format(newMin, minServiceId)
+                minServiceId = newMin
+            if count % 1000 == 0:
+                print(f'{count} services fetched')                
+
     def branches(self, regnum):
-        if regnum not in self.branch_cache:
-            self.branch_cache[regnum] = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizations/{regnum}/branches'))
-        return self.branch_cache[regnum]
+        # if regnum not in self.branch_cache:
+        #     row = self.org_cache.get(regnum, default=None)
+        #     if row is not None and row.get('branchCount') == 0:
+        #         branches = []
+        #     else:
+        #         branches = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizations/{regnum}/branches'))
+        #     self.branch_cache[regnum] = branches
+        return self.branch_cache.get(regnum, default=[])
 
     def services(self, regnum):
-        # params = dict(
-        #     filter=f'regNum={regnum}'
-        # )
-        resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizations/{regnum}/services'))
-        # resp = requests.get(f'https://www.guidestar.org.il/services/apexrest/api/services', params=params, headers=self.headers(), timeout=self.TIMEOUT).json()
-        return resp
+        # row = self.org_cache.get(regnum, default=None)
+        # if row is not None and row.get('servicesCount') == 0:
+        #     return []
+        # else:
+        #     return self.to_json(lambda: self.requests_get(f'{self.BASE}/organizations/{regnum}/services'))
+        return self.service_cache.get(regnum, default=[])
 
     def requests_get(self, *args, **kwargs):
         key = json.dumps([args, kwargs], sort_keys=True)

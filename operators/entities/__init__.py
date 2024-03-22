@@ -47,7 +47,7 @@ def updateOrgFromSourceData(ga: GuidestarAPI):
                 continue
             # if row['kind'] is not None:
             #     continue
-            for data in ga.organizations(regNums=regNums):
+            for data in ga.organizations(regNums=regNums, cacheOnly=True):
                 try:
                     data = data['data']
                     row['name'] = data['name'].replace(' (חל"צ)', '').replace(' (ע"ר)', '')
@@ -145,7 +145,7 @@ def unwind_branches(ga:GuidestarAPI):
                     yield ret
                 if not branches:
                     # print('FETCHING FROM GUIDESTAR', regNum)
-                    ret = list(ga.organizations(regNums=[regNum]))
+                    ret = list(ga.organizations(regNums=[regNum], cacheOnly=True))
                     if len(ret) > 0 and ret[0]['data'].get('fullAddress'):
                         data = ret[0]['data']
                         yield dict(
@@ -159,22 +159,22 @@ def unwind_branches(ga:GuidestarAPI):
                         )
                     else:
                         if ret:
-                            print('FETCHING FROM BUDGETKEY', regNum, ret)
-                        if row['kind'] not in ('עמותה', 'חל"צ'):
-                            ret = dict()
-                            ret.update(row)
-                            name = row['name']
-                            cleaned_name = clean_org_name(name)
-                            ret.update(dict(
-                                id='budgetkey:' + regNum,
-                                data=dict(
-                                    name=name,
-                                    address=cleaned_name,
-                                    location=cleaned_name,
-                                    organization=[regNum]
-                                )
-                            ))
-                            yield ret
+                            if row['kind'] not in ('עמותה', 'חל"צ', 'הקדש'):
+                                print('FETCHING FROM BUDGETKEY', regNum, ret, row)
+                                ret = dict()
+                                ret.update(row)
+                                name = row['name']
+                                cleaned_name = clean_org_name(name)
+                                ret.update(dict(
+                                    id='budgetkey:' + regNum,
+                                    data=dict(
+                                        name=name,
+                                        address=cleaned_name,
+                                        location=cleaned_name,
+                                        organization=[regNum]
+                                    )
+                                ))
+                                yield ret
                 national = {}
                 national.update(row)
                 national['id'] = 'guidestar:' + regNum + ':national'
@@ -494,7 +494,7 @@ def updateServiceFromSourceData(taxonomies):
             if email_address:
                 row['email_address'] = email_address
 
-            for k in ('isForCoronaVirus', 'lastModifiedDate', 'serviceId', 'regNum', 'isForBranch'):
+            for k in ('isForCoronaVirus', 'lastModifiedDate', 'serviceId', 'isForBranch'):
                 data.pop(k)
             row['situations'] = sorted(situations)
             row['responses'] = sorted(responses)
@@ -528,7 +528,7 @@ def fetchServiceData(ga, taxonomy):
     )
 
 
-def getGuidestarOrgs(ga):
+def getGuidestarOrgs(ga: GuidestarAPI):
     today = datetime.date.today().isoformat()
     regNums = [
         dict(id=org['id'], data=dict(id=org['id'], last_tag_date=today))
@@ -568,6 +568,7 @@ def operator(name, params, pipeline):
     ))
 
     ga = GuidestarAPI()
+    ga.fetchCaches()
     getGuidestarOrgs(ga)
     fetchOrgData(ga)
     fetchBranchData(ga)
