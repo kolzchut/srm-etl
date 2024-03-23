@@ -259,15 +259,13 @@ def fetchBranchData(ga):
 
 
 ## SERVICES
-def unwind_services(ga: GuidestarAPI, source='entities'):
+def unwind_services(ga: GuidestarAPI):
     def func(rows: ResourceWrapper):
         if rows.res.name != 'orgs':
             yield from rows        
         else:
             count = 0
             for _, row in enumerate(rows):
-                if row['source'] != source:
-                    continue
                 regNum = row['id']
 
                 branches = ga.branches(regNum)
@@ -292,7 +290,7 @@ def unwind_services(ga: GuidestarAPI, source='entities'):
                     ret['data']['actual_branch_ids'] = [b['branchId'] for b in branches]
                     ret['id'] = 'guidestar:' + service['serviceId']
                     count += 1
-                    if count % 10 == 0:
+                    if count % 1000 == 0:
                         print('COLLECTED {} services'.format(count))
                     yield ret
     return DF.Flow(
@@ -325,9 +323,11 @@ def updateServiceFromSourceData(taxonomies):
                     ).process()
 
     def func(rows):
+        count = 0
+        full_count = 0
         for row in rows:
+            full_count += 1
             if 'data' not in row:
-                # print('NO DATA', row)
                 yield row
                 continue
 
@@ -343,6 +343,7 @@ def updateServiceFromSourceData(taxonomies):
             orgId = data.pop('organization_id')
             actual_branch_ids = data.pop('actual_branch_ids')
             row['branches'] = ['guidestar:' + b['branchId'] for b in (data.pop('branches') or []) if b['branchId'] in actual_branch_ids]
+            row['organizations'] = []
 
             record_type = data.pop('recordType')
             assert record_type == 'GreenInfo'
@@ -421,8 +422,8 @@ def updateServiceFromSourceData(taxonomies):
 
             if national:
                 row['branches'].append(f'guidestar:{orgId}:national')
-            if len(row['branches']) == 0:
-                continue
+            # if len(row['branches']) == 0:
+            #     continue
 
             when = data.pop('whenServiceActive')
             if when == 'All Year':
@@ -499,7 +500,10 @@ def updateServiceFromSourceData(taxonomies):
             row['situations'] = sorted(situations)
             row['responses'] = sorted(responses)
             assert all(v in (None, '0') for v in data.values()), repr(data_source_url) + ':' + repr(data)
+            count += 1
             yield row
+
+        print('DONE EMITTING SERVICES', count,'/',full_count)
 
     return DF.Flow(
         func,

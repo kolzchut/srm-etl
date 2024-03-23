@@ -31,7 +31,7 @@ def hash_row(table_fields):
 
 
 def test_hash(table_fields):
-    def func(rows):
+    def func(rows: DF.ResourceWrapper):
         count_existing = 0
         count_new = 0
         count_different = 0
@@ -48,7 +48,7 @@ def test_hash(table_fields):
             else:
                 count_new += 1
                 yield row
-        print(f'Existing: {count_existing}, New: {count_new}, Different: {count_different}')
+        print(f'{rows.res.name} -- Existing: {count_existing}, New: {count_new}, Different: {count_different}')
     return func
 
 def airtable_updater_flow(table, source_id, table_fields, fetch_data_flow, update_data_flow, manage_status=True, airtable_base=None):
