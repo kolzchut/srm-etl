@@ -56,7 +56,8 @@ def data_api_sitemap_flow():
         dumper.write_ckan_dataset(dumper.datapackage)
         print(dumper.datapackage.resources[0].descriptor)
         for resource in resources:
-            dumper.write_file_to_output(f'{tmpdir}/{resource.path}', resource.path)
+            path = resource['path']
+            dumper.write_file_to_output(f'{tmpdir}/{path}', path)
 
 
 def operator(*_):
