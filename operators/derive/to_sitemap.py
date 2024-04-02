@@ -21,7 +21,7 @@ def data_api_sitemap_flow():
         DF.concatenate(dict(path=[]), target=dict(name='sitemap', path='sitemap.csv')),
         DF.set_type('path', transform=lambda v: v.replace("'", '&apos;').replace('"', '&quot;')),
         DF.printer()
-    ).results(onerror=None)[0][0]
+    ).results(on_error=None)[0][0]
     today = datetime.date.today().isoformat()
     with tempfile.TemporaryDirectory() as tmpdir:
         idx = 0

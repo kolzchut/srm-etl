@@ -564,7 +564,7 @@ def card_data_flow():
             resources=['situations'],
         ),
         DF.select_fields(['key', 'id', 'name', 'synonyms']),
-    ).results(onerror=None)[0][0]
+    ).results(on_error=None)[0][0]
     situations = dict(
         (s.pop('key'), s) for s in situations
     ) | dict(
@@ -576,7 +576,7 @@ def card_data_flow():
             resources=['responses'],
         ),
         DF.select_fields(['key', 'id', 'name', 'synonyms']),
-    ).results(onerror=None)[0][0]
+    ).results(on_error=None)[0][0]
     responses = dict(
         (r.pop('key'), r) for r in responses
     ) | dict(

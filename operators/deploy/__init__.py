@@ -61,7 +61,7 @@ def operator(*_):
         source = DF.Flow(
             load_from_airtable(settings.AIRTABLE_ALTERNATE_BASE, spec.table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.select_fields([spec.id_field] + select_fields),
-        ).results(onerror=None)[0][0]
+        ).results(on_error=None)[0][0]
         source = dict((row[spec.id_field], row) for row in source)
 
         DF.Flow(

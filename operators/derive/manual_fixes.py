@@ -25,7 +25,7 @@ class ManualFixes():
             var = DF.Flow(
                 load_from_airtable(settings.AIRTABLE_BASE, table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
                 DF.select_fields([AIRTABLE_ID_FIELD, 'id']),
-            ).results(onerror=None)[0][0]
+            ).results(on_error=None)[0][0]
             logger.info(f'Got {len(var)} {table} records')
             var = dict((r['id'], r) for r in var)
         return var
