@@ -34,6 +34,15 @@ def handle_national_services():
     return func
 
 
+def handle_no_taxonomies():
+    def func(row):
+        data = row['data']
+        if not data.get('responses'):
+            data.pop('responses', None)
+        if not data.get('situations'):
+            data.pop('situations', None)
+    return func
+
 # ORGS
 def org_updater():
     def func(row):
@@ -206,7 +215,7 @@ def mde_service_flow(data_sources, source_id):
         DF.update_resource(-1, name='services'),
         DF.select_fields(['Org Id', 'Branch Address', 'Branch Geocode', 'Data Source',
                           'Service Name', 'Service Description', 'Service Conditions', 'Service Phone Number', 'Service Email', 'Service Website',
-                          'responses_ids', 'situations_ids']),
+                          'responses_ids', 'situations_ids', 'target_audiences', 'notes']),
         DF.rename_fields({
             'Org Id': 'organization',
             'Data Source': 'data_source',
@@ -231,14 +240,17 @@ def mde_service_flow(data_sources, source_id):
             phone_numbers=r.get('phone_numbers'),
             data_source=r['data_source'],
             email_address=r.get('email_address'),
+            target_audiences=r.get('target_audiences'),
+            notes=r.get('notes'),
         )),
+        handle_no_taxonomies(),
         DF.add_field('id', 'string', lambda r: mde_id(r['branch_id'], r['name'])),
         DF.select_fields(['id', 'data']),
     ).results()[0][0]
 
     print('COLLECTED {} relevant services'.format(len(services)))
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, source_id,
-        ['id', 'name', 'description', 'payment_details', 'phone_numbers', 'email_address', 'urls', 'situations', 'responses', 'branches', 'data_sources'],
+        ['id', 'name', 'description', 'payment_details', 'phone_numbers', 'email_address', 'urls', 'situations', 'responses', 'branches', 'data_sources', 'target_audiences', 'notes'],
         services,
         service_updater(data_sources),
         airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE

@@ -55,7 +55,27 @@ def fetch_google_spreadsheet():
                         emit['Org Email'] = row.get('Org Email')
                         emit['Org Website'] = row.get('Org Website')
                     emit['Data Source'] = row['Source Name']
-                    emit['taxonomies'] = [service['קטגוריה'], service['אוכלוסיית יעד'], service['שפה'], service.get('שפה-2'), service.get('שפה-3'), service.get('שפה-4'), service.get('שפה-5')]
+                    try:
+                        emit['taxonomies'] = [service['קטגוריה'], service['אוכלוסיית יעד'], service['שפה'], service.get('שפה-2'), service.get('שפה-3'), service.get('שפה-4'), service.get('שפה-5')]
+                    except KeyError:
+                        pass
+                    try:
+                        emit['target_audiences'] = service['אוכלוסיות יעד']
+                    except KeyError:
+                        emit['target_audiences'] = None
+                    emergency_service_msg = 'יש לתייג כשירות חירום'
+                    emergency_service = False
+                    try:
+                        emergency_service = service['שירות למצב החירום'] is True
+                    except KeyError:
+                        pass
+                    try:
+                        notes = service['הערות חופשיות'] or ''
+                        notes = (notes + '\n\n' + emergency_service_msg) if emergency_service else notes
+                        notes = notes.strip()
+                        emit['notes'] = notes
+                    except KeyError:
+                        emit['notes'] = None if not emergency_service else emergency_service_msg
                     yield emit
 
     return DF.Flow(
@@ -69,7 +89,9 @@ def fetch_google_spreadsheet():
         DF.add_field('Service Website', 'string'),
         DF.add_field('Service Email', 'string'),        
         DF.add_field('Data Source', 'string'),
-        DF.add_field('taxonomies', 'array', []),
+        DF.add_field('taxonomies', 'array'),
+        DF.add_field('target_audiences', 'string'),
+        DF.add_field('notes', 'string'),
         func
     )
 
@@ -77,19 +99,20 @@ def handle_taxonomies(taxonomies):
     def func(row):
         responses = set()
         situations = set()
-        for t in row['taxonomies']:
-            if not t:
-                continue
-            t = t.strip()
-            if t in taxonomies:
-                responses.update(taxonomies[t]['response_ids'] or [])
-                situations.update(taxonomies[t]['situation_ids'] or [])
-        row['responses_ids'] = list(responses)
-        row['situations_ids'] = list(situations)
+        if row.get('taxonomies'):
+            for t in row['taxonomies']:
+                if not t:
+                    continue
+                t = t.strip()
+                if t in taxonomies:
+                    responses.update(taxonomies[t]['response_ids'] or [])
+                    situations.update(taxonomies[t]['situation_ids'] or [])
+            row['responses_ids'] = list(responses)
+            row['situations_ids'] = list(situations)
 
     return DF.Flow(
-        DF.add_field('responses_ids', 'array', []),
-        DF.add_field('situations_ids', 'array', []),
+        DF.add_field('responses_ids', 'array'),
+        DF.add_field('situations_ids', 'array'),
         func,
         DF.delete_fields(['taxonomies'])
     )

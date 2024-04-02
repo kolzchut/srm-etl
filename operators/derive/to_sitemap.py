@@ -21,30 +21,42 @@ def data_api_sitemap_flow():
         DF.concatenate(dict(path=[]), target=dict(name='sitemap', path='sitemap.csv')),
         DF.set_type('path', transform=lambda v: v.replace("'", '&apos;').replace('"', '&quot;')),
         DF.printer()
-    ).results()[0][0]
+    ).results(onerror=None)[0][0]
     today = datetime.date.today().isoformat()
-    with tempfile.NamedTemporaryFile(mode='w') as buff:
-        buff.write('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
-        for row in urls:
-            buff.write('<url><loc>https://www.kolsherut.org.il{}</loc><lastmod>{}</lastmod></url>\n'.format(row['path'], today))
-        buff.write('</urlset>')
-        dumper = dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, force_format=False)
-        datapackage = dict(
-            name='sitemap',
-            resources=[dict(
-                name='sitemap',
-                path='sitemap.xml',
+    with tempfile.TemporaryDirectory() as tmpdir:
+        idx = 0
+        resources = []
+        while len(urls) > 0:
+            res_name = f'sitemap_{idx}' if idx > 0 else 'sitemap'
+            base_filename = f'{res_name}.xml'
+            filename = f'{tmpdir}/{base_filename}'
+            with open(filename, 'w') as buff:
+                buff.write('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+                _urls = urls[:50000]
+                for row in _urls:
+                    buff.write('<url><loc>https://www.kolsherut.org.il{}</loc><lastmod>{}</lastmod></url>\n'.format(row['path'], today))
+                buff.write('</urlset>')
+                urls = urls[50000:]
+            resources.append(dict(
+                name=res_name,
+                path=base_filename,
                 format='xml',
                 schema=dict(
                     fields=[dict(name='path', type='string')]
                 )
-            )],
+            ))
+            idx += 1
+
+        dumper = dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, force_format=False)
+        datapackage = dict(
+            name='sitemap',
+            resources=resources,
         )
         dumper.datapackage = Package(datapackage)
         dumper.write_ckan_dataset(dumper.datapackage)
-        buff.flush()
         print(dumper.datapackage.resources[0].descriptor)
-        dumper.write_file_to_output(buff.name, 'sitemap.xml')
+        for resource in resources:
+            dumper.write_file_to_output(f'{tmpdir}/{resource.path}', resource.path)
 
 
 def operator(*_):

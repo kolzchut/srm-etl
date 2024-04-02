@@ -50,7 +50,7 @@ def prepare_locations():
         tmpfile.close()
         all_places = DF.Flow(
             DF.load(tmpfile.name, format='datapackage'),
-        ).results()[0][0]
+        ).results(onerror=None)[0][0]
         keys = [n for rec in all_places for n in rec['name']]
         mapping = dict((n ,rec['bounds']) for rec in all_places for n in rec['name'])
         return keys, mapping
