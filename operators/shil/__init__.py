@@ -17,7 +17,7 @@ EMERGENCY_TAG = 'human_services:internal_emergency_services'
 ORGANIZATION = {
     'id': 'srm0000',
     'data': {
-        'name': 'תחנות שירות ייעוץ לאזרח (שי"ל)',
+        'name': 'תחנות שירות ייעוץ לאזרח - שי״ל',
         'source': DATA_SOURCE_ID,
         'kind': 'משרד ממשלתי',
         'urls': SHIL_URL,
