@@ -47,11 +47,11 @@ def copy_from_curation_base(curation_base, source_id):
 
     for table in (settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_SERVICE_TABLE):
         print('FIXING NEWS', curation_base, table, source_id)
-        shutil.rmtree(f'.checkpoints/{CHECKPOINT}{table}', ignore_errors=True, onerror=None)
+        shutil.rmtree(f'{CHECKPOINT}{table}', ignore_errors=True, onerror=None)
 
         DF.Flow(
             load_from_airtable(curation_base, table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-            DF.checkpoint(CHECKPOINT + table),
+            DF.dump_to_path(CHECKPOINT + table),
             DF.filter_rows(lambda r: not r.get('decision')),
             DF.set_type('decision', transform=lambda v: v or 'New'),
             DF.select_fields(['id', 'decision', AIRTABLE_ID_FIELD],),
@@ -70,7 +70,7 @@ def copy_from_curation_base(curation_base, source_id):
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, source_id, fields,
         DF.Flow(
             # load_from_airtable(curation_base, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-            DF.checkpoint(CHECKPOINT + settings.AIRTABLE_ORGANIZATION_TABLE),
+            DF.load(CHECKPOINT + settings.AIRTABLE_ORGANIZATION_TABLE + '/datapackage.json'),
             DF.update_resource(-1, name='orgs'),
             DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='orgs'),
             DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='orgs'),
@@ -100,7 +100,7 @@ def copy_from_curation_base(curation_base, source_id):
     airtable_updater(settings.AIRTABLE_BRANCH_TABLE, source_id, fields,
         DF.Flow(
             # load_from_airtable(curation_base, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-            DF.checkpoint(CHECKPOINT + settings.AIRTABLE_BRANCH_TABLE),
+            DF.load(CHECKPOINT + settings.AIRTABLE_BRANCH_TABLE + '/datapackage.json'),
             DF.update_resource(-1, name='branches'),
             DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='branches'),
             DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='branches'),
@@ -128,7 +128,7 @@ def copy_from_curation_base(curation_base, source_id):
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, source_id, fields,
         DF.Flow(
             # load_from_airtable(curation_base, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-            DF.checkpoint(CHECKPOINT + settings.AIRTABLE_SERVICE_TABLE),
+            DF.load(CHECKPOINT + settings.AIRTABLE_SERVICE_TABLE + '/datapackage.json'),
             DF.update_resource(-1, name='services'),
             DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='services'),
             DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='services'),
