@@ -93,7 +93,7 @@ ORGS = {
             name='שירותי בריאות כללית',
             short_name='כללית',
             phone_numbers= '*2700',
-            url='https://www.clalit.co.il/he/your_health/family/mental_health/Pages/clalit_mental_health_clinics.aspx',
+            urls='https://www.clalit.co.il/he/your_health/family/mental_health/Pages/clalit_mental_health_clinics.aspx',
         ),
     ),
     'מאוחדת': dict(
