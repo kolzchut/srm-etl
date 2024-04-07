@@ -193,9 +193,9 @@ def get_tipat_data():
 def operator(*_):
     logger.info('Starting Shil Flow')
 
-    # shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
+    shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
 
-    # tipat_service_data_flow()
+    tipat_service_data_flow()
     DATA = get_tipat_data()
     tipat_branch_data_flow(DATA)
 
