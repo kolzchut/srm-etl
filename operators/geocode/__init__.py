@@ -67,8 +67,10 @@ def geocode(session):
                 accuracy = resp.accuracy
                 address = resp.address
                 if accuracy == 'GEOMETRIC_CENTER':
-                    if resp.quality in ('establishment', 'plus_code'):
+                    if resp.quality == 'establishment':
                         accuracy = 'POI_MID_POINT'
+                    elif resp.quality == 'plus_code':
+                        accuracy = 'ROOFTOP'
                     else:
                         print(accuracy, resp.quality)
                 if pluscode:
