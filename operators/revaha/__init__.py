@@ -76,6 +76,7 @@ SERVICES = [
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES,
             'responses': [
+                'human_services:place:welfare_bureau',
                 'human_services:food',
                 'human_services:care',
                 'human_services:legal:advocacy_legal_aid:understand_government_programs',
@@ -96,6 +97,7 @@ SERVICES = [
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES,
             'responses': [
+                'human_services:place:welfare_bureau',
                 'human_services:care',
                 EMERGENCY_TAG
             ],
@@ -116,6 +118,7 @@ SERVICES = [
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES,
             'responses': [
+                'human_services:place:welfare_bureau',
                 'human_services:care',
                 EMERGENCY_TAG
             ],
@@ -148,6 +151,7 @@ SERVICE_MAP = {
             'payment_details': 'יש לפנות לעובד/ת הסוציאלית של המשפחה',
             'data_sources': DATA_SOURCES,
             'responses': [
+                'human_services:place:welfare_bureau',
                 'human_services:legal:advocacy_legal_aid:understand_government_programs',
                 'human_services:money:financial_assistance',
                 'human_services:money:financial_education',
@@ -180,6 +184,7 @@ SERVICE_MAP = {
             'payment_details': 'יש לפנות למחלקה לשירותים חברתיים הסמוכה למקום המגורים',
             'data_sources': DATA_SOURCES,
             'responses': [
+                'human_services:place:welfare_bureau',
                 'human_services:care:guidance',
                 'human_services:legal:advocacy_legal_aid:understand_government_programs',
             ],
