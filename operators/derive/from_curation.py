@@ -51,6 +51,11 @@ def copy_from_curation_base(curation_base, source_id):
         settings.AIRTABLE_SERVICE_TABLE: ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers', 'email_address', 
             'implements', 'situations', 'responses', 'organizations', 'branches', 'responses_manual', 'situations_manual', 'data_sources']
     }
+    extra_fields = {
+        settings.AIRTABLE_ORGANIZATION_TABLE: ['services', 'branch_services'],
+        settings.AIRTABLE_BRANCH_TABLE: ['services', 'org_services'],
+        settings.AIRTABLE_SERVICE_TABLE: ['organizations', 'branches']
+    }
 
     for table in (settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_SERVICE_TABLE):
         print('FIXING NEWS', curation_base, table, source_id)
@@ -58,7 +63,7 @@ def copy_from_curation_base(curation_base, source_id):
 
         DF.Flow(
             load_from_airtable(curation_base, table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-            DF.select_fields(table_fields[table] + ['decision', AIRTABLE_ID_FIELD] + ['status', 'id', 'source']),
+            DF.select_fields(table_fields[table] + ['decision', AIRTABLE_ID_FIELD] + ['status', 'id', 'source'] + extra_fields.get(table, [])),
             DF.dump_to_path(CHECKPOINT + table),
             DF.filter_rows(lambda r: not r.get('decision')),
             DF.set_type('decision', transform=lambda v: v or 'New'),
