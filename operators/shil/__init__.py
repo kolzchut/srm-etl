@@ -41,6 +41,7 @@ SERVICE = {
         'data_sources': f'המידע התקבל מ<a target="_blank" href="{SHIL_URL}" target="_blank">האתר של שי״ל</a>',
         'responses': [
             'human_services:legal:advocacy_legal_aid',
+            'human_services:legal:advocacy_legal_aid:understand_government_programs',
             EMERGENCY_TAG
         ],
         'situations': []

@@ -21,7 +21,6 @@ def card_score(row):
     if national_service:
         score = 10
         phone_numbers = list(filter(None, (row['service_phone_numbers'] or []) + (row['organization_phone_numbers'] or [])))
-        print('PPP', phone_numbers)
         if phone_numbers:
             phone_number = phone_numbers[0]
             if len(phone_number) <= 5 or phone_number.startswith('1'):
