@@ -72,7 +72,7 @@ ORGS = {
     'לאומית': dict(
         id='srm0010',
         data=dict(
-            name='קופת חולים לאומית - מרפאות בריאות נפש',
+            name='קופת חולים לאומית',
             short_name='לאומית',
             phone_numbers='1-700-507-507',
             urls='https://www.leumit.co.il/heb/Rights/mentalhealth/',
@@ -81,7 +81,7 @@ ORGS = {
     'מכבי': dict(
         id='srm0011',
         data=dict(
-            name='מכבי שירותי בריאות - מרפאות בריאות נפש',
+            name='מכבי שירותי בריאות',
             short_name='מכבי',
             phone_numbers= '*3555',
             urls='https://www.maccabi4u.co.il/New/eligibilites/2062/',
@@ -90,7 +90,7 @@ ORGS = {
     'כללית': dict(
         id='srm0012',
         data=dict(
-            name='שירותי בריאות כללית - מרפאות בריאות נפש',
+            name='שירותי בריאות כללית',
             short_name='כללית',
             phone_numbers= '*2700',
             url='https://www.clalit.co.il/he/your_health/family/mental_health/Pages/clalit_mental_health_clinics.aspx',
@@ -99,7 +99,7 @@ ORGS = {
     'מאוחדת': dict(
         id='srm0013',
         data=dict(
-            name='קופת חולים מאוחדת - מרפאות בריאות נפש',
+            name='קופת חולים מאוחדת',
             short_name='מאוחדת',
             phone_numbers= '*3833',
             urls='https://www.meuhedet.co.il/%D7%9E%D7%90%D7%95%D7%97%D7%93%D7%AA-%D7%9C%D7%A0%D7%A4%D7%A9/'
@@ -205,6 +205,7 @@ def operator(*_):
 
         # Constants
         DF.add_field('organization', 'string', lambda r: ORGS.get(r['hmo'] or 'default')['id'], resources=-1),
+        DF.add_field('urls', 'string', lambda r: ORGS.get(r['hmo'] or 'default')['data']['urls'], resources=-1),
 
         DF.printer()
     ).results()[0][0]
@@ -224,7 +225,7 @@ def operator(*_):
         DF.delete_fields(['age_group'], resources=-1),
 
         # Constants
-        DF.add_field('responses', 'array', ['human_services:health:mental_health_care'], resources=-1),
+        DF.add_field('responses', 'array', ['human_services:health:mental_health_care', 'human_services:place:health:clinic:mental_health_clinic'], resources=-1),
         DF.add_field('data_sources', 'string', DATA_SOURCE_TEXT, resources=-1),
         DF.add_field('id', 'string', lambda r: 'mhclinic-' + slugify(r['name']), resources=-1),
 
@@ -236,7 +237,7 @@ def operator(*_):
     airtable_updater(
         settings.AIRTABLE_ORGANIZATION_TABLE,
         DATA_SOURCE_ID,
-        ['name', 'short_name', 'phone_numbers', 'urls'],
+        ['name', 'short_name', 'phone_numbers'],
         ORGS.values(),
         update_mapper(),
         airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
@@ -245,7 +246,7 @@ def operator(*_):
     airtable_updater(
         settings.AIRTABLE_BRANCH_TABLE,
         DATA_SOURCE_ID,
-        ['name', 'address', 'location', 'description', 'phone_numbers', 'organization'],
+        ['name', 'address', 'location', 'description', 'phone_numbers', 'organization', 'urls'],
         branches,
         update_mapper(),
         airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
