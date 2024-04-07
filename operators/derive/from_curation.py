@@ -45,12 +45,20 @@ def copy_from_curation_base(curation_base, source_id):
     updated_orgs = dict()
     updated_branches = dict()
 
+    table_fields = {
+        settings.AIRTABLE_ORGANIZATION_TABLE: ['name', 'short_name', 'kind', 'urls', 'phone_numbers', 'email_address', 'description', 'purpose'],
+        settings.AIRTABLE_BRANCH_TABLE: ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'email_address', 'urls', 'situations'],
+        settings.AIRTABLE_SERVICE_TABLE: ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers', 'email_address', 
+            'implements', 'situations', 'responses', 'organizations', 'branches', 'responses_manual', 'situations_manual', 'data_sources']
+    }
+
     for table in (settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_SERVICE_TABLE):
         print('FIXING NEWS', curation_base, table, source_id)
         shutil.rmtree(f'{CHECKPOINT}{table}', ignore_errors=True, onerror=None)
 
         DF.Flow(
             load_from_airtable(curation_base, table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            DF.select_fields(table_fields[table] + ['decision', AIRTABLE_ID_FIELD]),
             DF.dump_to_path(CHECKPOINT + table),
             DF.filter_rows(lambda r: not r.get('decision')),
             DF.set_type('decision', transform=lambda v: v or 'New'),
@@ -66,8 +74,8 @@ def copy_from_curation_base(curation_base, source_id):
 
     manual_fixes = ManualFixes()
 
-    fields = ['name', 'short_name', 'kind', 'urls', 'phone_numbers', 'email_address', 'description', 'purpose']
-    airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, source_id, fields,
+    org_fields = table_fields[settings.AIRTABLE_ORGANIZATION_TABLE]
+    airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, source_id, org_fields,
         DF.Flow(
             # load_from_airtable(curation_base, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.load(CHECKPOINT + settings.AIRTABLE_ORGANIZATION_TABLE + '/datapackage.json'),
@@ -78,7 +86,7 @@ def copy_from_curation_base(curation_base, source_id):
             manual_fixes.apply_manual_fixes(),
             collect_ids(updated_orgs),
             DF.delete_fields(['source', 'status'], resources=-1),
-            fetch_mapper(fields=fields),
+            fetch_mapper(fields=org_fields),
         ),
         update_mapper()
     )
@@ -96,8 +104,8 @@ def copy_from_curation_base(curation_base, source_id):
         lambda row: updated_locations.setdefault(row['id'], row.get(AIRTABLE_ID_FIELD)),
     ).process()
 
-    fields = ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'email_address', 'urls', 'situations']
-    airtable_updater(settings.AIRTABLE_BRANCH_TABLE, source_id, fields,
+    branch_fields = table_fields[settings.AIRTABLE_BRANCH_TABLE]
+    airtable_updater(settings.AIRTABLE_BRANCH_TABLE, source_id, branch_fields,
         DF.Flow(
             # load_from_airtable(curation_base, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.load(CHECKPOINT + settings.AIRTABLE_BRANCH_TABLE + '/datapackage.json'),
@@ -111,7 +119,7 @@ def copy_from_curation_base(curation_base, source_id):
             DF.filter_rows(lambda r: len(r['organization'] or []) > 0),
             collect_ids(updated_branches),
             DF.delete_fields(['source', 'status'], resources=-1),
-            fetch_mapper(fields=fields),
+            fetch_mapper(fields=branch_fields),
         ),
         update_mapper()
     )
@@ -123,9 +131,8 @@ def copy_from_curation_base(curation_base, source_id):
     ).process()
     updated_branches = {k: conversion.get(v) for k, v in updated_branches.items()}
 
-    fields = ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers', 'email_address', 
-         'implements', 'situations', 'responses', 'organizations', 'branches', 'responses_manual', 'situations_manual', 'data_sources']
-    airtable_updater(settings.AIRTABLE_SERVICE_TABLE, source_id, fields,
+    service_fields = table_fields[settings.AIRTABLE_SERVICE_TABLE]
+    airtable_updater(settings.AIRTABLE_SERVICE_TABLE, source_id, service_fields,
         DF.Flow(
             # load_from_airtable(curation_base, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.load(CHECKPOINT + settings.AIRTABLE_SERVICE_TABLE + '/datapackage.json'),
@@ -137,7 +144,7 @@ def copy_from_curation_base(curation_base, source_id):
             filter_by_items(updated_branches, ['branches']),
             DF.filter_rows(lambda r: len(r.get('organizations') or []) > 0 or len(r.get('branches') or []) > 0),
             DF.delete_fields(['source', 'status'], resources=-1),
-            fetch_mapper(fields=fields),
+            fetch_mapper(fields=service_fields),
         ),
         update_mapper()
     )
