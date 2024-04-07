@@ -1,3 +1,4 @@
+import shutil
 import dataflows as DF
 
 from srm_tools.logger import logger
@@ -8,6 +9,7 @@ from .manual_fixes import ManualFixes
 
 from conf import settings
 
+CHECKPOINT = 'from-curation-'
 
 def filter_by_items(mapping, fields):
     def func(rows):
@@ -45,8 +47,11 @@ def copy_from_curation_base(curation_base, source_id):
 
     for table in (settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_SERVICE_TABLE):
         print('FIXING NEWS', curation_base, table, source_id)
+        shutil.rmtree(f'.checkpoints/{CHECKPOINT}{table}', ignore_errors=True, onerror=None)
+
         DF.Flow(
             load_from_airtable(curation_base, table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            DF.checkpoint(CHECKPOINT + table),
             DF.filter_rows(lambda r: not r.get('decision')),
             DF.set_type('decision', transform=lambda v: v or 'New'),
             DF.select_fields(['id', 'decision', AIRTABLE_ID_FIELD],),
@@ -64,7 +69,8 @@ def copy_from_curation_base(curation_base, source_id):
     fields = ['name', 'short_name', 'kind', 'urls', 'phone_numbers', 'email_address', 'description', 'purpose']
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, source_id, fields,
         DF.Flow(
-            load_from_airtable(curation_base, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            # load_from_airtable(curation_base, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            DF.checkpoint(CHECKPOINT + settings.AIRTABLE_ORGANIZATION_TABLE),
             DF.update_resource(-1, name='orgs'),
             DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='orgs'),
             DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='orgs'),
@@ -93,11 +99,12 @@ def copy_from_curation_base(curation_base, source_id):
     fields = ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'email_address', 'urls', 'situations']
     airtable_updater(settings.AIRTABLE_BRANCH_TABLE, source_id, fields,
         DF.Flow(
-            load_from_airtable(curation_base, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            # load_from_airtable(curation_base, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            DF.checkpoint(CHECKPOINT + settings.AIRTABLE_BRANCH_TABLE),
             DF.update_resource(-1, name='branches'),
             DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='branches'),
             DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='branches'),
-            DF.filter_rows(lambda r: any((r.get('services'), r.get('org_services'))), resources='orgs'),
+            DF.filter_rows(lambda r: any((r.get('services'), r.get('org_services'))), resources='branches'),
             manual_fixes.apply_manual_fixes(),
             DF.set_type('location', type='array', transform=lambda v: [updated_locations.get(v, v)]),
             filter_by_items(updated_orgs, ['organization']),
@@ -120,7 +127,8 @@ def copy_from_curation_base(curation_base, source_id):
          'implements', 'situations', 'responses', 'organizations', 'branches', 'responses_manual', 'situations_manual', 'data_sources']
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, source_id, fields,
         DF.Flow(
-            load_from_airtable(curation_base, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            # load_from_airtable(curation_base, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            DF.checkpoint(CHECKPOINT + settings.AIRTABLE_SERVICE_TABLE),
             DF.update_resource(-1, name='services'),
             DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='services'),
             DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='services'),
