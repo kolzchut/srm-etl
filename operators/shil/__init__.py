@@ -7,6 +7,11 @@ from srm_tools.logger import logger
 from srm_tools.processors import update_mapper
 from srm_tools.update_table import airtable_updater
 
+from openlocationcode import openlocationcode as olc
+from pyproj import Transformer
+
+transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
+
 ITEM_URL_BASE = 'https://www.gov.il/he/departments/bureaus'
 
 DATA_SOURCE_ID = 'shil'
@@ -51,7 +56,7 @@ SERVICE = {
 
 def normalize_address(r):
     address = r['Address'] or {}
-    city = address.get('City') or []
+    city = address.get('CityDesc') or []
     street = address.get('Street') or ''
     number = address.get('HouseNumber') or 0
     if len(city) > 0 and number > 0:
@@ -60,6 +65,19 @@ def normalize_address(r):
         return f'{street}, {city[0]}'
     else:
         return street
+
+
+def get_location(r):
+    address = r['Address'] or {}
+    x_coord = address.get('mapiXCordinata')
+    y_coord = address.get('mapiYCordinata')
+    if x_coord and y_coord:
+        x = int(x_coord)
+        y = int(y_coord)
+        lon, lat = transformer.transform(x, y)
+        pc = olc.encode(lat, lon, 11)
+        return pc
+    return normalize_address(r)
 
 
 def add_newlines(s):
@@ -99,8 +117,9 @@ FIELD_MAP = {
         'transform': normalize_address,
     },
     'location': {
-        'source': 'address',
+        'source': 'Address',
         'type': 'string',
+        'transform': get_location,
     },
     'organization': {'type': 'array', 'transform': lambda r: [ORGANIZATION['id']]},
     'services': {'type': 'array', 'transform': lambda r: [SERVICE['id']]},
