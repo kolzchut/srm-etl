@@ -63,7 +63,7 @@ def copy_from_curation_base(curation_base, source_id):
 
         DF.Flow(
             load_from_airtable(curation_base, table, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-            DF.select_fields(table_fields[table] + ['decision', AIRTABLE_ID_FIELD] + ['status', 'id', 'source'] + extra_fields.get(table, [])),
+            DF.select_fields(table_fields[table] + ['decision', AIRTABLE_ID_FIELD] + ['status', 'id', 'source', 'fixes'] + extra_fields.get(table, [])),
             DF.dump_to_path(CHECKPOINT + table),
             DF.filter_rows(lambda r: not r.get('decision')),
             DF.set_type('decision', transform=lambda v: v or 'New'),
