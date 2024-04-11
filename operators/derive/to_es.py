@@ -35,7 +35,7 @@ def card_score(row):
     # if 'human_services:internal_emergency_services' in response_ids:
     #     score *= 10
     organization_kind = row['organization_kind']
-    if organization_kind in ('משרד ממשלתי', 'רשות מקומית'):
+    if organization_kind in ('משרד ממשלתי', 'רשות מקומית', 'תאגיד סטטוטורי'):
         score *= 5
 
     return score
