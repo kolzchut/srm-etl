@@ -28,8 +28,8 @@ DEPLOY_CONFIG = [
     DeploySpec(settings.AIRTABLE_ORGANIZATION_TABLE,
                'id', ['short_name', 'manual_short_name', 'situation_ids:situations']),
     # Service Manual Tagging
-    DeploySpec(settings.AIRTABLE_SERVICE_TABLE,
-               'id', ['name_manual']),
+    # DeploySpec(settings.AIRTABLE_SERVICE_TABLE,
+    #            'id', ['name_manual']),
     # Manual Location Geo-Tagging
     DeploySpec(settings.AIRTABLE_LOCATION_TABLE,
                'id', ['status', 'provider', 'accuracy',
