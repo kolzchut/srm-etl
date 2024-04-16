@@ -17,7 +17,6 @@ class GuidestarAPI():
     _headers = None
 
     def __init__(self):
-        self.branch_cache = dict()
         self.org_cache = kvfile.KVFile(location='guidestar_org_cache')
         self.branch_cache = kvfile.KVFile(location='guidestar_branch_cache')
         self.service_cache = kvfile.KVFile(location='guidestar_service_cache')
@@ -87,6 +86,8 @@ class GuidestarAPI():
             for row in resp:
                 regNum = row['regNum']
                 self.org_cache.set(regNum, row)
+                self.branch_cache.set(regNum, [])
+                self.service_cache.set(regNum, [])
                 count += 1
             if len(resp) == 0:
                 done = True
