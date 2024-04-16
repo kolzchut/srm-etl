@@ -203,11 +203,11 @@ def data_api_es_flow():
         dump_to_es_and_delete(
             indexes=dict(srm__cards=[dict(resource_name='cards')]),
         ),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
-        ),
+        # dump_to_ckan(
+        #     settings.CKAN_HOST,
+        #     settings.CKAN_API_KEY,
+        #     settings.CKAN_OWNER_ORG,
+        # ),
 
         # # TESTING FLOW
         # DF.add_field('text', 'array', **{'es:itemType': 'string', 'es:keyword': True}, default=select_text_fields),
