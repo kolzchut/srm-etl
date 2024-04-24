@@ -21,6 +21,7 @@ def apply_auto_tagging():
 
     def func(rows):
         for row in rows:
+            row['auto_tagged'] = row.get('auto_tagged') or []
             for rule in rules:
                 found = False
                 fields = rule['fields']
@@ -36,13 +37,20 @@ def apply_auto_tagging():
                         for s in rule['situation_ids']:
                             if s not in row['situation_ids']:
                                 row['situation_ids'].append(s)
+                            if s not in row['auto_tagged']:
+                                row['auto_tagged'].append(s)
                     if rule['response_ids']:
                         for r in rule['response_ids']:
                             if r not in row['response_ids']:
                                 row['response_ids'].append(r)
+                            if r not in row['auto_tagged']:
+                                row['auto_tagged'].append(r)
             yield row
 
-    return func
+    return DF.Flow(
+        DF.add_field('auto_tagged', 'array'),
+        func,
+    )
 
 if __name__ == '__main__':
     testing = DF.Flow(

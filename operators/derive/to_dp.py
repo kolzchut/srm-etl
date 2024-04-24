@@ -531,12 +531,15 @@ class RSScoreCalc():
         def func(row):
             responses = row['responses']
             situations = row['situations']
+            auto_tagged = row['auto_tagged']
             score = 0
             s_scores = dict()
             if responses:
                 for r in responses:
                     for s in situations:
                         s_score = self.scores.get((s['id'], r['id']), 0) / len(responses)
+                        if s['id'] in auto_tagged:
+                            s_score = 0
                         score += s_score
                         s_scores.setdefault(s['id'], 0)
                         s_scores[s['id']] += s_score
@@ -616,7 +619,7 @@ def card_data_flow():
         rs_score.process('card_data'),
         DF.add_field('situation_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['situation_ids']), resources=['card_data']),
         DF.add_field('response_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_ids']), resources=['card_data']),
-        DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses'], resources=['card_data']),
+        DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses', 'auto_tagged'], resources=['card_data']),
         DF.add_field('situations_parents', 'array', lambda r: [situations[s] for s in r['situation_ids_parents']], resources=['card_data']),
         DF.add_field('responses_parents', 'array', lambda r: [responses[s] for s in r['response_ids_parents']], resources=['card_data']),
         DF.set_type('situation_ids', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
