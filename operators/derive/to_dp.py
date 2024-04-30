@@ -550,7 +550,7 @@ class RSScoreCalc():
                     score -= row['situation_scores'].pop(0)
                     row['situation_ids'].pop(0)
                     row['situations'].pop(0)
-                row['rs_score'] = score 
+                row['rs_score'] = score
             return row
         return DF.Flow(
             DF.add_field('rs_score', 'number', resources=resources),

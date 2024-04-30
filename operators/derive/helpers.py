@@ -352,6 +352,7 @@ def org_name_parts(row):
         prefix = name[: m.start()].strip(' -,\n\t')
         suffix = name[m.end() :].strip(' -,\n\t')
         name = prefix + ' ' + suffix
+        name = name.strip() or None
         return dict(
             primary=short_name, secondary=name
         )
