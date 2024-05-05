@@ -99,6 +99,7 @@ def copy_from_curation_base(curation_base, source_id):
     conversion = dict()
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.filter_rows(lambda r: r.get('id') is not None),
         lambda row: conversion.setdefault(row['id'], row.get(AIRTABLE_ID_FIELD)),
     ).process()
     updated_orgs = {k: conversion.get(v) for k, v in updated_orgs.items()}
