@@ -75,7 +75,7 @@ def operator(*_):
             DF.add_field('address', 'string', lambda r: ' '.join(filter(None, [r['Adrees'], r['City_Name']])).replace(' - ', '-')),
             DF.add_field('branch_id', 'string', lambda r: 'meser-' + hasher(r['address'], r['organization_id'])),
             DF.add_field('location', 'string', alternate_address),
-            DF.add_field('tagging', 'array', lambda r: list(filter(None, [r['Type_Descr'], r['Target_Population_Descr'], r['Second_Classific'], r['Gender_Descr'], r['Head_Department']))),
+            DF.add_field('tagging', 'array', lambda r: list(filter(None, [r['Type_Descr'], r['Target_Population_Descr'], r['Second_Classific'], r['Gender_Descr'], r['Head_Department']]))),
             DF.add_field('phone_numbers', 'string', lambda r: '0' + r['Telephone'] if r['Telephone'] and r['Telephone'][0] != '0' else r['Telephone'] or None),
 
             # Combining same services
