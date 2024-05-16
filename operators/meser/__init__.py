@@ -56,16 +56,15 @@ def operator(*_):
 
         DF.Flow(
             # Loading data
-            DF.load(str(source_data), infer_strategy=DF.load.INFER_STRINGS),
+            DF.load(str(source_data), infer_strategy=DF.load.INFER_STRINGS, headers=1),
             DF.update_resource(-1, name='meser'),
             DF.select_fields(['Name',
-                            'Misgeret_Id', 'Type_Descr', 'Target_Population_Descr', 'Second_Classific', 
+                            'Misgeret_Id', 'Type_Descr', 'Target_Population_Descr', 'Head_Department', 'Second_Classific', 
                             'ORGANIZATIONS_BUSINES_NUM', 'Registered_Business_Id',
                             'Gender_Descr', 'City_Name', 'Adrees', 'Telephone', 'GisX', 'GisY']),
             # Cleanup
             DF.update_schema(-1, missingValues=['NULL', '-1', 'לא ידוע', 'לא משויך', 'רב תכליתי', '0', '999', '9999']),
             DF.validate(),
-
             # Adding fields
             DF.add_field('service_name', 'string', lambda r: r['Name'].strip()),
             DF.add_field('branch_name', 'string', lambda r: r['Type_Descr'].strip()),
@@ -76,7 +75,7 @@ def operator(*_):
             DF.add_field('address', 'string', lambda r: ' '.join(filter(None, [r['Adrees'], r['City_Name']])).replace(' - ', '-')),
             DF.add_field('branch_id', 'string', lambda r: 'meser-' + hasher(r['address'], r['organization_id'])),
             DF.add_field('location', 'string', alternate_address),
-            DF.add_field('tagging', 'array', lambda r: list(filter(None, [r['Type_Descr'], r['Target_Population_Descr'], r['Second_Classific'], r['Gender_Descr']]))),
+            DF.add_field('tagging', 'array', lambda r: list(filter(None, [r['Type_Descr'], r['Target_Population_Descr'], r['Second_Classific'], r['Gender_Descr'], r['Head_Department']))),
             DF.add_field('phone_numbers', 'string', lambda r: '0' + r['Telephone'] if r['Telephone'] and r['Telephone'][0] != '0' else r['Telephone'] or None),
 
             # Combining same services
