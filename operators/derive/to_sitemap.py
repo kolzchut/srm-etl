@@ -50,7 +50,7 @@ def data_api_sitemap_flow():
                 )
             ))
             idx += 1
-        assert len(resources) == 2
+        assert len(resources) == 3, 'Expected 3 resources, got %d' % len(resources)
         dumper = dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, force_format=False)
         datapackage = dict(
             name='sitemap',
