@@ -37,7 +37,7 @@ class GuidestarAPI():
         logger.error('Failed to get response from Guidestar API')
         
     def login(self, username, password):
-        resp = self.to_json(lambda: requests.post(f'{self.BASE}/login', json=dict(username=username, password=password)).json())
+        resp = self.to_json(lambda: requests.post(f'{self.BASE}/login', json=dict(username=username, password=password), verify=False).json())
         sessionId = resp['sessionId']
         headers = dict(
             Authorization=f'Bearer {sessionId}'
@@ -175,6 +175,6 @@ class GuidestarAPI():
         data = cache_get(key)
         if data is not None:
             return data
-        ret = requests.get(*args, **kwargs, headers=self.headers(), timeout=self.TIMEOUT).json()
+        ret = requests.get(*args, **kwargs, headers=self.headers(), timeout=self.TIMEOUT, verify=False).json()
         cache_set(key, ret)
         return ret
