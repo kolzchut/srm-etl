@@ -1,4 +1,4 @@
-FROM akariv/dgp-app:de2d7e96560f854be942030de0718502e55b38e6
+FROM akariv/dgp-app:b88c29b77541f79541053aeefc4c95957e8df066
 
 USER root
 RUN apt-get update && apt-get install -y curl gnupg wget unzip build-essential libsqlite3-dev zlib1g-dev procps ca-certificates
