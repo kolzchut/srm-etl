@@ -35,3 +35,21 @@ def operator(*args):
             format='json'
         ),
     ).process()
+
+    DF.Flow(
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_HOMEPAGE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.update_package(name='homepage', title='Homepage Layout'),
+        DF.update_resource(-1, name='homepage', path='homepage.csv'),
+        enumerate_rows(),
+        DF.set_primary_key(['id']),
+        DF.select_fields(['id', 'group', 'title', 'situation_id', 'response_id', 'score']),
+        dump_to_es_and_delete(
+            indexes=dict(srm__homepage=[dict(resource_name='homepage')]),
+        ),
+        dump_to_ckan(
+            settings.CKAN_HOST,
+            settings.CKAN_API_KEY,
+            settings.CKAN_OWNER_ORG,
+            format='json'
+        ),
+    ).process()
