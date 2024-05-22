@@ -36,6 +36,7 @@ def handle_node(node, breadcrumbs=None, renames=[]):
                 name_en=handle_tx(node['name']),
                 description_en=handle_tx(node.get('description')),
                 breadcrumbs='/'.join(breadcrumbs[1:]),
+                pk=node.get('pk')
             )
         )
         yield record
@@ -80,7 +81,7 @@ def fetch_taxonomy(keys, extra=[], renames=[]):
 def operator(*_):
     airtable_updater(
         settings.AIRTABLE_SITUATION_TABLE, 'openeligibility',
-        ['name', 'name_en', 'description', 'description_en', 'breadcrumbs'],
+        ['name', 'name_en', 'description', 'description_en', 'breadcrumbs', 'pk'],
         fetch_taxonomy(['human_situations']),
         DF.Flow(
             lambda row: row.update(row.get('data', {})),
@@ -88,7 +89,7 @@ def operator(*_):
     )
     airtable_updater(
         settings.AIRTABLE_RESPONSE_TABLE, 'openeligibility',
-        ['name', 'name_en', 'description', 'description_en', 'breadcrumbs'],
+        ['name', 'name_en', 'description', 'description_en', 'breadcrumbs', 'pk'],
         fetch_taxonomy(['human_services', 'human_places'], INTERNAL_RESPONSES, [('human_places:', 'human_services:place:')]),
         DF.Flow(
             lambda row: row.update(row.get('data', {})),

@@ -59,7 +59,7 @@ def dump_to_es_and_delete(**kwargs):
     def deleter():
         time.sleep(300)
         for index in indexes:
-            response = engine.delete_by_query(index, body=dict(query=dict(bool=dict(must_not=dict(term=dict(revision=unique_id))))))
+            response = engine.delete_by_query(index, body=dict(query=dict(bool=dict(must_not=dict(term=dict(revision=unique_id))))), conflicts='proceed')
             print('DELETED', index, response)
 
     return DF.Flow(
