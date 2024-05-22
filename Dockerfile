@@ -1,7 +1,8 @@
 FROM akariv/dgp-app:de2d7e96560f854be942030de0718502e55b38e6
 
 USER root
-RUN apt-get update && apt-get install -y curl gnupg wget unzip build-essential libsqlite3-dev zlib1g-dev procps
+RUN apt-get update && apt-get install -y curl gnupg wget unzip build-essential libsqlite3-dev zlib1g-dev procps ca-certificates
+RUN update-ca-certificates --fresh
 
 RUN wget https://github.com/mapbox/tippecanoe/archive/refs/tags/1.36.0.zip && \
     unzip 1.36.0.zip && rm 1.36.0.zip
