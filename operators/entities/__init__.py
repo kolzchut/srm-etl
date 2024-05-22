@@ -397,6 +397,7 @@ def updateServiceFromSourceData(taxonomies):
                     national = True
                 elif item == 'Customer Place':
                     areas.append('בבית הלקוח')
+                    national = True
                 elif item == 'Remote Service':
                     areas.append('שירות מרחוק')
                     national = True
@@ -408,8 +409,10 @@ def updateServiceFromSourceData(taxonomies):
                     national = True
                 elif item == 'Customer Appointment':
                     areas.append('במפגשים קבוצתיים או אישיים')
+                    national = True
                 elif item == 'Program':
                     areas.append('תוכנית ייעודית בהרשמה מראש')
+                    national = True
                 elif item in ('Not relevant', ''):
                     pass
                 else:
