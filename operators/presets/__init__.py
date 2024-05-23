@@ -23,11 +23,11 @@ def homepage_query(row):
     if situation_name and response_name:
         q = f'{response_name} עבור {situation_name}'
     elif situation_name:
-        q = f'{situation_name}'
+        q = situation_name
     elif response_name:
-        q = f'{response_name}'
+        q = response_name
     else:
-        assert False, f'situation_name or response_name must be present, {row["group"]}/{row["title"]}'
+        return
     q = '_'.join(q.split())
     return q
 
@@ -57,6 +57,7 @@ def operator(*args):
         enumerate_rows(),
         DF.set_primary_key(['id']),
         DF.add_field('query', 'string', homepage_query),
+        DF.filter_rows(lambda row: row.get('query') is not None),
         DF.select_fields(['id', 'group', 'title', 'situation_id', 'response_id', 'score', 'query']),
         DF.set_type('situation_id', type='string', transform=lambda v: v[0] if v else None),
         DF.set_type('response_id', type='string', transform=lambda v: v[0] if v else None),
