@@ -17,6 +17,20 @@ def enumerate_rows():
         func
     )
 
+def homepage_query(row):
+    situation_name = row.get('situation_name')
+    response_name = row.get('response_name')
+    if situation_name and response_name:
+        q = f'{response_name} עבור {situation_name}'
+    elif situation_name:
+        q = f'{situation_name}'
+    elif response_name:
+        q = f'{response_name}'
+    else:
+        assert False, f'situation_name or response_name must be present, {row["group"]}/{row["title"]}'
+    q = '_'.join(q.split())
+    return q
+
 def operator(*args):
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_PRESETS_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
@@ -42,7 +56,8 @@ def operator(*args):
         DF.update_resource(-1, name='homepage', path='homepage.csv'),
         enumerate_rows(),
         DF.set_primary_key(['id']),
-        DF.select_fields(['id', 'group', 'title', 'situation_id', 'response_id', 'score']),
+        DF.add_field('query', 'string', homepage_query),
+        DF.select_fields(['id', 'group', 'title', 'situation_id', 'response_id', 'score', 'query']),
         DF.set_type('situation_id', type='string', transform=lambda v: v[0] if v else None),
         DF.set_type('response_id', type='string', transform=lambda v: v[0] if v else None),
         dump_to_es_and_delete(
