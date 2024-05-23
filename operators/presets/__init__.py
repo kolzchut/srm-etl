@@ -43,6 +43,8 @@ def operator(*args):
         enumerate_rows(),
         DF.set_primary_key(['id']),
         DF.select_fields(['id', 'group', 'title', 'situation_id', 'response_id', 'score']),
+        DF.set_type('situation_id', type='string', transform=lambda v: v[0] if v else None),
+        DF.set_type('response_id', type='string', transform=lambda v: v[0] if v else None),
         dump_to_es_and_delete(
             indexes=dict(srm__homepage=[dict(resource_name='homepage')]),
         ),
