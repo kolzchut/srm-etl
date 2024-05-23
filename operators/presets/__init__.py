@@ -56,11 +56,11 @@ def operator(*args):
         DF.update_resource(-1, name='homepage', path='homepage.csv'),
         enumerate_rows(),
         DF.set_primary_key(['id']),
+        DF.set_type('situation_id', type='string', transform=lambda v: v[0] if v else None),
+        DF.set_type('response_id', type='string', transform=lambda v: v[0] if v else None),
         DF.add_field('query', 'string', homepage_query),
         DF.filter_rows(lambda row: row.get('query') is not None),
         DF.select_fields(['id', 'group', 'title', 'situation_id', 'response_id', 'score', 'query']),
-        DF.set_type('situation_id', type='string', transform=lambda v: v[0] if v else None),
-        DF.set_type('response_id', type='string', transform=lambda v: v[0] if v else None),
         dump_to_es_and_delete(
             indexes=dict(srm__homepage=[dict(resource_name='homepage')]),
         ),
