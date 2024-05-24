@@ -58,6 +58,8 @@ def operator(*args):
         DF.set_primary_key(['id']),
         DF.set_type('situation_id', type='string', transform=lambda v: v[0] if v else None),
         DF.set_type('response_id', type='string', transform=lambda v: v[0] if v else None),
+        DF.set_type('situation_name', type='string', transform=lambda v: v[0] if v else None),
+        DF.set_type('response_name', type='string', transform=lambda v: v[0] if v else None),
         DF.add_field('query', 'string', homepage_query),
         DF.filter_rows(lambda row: row.get('query') is not None),
         DF.select_fields(['id', 'group', 'title', 'situation_id', 'response_id', 'score', 'query']),
