@@ -391,19 +391,24 @@ def load_organizations_to_es_flow():
     )
 
 def load_autocomplete_to_es_flow():
-    return DF.Flow(
+    DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/autocomplete/datapackage.json'),
         DF.update_package(title='AutoComplete Queries', name='autocomplete'),
         DF.set_primary_key(['id']),
         dump_to_es_and_delete(
             indexes=dict(srm__autocomplete=[dict(resource_name='autocomplete')]),
         ),
+    ).process()
+    DF.Flow(
+        DF.load(f'{settings.DATA_DUMP_DIR}/autocomplete/datapackage.json', limit_rows=10000),
+        DF.update_package(title='AutoComplete Queries', name='autocomplete'),
+        DF.set_primary_key(['id']),
         dump_to_ckan(
             settings.CKAN_HOST,
             settings.CKAN_API_KEY,
             settings.CKAN_OWNER_ORG,
         ),
-    )
+    ).process()
 
 def operator(*_):
     logger.info('Starting ES Flow')
