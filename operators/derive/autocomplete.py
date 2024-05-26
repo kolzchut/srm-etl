@@ -67,8 +67,16 @@ def unwind_templates():
                 situations = row['situations_parents'] if '{situation}' in template else [dict()]
                 direct_responses = row['response_ids'] + [None]
                 direct_situations = row['situation_ids'] + [None]
-                org_name = row.get('organization_short_name') or row.get('organization_name') if '{org_name}' in template or '{org_id}' in template else None
-                org_names = [org_name]
+                if '{org_name}' in template or '{org_id}' in template:
+                    org_name = row.get('organization_short_name') or row.get('organization_name')
+                    _org_names = [row.get('organization_short_name'), row.get('organization_name')]
+                    org_names = []
+                    for on in _org_names:
+                        if on and on not in org_names:
+                            org_names.append(on)
+                else:
+                    org_name = None
+                    org_names = [None]
                 org_id = row.get('organization_id') if org_name else None
                 org_ids = [org_id]
                 city_name = row.get('branch_city') if '{city_name}' in template else None
