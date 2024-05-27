@@ -15,6 +15,7 @@ class GuidestarAPI():
     BASE = settings.GUIDESTAR_API
     TIMEOUT = 30
     _headers = None
+    VERIFY_SSL = True
 
     def __init__(self):
         self.org_cache = kvfile.KVFile(location='guidestar_org_cache')
@@ -37,7 +38,7 @@ class GuidestarAPI():
         logger.error('Failed to get response from Guidestar API')
         
     def login(self, username, password):
-        resp = self.to_json(lambda: requests.post(f'{self.BASE}/login', json=dict(username=username, password=password), verify=False).json())
+        resp = self.to_json(lambda: requests.post(f'{self.BASE}/login', json=dict(username=username, password=password), verify=self.VERIFY_SSL).json())
         sessionId = resp['sessionId']
         headers = dict(
             Authorization=f'Bearer {sessionId}'
@@ -175,6 +176,6 @@ class GuidestarAPI():
         data = cache_get(key)
         if data is not None:
             return data
-        ret = requests.get(*args, **kwargs, headers=self.headers(), timeout=self.TIMEOUT, verify=False).json()
+        ret = requests.get(*args, **kwargs, headers=self.headers(), timeout=self.TIMEOUT, verify=self.VERIFY_SSL).json()
         cache_set(key, ret)
         return ret
