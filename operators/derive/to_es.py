@@ -417,7 +417,7 @@ def operator(*_):
     load_responses_to_es_flow().process()
     load_situations_to_es_flow().process()
     load_organizations_to_es_flow().process()
-    load_autocomplete_to_es_flow().process()
+    load_autocomplete_to_es_flow()
     logger.info('Finished ES Flow')
 
 
