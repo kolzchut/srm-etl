@@ -49,7 +49,7 @@ def copy_from_curation_base(curation_base, source_id):
         settings.AIRTABLE_ORGANIZATION_TABLE: ['name', 'short_name', 'kind', 'urls', 'phone_numbers', 'email_address', 'description', 'purpose'],
         settings.AIRTABLE_BRANCH_TABLE: ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'email_address', 'urls', 'situations'],
         settings.AIRTABLE_SERVICE_TABLE: ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers', 'email_address', 
-            'implements', 'situations', 'responses', 'organizations', 'branches', 'responses_manual', 'situations_manual', 'data_sources']
+            'implements', 'situations', 'responses', 'organizations', 'branches', 'responses_manual', 'situations_manual', 'data_sources', 'boost']
     }
     extra_fields = {
         settings.AIRTABLE_ORGANIZATION_TABLE: ['services', 'branch_services'],

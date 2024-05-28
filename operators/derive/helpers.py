@@ -141,6 +141,7 @@ def preprocess_services(select_fields=None, validate=False):
         DF.set_type('name', transform=lambda v, row: row['name_manual'] or v, resources=['services']),
         DF.set_type('situation_ids', transform=lambda _, row: row['situations_manual_ids'] or row['situation_ids'], resources=['services']),
         DF.set_type('response_ids', transform=lambda _, row: row['responses_manual_ids'] or row['response_ids'], resources=['services']),
+        DF.set_type('boost', type='number', transform=lambda v: v or 0, resources=['services']),
         DF.set_type(
             'phone_numbers',
             type='array',

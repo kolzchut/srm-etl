@@ -38,6 +38,10 @@ def card_score(row):
     if organization_kind in ('משרד ממשלתי', 'רשות מקומית', 'תאגיד סטטוטורי'):
         score *= 5
 
+    boost = row['service_boost'] or 0
+    boost = 10**(boost/10)
+    score *= boost
+
     return score
 
 def data_api_es_flow():
