@@ -8,7 +8,7 @@ from datapackage import Package
 from conf import settings
 from srm_tools.logger import logger
 
-NUM_SITEMAPS = 2
+NUM_SITEMAPS = 3
 
 def data_api_sitemap_flow():
     urls = DF.Flow(
