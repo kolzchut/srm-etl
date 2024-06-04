@@ -19,7 +19,9 @@ def get_gov_api(url, skip):
     timeout = 5
     wait_when_blocked = 180
     headers = {
-        "User-Agent": "kz-data-reader"
+        "User-Agent": "kz-data-reader",
+        # 'User-Agent': 'curl/8.4.0',
+        'Accept': '*/*'
     }
     retries = 5
     while retries:
@@ -29,16 +31,20 @@ def get_gov_api(url, skip):
             # so we catch the exception on parsing as json.
             response = requests.get(
                 url,
-                params={'limit': 1000, 'skip': skip},
+                params={'limit': skip+10, 'skip': skip},
                 timeout=timeout,
                 headers=headers,
-            ).json()
+            )
+            response.raise_for_status()
+            # print(f'GOT {response.status_code}: {response.content[:1000]}')
+            # print(f'GOT2 {response.headers}')
+            response = response.json()
             total, results = response['total'], response['results']
             retries = 0
-        except:
+        except Exception as e:
             total, results = 0, tuple()
             retries = retries - 1
-            print(f'Gov API access blocked. Retrying in 3 minutes. {retries} retries left.')
+            print(f'Gov API access blocked. Retrying in 3 minutes. {retries} retries left. ({e})')
             time.sleep(wait_when_blocked)
 
     if total == 0:

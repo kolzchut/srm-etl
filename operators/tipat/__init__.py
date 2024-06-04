@@ -135,18 +135,6 @@ def ensure_field(name, args, resources=None):
     return DF.add_field(name, type, transform, resources=resources)
 
 
-def get_shil_data():
-    skip = 0
-    skip_by = 50
-    total, results = get_gov_api(settings.SHIL_API, skip)
-
-    while len(results) < total:
-        skip += skip + skip_by
-        _, batch = get_gov_api(settings.SHIL_API, skip)
-        results.extend(batch)
-    return results
-
-
 def tipat_service_data_flow():
     return airtable_updater(
         settings.AIRTABLE_SERVICE_TABLE,

@@ -18,20 +18,8 @@ DATA_SOURCE_ID = 'shil'
 
 SHIL_URL = 'https://www.gov.il/he/Departments/Guides/molsa-shill-guide'
 EMERGENCY_TAG = 'human_services:internal_emergency_services'
-
-ORGANIZATION = {
-    'id': 'srm0000',
-    'data': {
-        'name': 'תחנות שירות ייעוץ לאזרח - שי״ל',
-        'source': DATA_SOURCE_ID,
-        'kind': 'משרד ממשלתי',
-        'urls': SHIL_URL,
-        'phone_numbers': '118',
-        # 'urls': 'https://www.gov.il/he/departments/bureaus/?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca#תחנות שירות ייעוץ לאזרח',
-        'description': '',
-        'purpose': '',
-    },
-}
+ORG_ID = '500106406'
+OPERATING_UNIT = 'תחנות שירות ייעוץ לאזרח - שי״ל'
 
 SERVICE = {
     'id': 'shil-1',
@@ -42,7 +30,7 @@ SERVICE = {
         'payment_required': 'no',
         'urls': '',
         # 'urls': 'https://www.gov.il/he/departments/bureaus/?OfficeId=4fa63b79-3d73-4a66-b3f5-ff385dd31cc7&categories=7cbc48b1-bf90-4136-8c16-749e77d1ecca#שירות ייעוץ לאזרח',
-        'organizations': ['srm0000'],
+        'organizations': [],
         'data_sources': f'המידע התקבל מ<a target="_blank" href="{SHIL_URL}" target="_blank">האתר של שי״ל</a>',
         'responses': [
             'human_services:legal:advocacy_legal_aid',
@@ -121,7 +109,8 @@ FIELD_MAP = {
         'type': 'string',
         'transform': get_location,
     },
-    'organization': {'type': 'array', 'transform': lambda r: [ORGANIZATION['id']]},
+    'organization': {'type': 'array', 'transform': lambda r: [ORG_ID]},
+    'operating_unit': {'type': 'array', 'transform': lambda r: OPERATING_UNIT},
     'services': {'type': 'array', 'transform': lambda r: [SERVICE['id']]},
 }
 
@@ -139,25 +128,14 @@ def ensure_field(name, args, resources=None):
 
 def get_shil_data():
     skip = 0
-    skip_by = 50
-    total, results = get_gov_api(settings.SHIL_API, skip)
+    total, batch = get_gov_api(settings.SHIL_API, skip)
+    results = list(batch)
 
     while len(results) < total:
-        skip += skip + skip_by
+        skip += len(batch)
         _, batch = get_gov_api(settings.SHIL_API, skip)
         results.extend(batch)
     return results
-
-
-def shil_organization_data_flow():
-    airtable_updater(
-        settings.AIRTABLE_ORGANIZATION_TABLE,
-        DATA_SOURCE_ID,
-        list(ORGANIZATION['data'].keys()),
-        [ORGANIZATION],
-        update_mapper(),
-        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
-    )
 
 
 def shil_service_data_flow():
@@ -197,7 +175,6 @@ def shil_branch_data_flow():
 def operator(*_):
     logger.info('Starting Shil Flow')
 
-    shil_organization_data_flow()
     shil_service_data_flow()
     shil_branch_data_flow()
 

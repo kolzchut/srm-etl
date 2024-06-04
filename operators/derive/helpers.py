@@ -185,7 +185,7 @@ def preprocess_organizations(select_fields=None, validate=False):
 
 def preprocess_branches(validate=False):
     select_fields = [
-        'key', 'id', 'source', 'status', 'name', 'organization', 'location', 'address', 'address_details', 'description', 'phone_numbers', 'email_address', 'urls', 'manual_url', 'fixes', 'situations', 'services'
+        'key', 'id', 'source', 'status', 'name', 'organization', 'operating_unit', 'location', 'address', 'address_details', 'description', 'phone_numbers', 'email_address', 'urls', 'manual_url', 'fixes', 'situations', 'services'
     ]
     return DF.Flow(
         DF.update_resource(['Branches'], name='branches', path='branches.csv'),
