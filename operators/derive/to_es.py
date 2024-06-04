@@ -210,7 +210,7 @@ def data_api_es_flow():
         DF.delete_fields([
             'score', 'possible_autocomplete', 'situations', 'responses', 'collapse_key', 
             'responses_parents', 'situation_parents', 'situation_ids_parents', 'response_ids_parents',
-            'data_sources', 'rs_score', 'situation_scores', 'point_id', 'coords'])
+            'data_sources', 'rs_score', 'situation_scores', 'point_id', 'coords']),
         dump_to_ckan(
             settings.CKAN_HOST,
             settings.CKAN_API_KEY,
