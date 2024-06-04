@@ -68,7 +68,7 @@ def upload_tileset(filename, tileset, name):
 
 def branches(r):
     records = r.get('records')
-    return list([f['organization_short_name'] or f['organization_name'] for f in records])
+    return list([f['branch_operating_unit'] or f['organization_short_name'] or f['organization_name'] for f in records])
 
 
 def point_title(r, full=False):

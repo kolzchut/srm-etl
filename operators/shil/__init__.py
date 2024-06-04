@@ -19,7 +19,7 @@ DATA_SOURCE_ID = 'shil'
 SHIL_URL = 'https://www.gov.il/he/Departments/Guides/molsa-shill-guide'
 EMERGENCY_TAG = 'human_services:internal_emergency_services'
 ORG_ID = '500106406'
-OPERATING_UNIT = 'תחנות שירות ייעוץ לאזרח - שי״ל'
+OPERATING_UNIT = 'תחנת שירות ייעוץ לאזרח - שי״ל'
 
 SERVICE = {
     'id': 'shil-1',
