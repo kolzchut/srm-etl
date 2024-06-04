@@ -47,21 +47,7 @@ PAYMENT_DETAILS = 'נדרש תיאום מראש'
 BRANCH_NAME_PREFIX = 'מחלקה לשירותים חברתיים'
 EMERGENCY_DESCRIPTION = '\n\n' + 'בזמן המלחמה המחלקה לשירותים חברתיים מעניקה סיוע, ייעוץ והכוונה גם למי שפונה ונמצא באזור המגורים בה פועלת המחלקה.'
 EMERGENCY_TAG = 'human_services:internal_emergency_services'
-
-ORGANIZATION = {
-    'id': 'srm0020',
-    'data': {
-        'name': 'משרד הרווחה והביטחון החברתי',
-        'short_name': 'מחלקת רווחה',
-        'source': DATA_SOURCE_ID,
-        'kind': 'משרד ממשלתי',
-        'phone_numbers': '118',
-        'description': '',
-        'purpose': '',
-        'urls': 'https://www.gov.il/he/departments/molsa/govil-landing-page',
-    },
-}
-
+ORG_ID = '500106406'
 
 SERVICES = [
     {
@@ -72,7 +58,7 @@ SERVICES = [
             'description': 'השירות מסייע לילדים, בני נוער, משפחות, יחידים, מוגבלים, זקנים, עולים חדשים ולכל פרט/קבוצה החפצים בקבלת סיוע. המחלקות לשירותים חברתיים  מעניקות מידע, יעוץ, טיפול, שירותים סוציאליים, הכוונה, תיווך לקבלת שירות, שילוב במסגרות ושירותי עזר בבית - בהתאם לכללי נזקקות וזכאות ולאפשרויות התקציביות.' + EMERGENCY_DESCRIPTION,
             'payment_required': 'no',
             'urls': f'{BASE_URL}#{BRANCH_NAME_PREFIX}',
-            'organizations': ['srm0020'],
+            'organizations': [],
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES,
             'responses': [
@@ -93,7 +79,7 @@ SERVICES = [
             'description': 'השירות לאוכלוסיית התושבים הוותיקים ובני משפחותיהם ניתן במחלקות לשירותים חברתיים וכולל מיצוי זכויות, מידע על מסגרות יומיות ,שירותי סעד, עובדים זרים, דיור מוגן ומסגרות מוסדיות זמניות וקבועות.' + EMERGENCY_DESCRIPTION,
             'payment_required': 'no',
             'urls': f'{BASE_URL}#{BRANCH_NAME_PREFIX}',
-            'organizations': ['srm0020'],
+            'organizations': [],
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES,
             'responses': [
@@ -114,7 +100,7 @@ SERVICES = [
             'description': 'השירות לאנשים  עם מוגבלות ובני משפחותיהם ניתן במחלקות לשירותים חברתיים ומיועד לאנשים עם פיגור שכלי, אוטיזם, מוגבלויות פיזיות וחושיות (עיוורון וחירשות) ולבני משפחותיהם. למימוש הזכאות לשירותים יש צורך בהכרה של משרד הרווחה והשירותים החברתיים.' + EMERGENCY_DESCRIPTION,
             'payment_required': 'no',
             'urls': f'{BASE_URL}#{BRANCH_NAME_PREFIX}',
-            'organizations': ['srm0020'],
+            'organizations': [],
             'payment_details': PAYMENT_DETAILS,
             'data_sources': DATA_SOURCES,
             'responses': [
@@ -132,7 +118,7 @@ SERVICES = [
 
 SERVICE_MAP = {
     'noshmim': {
-        'id': 'rehava-noshmim',
+        'id': 'revaha-noshmim',
         'data': {
             'name': 'נושמים לרווחה',
             'source': DATA_SOURCE_ID,
@@ -164,7 +150,7 @@ SERVICE_MAP = {
         }
     },
     'otzma': {
-        'id': 'rehava-otzma',
+        'id': 'revaha-otzma',
         'data': {
             'name': 'מרכז עוצמה',
             'source': DATA_SOURCE_ID,
@@ -209,7 +195,7 @@ FIELD_MAP = {
         'type': 'string',
         'transform': transform_phone_numbers,
     },
-    'urls': f'{BASE_URL}#{BRANCH_NAME_PREFIX}',
+    'urls': {'transform': lambda _: f'{BASE_URL}#{BRANCH_NAME_PREFIX}'},
     'email_address': {
         'source': 'email',
         'type': 'string',
@@ -220,7 +206,8 @@ FIELD_MAP = {
         'source': 'address',
         'type': 'string'
     },
-    'organization': {'type': 'array', 'transform': lambda r: [ORGANIZATION['id']]},
+    'organization': {'type': 'array', 'transform': lambda r: [ORG_ID]},
+    'operating_unit': {'transform': lambda _: 'מחלקת רווחה'},
     'services': {'type': 'array', 'transform': lambda r: []},
     # '__airtable_id': {}, needed to prevent error
 }
@@ -229,16 +216,6 @@ FIELD_MAP = {
 def get_revaha_data():
     return fetch_datagovil_datastore('social-departments', 'המחלקות לשירותים חברתיים')
 
-
-def revaha_organization_data_flow():
-    return airtable_updater(
-        settings.AIRTABLE_ORGANIZATION_TABLE,
-        DATA_SOURCE_ID,
-        list(ORGANIZATION['data'].keys()),
-        [ORGANIZATION],
-        update_mapper(),
-        airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
-    )
 
 def update_services():
     extra = DF.Flow(
@@ -250,6 +227,8 @@ def update_services():
 
     print('update_services, extra keys {}, service map: {}'.format(list(extra.keys())[:10], list(SERVICE_MAP.keys())))
 
+    service_ids = [x['id'] for x in SERVICES]
+
     def func(services, row):
         id = row['id']
         if id in extra:
@@ -259,6 +238,9 @@ def update_services():
                     service = SERVICE_MAP[k]['id']
                     if service not in services:
                         services.append(service)
+        for service in service_ids:
+            if service not in services:
+                services.append(service)
         return services
     
     return DF.set_type('services', transform=func, resources=['branches'])
@@ -332,7 +314,6 @@ def revaha_service_data_flow():
 
 def operator(*_):
     logger.info('Starting Revaha Flow')
-    revaha_organization_data_flow()
     revaha_service_data_flow()
     revaha_branch_data_flow()
     logger.info('Finished Revaha Flow')
