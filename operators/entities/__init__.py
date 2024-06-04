@@ -27,6 +27,8 @@ def fetchEntityFromBudgetKey(regNum):
     if len(entity) > 0:
         entity = entity[0]
         name = entity['name']
+        if regNum.startswith('50'):
+            name = name.split('/')[0].strip()
         rec = dict(
             id=entity['id'],
             data = dict(
