@@ -49,8 +49,6 @@ def org_updater():
         if not row.get('data'):
             return
         data = row['data']
-        row['name'] = data['name']
-        row['short_name'] = row.get('short_name') or data['short_name']
         if row.get('urls'):
             urls = row['urls'].split('\n')
         else:
@@ -75,21 +73,17 @@ def mde_organization_flow():
     orgs = DF.Flow(
         DF.checkpoint(CHECKPOINT),
         DF.update_resource(-1, name='orgs'),
-        DF.select_fields(['Org Id', 'Org Name', 'Org Short Name', 'Org Phone Number', 'Org Website', 'Org Email']),
+        DF.select_fields(['Org Id', 'Org Phone Number', 'Org Website', 'Org Email']),
         DF.rename_fields({
             'Org Id': 'id',
-            'Org Name': 'name',
-            'Org Short Name': 'short_name',
             'Org Phone Number': 'phone_numbers',
             'Org Website': 'urls',
             'Org Email': 'email_address',
         }),
         DF.join_with_self('orgs', ['id'], dict(
-            id=None, name=None, short_name=None, urls=None, phone_numbers=None, email_address=None
+            id=None, urls=None, phone_numbers=None, email_address=None
         )),
         DF.add_field('data', 'object', lambda r: dict(
-            name=r['name'],
-            short_name=r['short_name'],
             urls=r['urls'],
             phone_numbers=r['phone_numbers'],
             email_address=r['email_address'],
@@ -102,7 +96,7 @@ def mde_organization_flow():
     print('COLLECTED {} relevant organizations'.format(len(orgs)))
 
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'entities',
-        ['name', 'short_name', 'urls', 'phone_numbers', 'last_tag_date'],
+        ['urls', 'phone_numbers', 'last_tag_date'],
         orgs,
         org_updater(), 
         manage_status=False,
@@ -139,7 +133,7 @@ def mde_branch_flow(source_id):
     branches = DF.Flow(
         DF.checkpoint(CHECKPOINT),
         DF.update_resource(-1, name='branches'),
-        DF.select_fields(['Org Id', 'Branch Details', 'Branch Address', 'Branch Geocode', 
+        DF.select_fields(['Org Id', 'Org Name', 'Org Short Name', 'Branch Details', 'Branch Address', 'Branch Geocode', 
                           'Branch Phone Number', 'Branch Email', 'Branch Website']),
         DF.rename_fields({
             'Org Id': 'organization',
@@ -150,10 +144,13 @@ def mde_branch_flow(source_id):
             'Branch Email': 'email_address',
             'Branch Website': 'urls',
         }),
+        DF.add_field('operating_unit', 'string', lambda r: r.get('Org Short Name') or r.get('Org Name')),
+        DF.delete_fields(['Org Name', 'Org Short Name']),
         DF.add_field('id', 'string', lambda r: mde_id(r['organization'], r.get('address'), r.get('geocode'))),
         DF.join_with_self('branches', ['id'], dict(
             id=None, 
             name=None, 
+            operating_unit=None,
             address=None,
             geocode=None, 
             phone_numbers=None,
@@ -163,6 +160,7 @@ def mde_branch_flow(source_id):
         )),
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
+            operating_unit=r['operating_unit'],
             address=r['address'],
             geocode=r['geocode'],
             phone_numbers=r['phone_numbers'],
@@ -175,7 +173,7 @@ def mde_branch_flow(source_id):
 
     print('COLLECTED {} relevant branches'.format(len(branches)))
     return airtable_updater(settings.AIRTABLE_BRANCH_TABLE, source_id,
-        ['id', 'name', 'organization', 'location', 'address', 'phone_numbers', 'email_address', 'urls'],
+        ['id', 'name', 'organization', 'operating_unit', 'location', 'address', 'phone_numbers', 'email_address', 'urls'],
         branches,
         branch_updater(),
         airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
