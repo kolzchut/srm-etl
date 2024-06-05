@@ -1,4 +1,4 @@
-from . import to_dp, to_es, to_mapbox, to_sitemap, from_curation, autocomplete
+from . import to_dp, to_es, to_mapbox, to_sitemap, from_curation, autocomplete, to_sql
 
 from srm_tools.logger import logger
 
@@ -11,9 +11,9 @@ def operator(*_):
     to_dp.operator()
     autocomplete.operator()
     to_es.operator()
+    to_sql.operator()
     to_mapbox.operator()
     to_sitemap.operator()
-    # to_sql.operator()
 
     logger.info('Finished Derive Data Flow')
 

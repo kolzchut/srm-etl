@@ -28,6 +28,14 @@ def dump_to_sql_flow():
             dict(
                 cards={
                     'resource-name': 'cards',
+                    'indexes_fields': [
+                        ['service_name'],
+                        ['organization_id'],
+                        ['organization_kind'],
+                        ['branch_city'],
+                        ['national_service'],
+                        ['card_id'],
+                    ],
                 }
             ), engine='env://DATASETS_DATABASE_URL'
         ),
