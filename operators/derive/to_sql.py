@@ -21,21 +21,13 @@ from srm_tools.logger import logger
 #     )
 
 
-def data_api_sql_flow():
+def dump_to_sql_flow():
     return DF.Flow(
-        DF.load(f'{settings.DATA_DUMP_DIR}/flat_table/datapackage.json'),
+        DF.load(f'{settings.DATA_DUMP_DIR}/cards/datapackage.json'),
         DF.dump_to_sql(
             dict(
-                srm_api={
-                    'resource-name': 'flat_table',
-                    'indexes_fields': [
-                        ['branch_name'],
-                        ['organization_name'],
-                        ['service_name'],
-                        ['response_name'],
-                        ['situation_name'],
-                        ['response_category'],
-                    ],
+                cards={
+                    'resource-name': 'cards',
                 }
             ), engine='env://DATASETS_DATABASE_URL'
         ),
@@ -46,7 +38,7 @@ def operator(*_):
     logger.info('Starting SQL Flow')
 
     # relational_sql_flow().process()
-    data_api_sql_flow().process()
+    dump_to_sql_flow().process()
 
     logger.info('Finished SQL Flow')
 
