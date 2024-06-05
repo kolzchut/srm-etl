@@ -23,7 +23,8 @@ from srm_tools.logger import logger
 
 def dump_to_sql_flow():
     return DF.Flow(
-        DF.load(f'{settings.DATA_DUMP_DIR}/cards/datapackage.json'),
+        DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
+        DF.update_resource('card_data', name='cards'),
         DF.dump_to_sql(
             dict(
                 cards={
