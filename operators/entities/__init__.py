@@ -27,14 +27,16 @@ def fetchEntityFromBudgetKey(regNum):
     if len(entity) > 0:
         entity = entity[0]
         name = entity['name']
+        purpose = entity['details'].get('goal')
         if regNum.startswith('50'):
+            purpose = purpose or name
             name = name.split('/')[0].strip()
         rec = dict(
             id=entity['id'],
             data = dict(
                 name=name,
                 kind=entity['kind_he'],
-                purpose=entity['details'].get('goal'),
+                purpose=purpose
             )
         )
         return rec
