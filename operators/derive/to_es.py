@@ -237,7 +237,6 @@ def data_api_es_flow():
         # dump_to_es_and_delete(
         #     indexes=dict(testing=[dict(resource_name='cards')]),
         # ),
-    )
 
 HEB = re.compile('[א-ת]+[-א-ת"״]+[א-ת]+')
 def select_text_fields(row):
