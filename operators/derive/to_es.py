@@ -45,9 +45,8 @@ def card_score(row):
     return score
 
 def data_api_es_flow():
-    return DF.Flow(
+    DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
-        DF.update_package(title='Card Data', name='srm_card_data'),
         DF.update_resource('card_data', name='cards'),
         DF.add_field('score', 'number', card_score, resources=['cards']),
         DF.set_type(
@@ -207,6 +206,10 @@ def data_api_es_flow():
         dump_to_es_and_delete(
             indexes=dict(srm__cards=[dict(resource_name='cards')]),
         ),
+    ).process()
+    DF.Flow(
+        DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
+        DF.update_package(title='Card Data', name='srm_card_data'),
         DF.delete_fields([
             'score', 'possible_autocomplete', 'situations', 'responses', 'collapse_key', 
             'responses_parents', 'situation_parents', 'situation_ids_parents', 'response_ids_parents',
@@ -216,6 +219,17 @@ def data_api_es_flow():
             settings.CKAN_API_KEY,
             settings.CKAN_OWNER_ORG,
         ),
+    ).process()
+    DF.Flow(
+        DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json', limit_rows=1),
+        DF.update_package(title='Card Data', name='srm_card_data'),
+        DF.update_resource(-1, name='cards_placeholder'),
+        dump_to_ckan(
+            settings.CKAN_HOST,
+            settings.CKAN_API_KEY,
+            settings.CKAN_OWNER_ORG,
+        ),
+    ).process()
 
         # # TESTING FLOW
         # DF.add_field('text', 'array', **{'es:itemType': 'string', 'es:keyword': True}, default=select_text_fields),
@@ -420,7 +434,7 @@ def load_autocomplete_to_es_flow():
 
 def operator(*_):
     logger.info('Starting ES Flow')
-    data_api_es_flow().process()
+    data_api_es_flow()
     load_locations_to_es_flow().process()
     load_responses_to_es_flow().process()
     load_situations_to_es_flow().process()
