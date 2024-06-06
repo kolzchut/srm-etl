@@ -69,7 +69,7 @@ def unwind_templates():
                 direct_situations = row['situation_ids'] + [None]
                 if '{org_name}' in template or '{org_id}' in template:
                     org_name = row.get('organization_short_name') or row.get('organization_name')
-                    _org_names = [row.get('organization_short_name'), row.get('organization_name'), row.get('organization_original_name')]
+                    _org_names = [row.get('branch_operating_unit'), row.get('organization_short_name'), row.get('organization_name'), row.get('organization_original_name')]
                     org_names = []
                     for on in _org_names:
                         if on and on not in org_names:
