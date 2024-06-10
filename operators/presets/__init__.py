@@ -61,7 +61,7 @@ def operator(*args):
         DF.set_type('situation_name', type='string', transform=lambda v: v[0] if v else None),
         DF.set_type('response_name', type='string', transform=lambda v: v[0] if v else None),
         DF.add_field('query', 'string', homepage_query),
-        DF.filter_rows(lambda row: row.get('query') is not None),
+        DF.filter_rows(lambda row: row.get('group') is not None),
         DF.select_fields(['id', 'group', 'title', 'situation_id', 'response_id', 'score', 'query']),
         dump_to_es_and_delete(
             indexes=dict(srm__homepage=[dict(resource_name='homepage')]),
