@@ -692,12 +692,13 @@ def card_data_flow():
             ])}
         ),
         DF.add_field(
-            'organization_resolved', 'string', lambda row: row.get('branch_operating_unit') or row.get('organization_short_name') or row.get('organization_name'),
+            'organization_resolved_name', 'string', lambda row: row.get('branch_operating_unit') or row.get('organization_short_name') or row.get('organization_name'),
         ),
         DF.set_type('card_id', **{'es:keyword': True}),
         DF.set_type('branch_id', **{'es:keyword': True}),
         DF.set_type('service_id', **{'es:keyword': True}),
         DF.set_type('organization_id', **{'es:keyword': True}),
+        DF.set_type('organization_resolved_name', **{'es:keyword': True}),
         DF.set_type('response_categories', **{'es:itemType': 'string', 'es:keyword': True}),
         DF.set_primary_key(['card_id'], resources=['card_data']),
         DF.update_resource(['card_data'], path='card_data.csv'),
