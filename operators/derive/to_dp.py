@@ -691,6 +691,9 @@ def card_data_flow():
                 dict(name='secondary', type='string'),
             ])}
         ),
+        DF.add_field(
+            'organization_resolved', 'string', lambda row: row.get('branch_operating_unit') or row.get('organization_short_name') or row.get('organization_name'),
+        ),
         DF.set_type('card_id', **{'es:keyword': True}),
         DF.set_type('branch_id', **{'es:keyword': True}),
         DF.set_type('service_id', **{'es:keyword': True}),
