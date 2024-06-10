@@ -216,7 +216,7 @@ def data_api_es_flow():
         DF.checkpoint(checkpoint),
         DF.update_resource(-1, name='full_cards'),
         DF.delete_fields([
-            'score', 'possible_autocomplete', 'situations', 'responses', 'collapse_key', 
+            'score', 'possible_autocomplete', 'situations', 'responses', 'collapse_key', 'organization_resolved_name',
             'responses_parents', 'situations_parents', 'situation_ids_parents', 'response_ids_parents',
             'data_sources', 'rs_score', 'situation_scores', 'point_id', 'coords']),
         dump_to_ckan(
