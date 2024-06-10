@@ -109,7 +109,8 @@ def unwind_templates():
                         situation.get('name'),
                         city_name,
                         *response.get('synonyms', []),
-                        *situation.get('synonyms', [])
+                        *situation.get('synonyms', []),
+                        org_name,
                     ])
                     structured_query = ' '.join(remove_stop_words(x.strip()) for x in structured_query if x)
                     yield {
