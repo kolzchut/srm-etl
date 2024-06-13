@@ -75,7 +75,7 @@ def soprocServices(services):
         data = dict(
             name=service['name'],
             description=service['description'],
-            organizations=[s['entity_id'] for s in (service['suppliers'] or [])],
+            organizations=[s['entity_id'] for s in (service['suppliers'] or []) if s['active'] == 'yes'],
             urls=None,
         )
         data.update(extra_data)
