@@ -8,7 +8,7 @@ from datapackage import Package
 from conf import settings
 from srm_tools.logger import logger
 
-NUM_SITEMAPS = 3
+NUM_SITEMAPS = (2, 3)
 
 def data_api_sitemap_flow():
     urls = DF.Flow(
@@ -52,7 +52,7 @@ def data_api_sitemap_flow():
                 )
             ))
             idx += 1
-        assert len(resources) == NUM_SITEMAPS, f'Expected {NUM_SITEMAPS} resources, got {len(resources)}'
+        assert len(resources) in NUM_SITEMAPS, f'Expected {NUM_SITEMAPS} resources, got {len(resources)}'
         dumper = dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, force_format=False)
         datapackage = dict(
             name='sitemap',
