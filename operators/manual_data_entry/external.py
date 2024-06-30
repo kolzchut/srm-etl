@@ -21,7 +21,7 @@ def fetch_google_spreadsheet():
                 services = DF.Flow(
                     DF.load(URL, headers=2, deduplicate_headers=True),
                     DF.filter_rows(lambda r: bool(r['שם השירות'])),
-                    stats.filter_with_stats('External Manual Data: Entry not ready to publish', lambda r: r['סטטוס'] == 'מוכן לפרסום'),
+                    stats.filter_with_stat('External Manual Data: Entry not ready to publish', lambda r: r['סטטוס'] == 'מוכן לפרסום'),
                     # DF.printer(),
                 ).results()[0][0]
                 for service in services:
@@ -145,7 +145,7 @@ def main():
 
     DF.Flow(
         DFA.load_from_airtable('app4yocYm963dR5Tt', 'Sheets', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-        stats.filter_with_stats('External Manual Data: Sheet not ready to publish', lambda r: r['Status'] == 'בייצור'),
+        stats.filter_with_stat('External Manual Data: Sheet not ready to publish', lambda r: r['Status'] == 'בייצור'),
         fetch_google_spreadsheet(),
         DF.delete_fields([DFA.AIRTABLE_ID_FIELD, 'Status', 'Google Spreadsheet', 'Source Legalese', 'Source Name']),
         handle_taxonomies(taxonomies),

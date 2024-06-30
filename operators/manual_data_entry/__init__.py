@@ -14,8 +14,8 @@ def mde_prepare():
     source_flow = DF.Flow(
         load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.filter_rows(lambda r: r.get('Org Id') != 'dummy'),
-        stats.filter_with_stats('Manual Data Entry: No Org ID or Org Name', lambda r: (r.get('Org Id') or r.get('Org Name'))),
-        stats.filter_with_stats('Manual Data Entry: Entry not ready to publish', lambda r: r.get('Status') == 'בייצור'),
+        stats.filter_with_stat('Manual Data Entry: No Org ID or Org Name', lambda r: (r.get('Org Id') or r.get('Org Name'))),
+        stats.filter_with_stat('Manual Data Entry: Entry not ready to publish', lambda r: r.get('Status') == 'בייצור'),
     )
 
     data_sources = DF.Flow(
