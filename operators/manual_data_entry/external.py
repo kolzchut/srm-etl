@@ -4,8 +4,11 @@ import dataflows as DF
 import dataflows_airtable as DFA
 
 from conf import settings
+from srm_tools.stats import Stats
 
 from .mde_utils import load_manual_data
+
+stats = Stats()
 
 CHECKPOINT = 'external-mde'
 
@@ -18,7 +21,7 @@ def fetch_google_spreadsheet():
                 services = DF.Flow(
                     DF.load(URL, headers=2, deduplicate_headers=True),
                     DF.filter_rows(lambda r: bool(r['שם השירות'])),
-                    DF.filter_rows(lambda r: r['סטטוס'] == 'מוכן לפרסום'),
+                    stats.filter_with_stats('External Manual Data: Entry not ready to publish', lambda r: r['סטטוס'] == 'מוכן לפרסום'),
                     # DF.printer(),
                 ).results()[0][0]
                 for service in services:
@@ -142,7 +145,7 @@ def main():
 
     DF.Flow(
         DFA.load_from_airtable('app4yocYm963dR5Tt', 'Sheets', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-        DF.filter_rows(lambda r: r['Status'] == 'בייצור'),
+        stats.filter_with_stats('External Manual Data: Sheet not ready to publish', lambda r: r['Status'] == 'בייצור'),
         fetch_google_spreadsheet(),
         DF.delete_fields([DFA.AIRTABLE_ID_FIELD, 'Status', 'Google Spreadsheet', 'Source Legalese', 'Source Name']),
         handle_taxonomies(taxonomies),

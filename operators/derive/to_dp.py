@@ -173,7 +173,7 @@ def flat_branches_flow(branch_mapping):
         DF.update_resource(['branches'], name='flat_branches', path='flat_branches.csv'),
         DF.rename_fields({'address': 'orig_address'}, resources=['flat_branches']),
         # location onto branches
-        DF.filter_rows(
+        helpers.get_stats().filter_with_stat('Branches: No Location',
             lambda r: r['location'] and len(r['location']) > 0, resources=['flat_branches']
         ),
         DF.add_field(
@@ -446,7 +446,7 @@ def flat_table_flow():
             ),
             mode='inner'
         ),
-        DF.filter_rows(lambda r: bool(r['service_responses']), resources=['flat_table']),
+        helpers.get_stats().filter_with_stat('Cards: No Responses', lambda r: bool(r['service_responses']), resources=['flat_table']),
         DF.add_field(
             'branch_short_name', 'string', helpers.calculate_branch_short_name, resources=['flat_table']
         ),
@@ -648,9 +648,9 @@ def card_data_flow():
             resources=['card_data'],
             **{'es:keyword': True},
         ),
-        DF.filter_rows(lambda r: r['response_category'] is not None, resources=['card_data']),
+        helpers.get_stats().filter_with_stat('Cards: No Response Category', lambda r: r['response_category'], resources=['card_data']),
         DF.set_type('responses', transform=lambda v, row: helpers.reorder_responses_by_category(v, row['response_category'])),
-        DF.filter_rows(lambda r: helpers.validate_geometry(r['branch_geometry']) or r['national_service'], resources=['card_data']),
+        helpers.get_stats().filter_with_stat('Cards: Invalid Location',lambda r: helpers.validate_geometry(r['branch_geometry']) or r['national_service'], resources=['card_data']),
         DF.add_field('possible_autocomplete', 'array', default=possible_autocomplete, resources=['card_data'], **{'es:itemType': 'string', 'es:keyword': True}),
         DF.add_field(
             'point_id', 'string',

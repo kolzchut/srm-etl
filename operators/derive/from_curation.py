@@ -3,6 +3,7 @@ import dataflows as DF
 
 from srm_tools.logger import logger
 from srm_tools.processors import fetch_mapper, update_mapper
+from srm_tools.stats import Stats
 from srm_tools.update_table import airtable_updater
 from dataflows_airtable import load_from_airtable, AIRTABLE_ID_FIELD, dump_to_airtable
 from .manual_fixes import ManualFixes
@@ -78,6 +79,7 @@ def copy_from_curation_base(curation_base, source_id):
 
 
     manual_fixes = ManualFixes()
+    stats = Stats()
 
     org_fields = table_fields[settings.AIRTABLE_ORGANIZATION_TABLE]
     airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, source_id, org_fields,
@@ -85,9 +87,10 @@ def copy_from_curation_base(curation_base, source_id):
             # load_from_airtable(curation_base, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.load(CHECKPOINT + settings.AIRTABLE_ORGANIZATION_TABLE + '/datapackage.json'),
             DF.update_resource(-1, name='orgs'),
-            DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='orgs'),
-            DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='orgs'),
-            DF.filter_rows(lambda r: any((r.get('services'), r.get('branch_services'))), resources='orgs'),
+
+            stats.filter_with_stat('Data Import: Organizations: Inactive ', lambda r: r.get('status') == 'ACTIVE', resources='orgs'),
+            stats.filter_with_stat('Data Import: Organizations: Rejected/Suspended', lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='orgs'),
+            stats.filter_with_stat('Data Import: Organizations: No Services/Branch services', lambda r: any((r.get('services'), r.get('branch_services'))), resources='orgs'),
             manual_fixes.apply_manual_fixes(),
             collect_ids(updated_orgs),
             DF.delete_fields(['source', 'status'], resources=-1),
@@ -116,13 +119,13 @@ def copy_from_curation_base(curation_base, source_id):
             # load_from_airtable(curation_base, settings.AIRTABLE_BRANCH_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.load(CHECKPOINT + settings.AIRTABLE_BRANCH_TABLE + '/datapackage.json'),
             DF.update_resource(-1, name='branches'),
-            DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='branches'),
-            DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='branches'),
-            DF.filter_rows(lambda r: any((r.get('services'), r.get('org_services'))), resources='branches'),
+            stats.filter_with_stat('Data Import: Branches: Inactive ', lambda r: r.get('status') == 'ACTIVE', resources='branches'),
+            stats.filter_with_stat('Data Import: Branches: Rejected/Suspended', lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='branches'),
+            stats.filter_with_stat('Data Import: Branches: No Services/Org services', lambda r: any((r.get('services'), r.get('org_services'))), resources='branches'),
             manual_fixes.apply_manual_fixes(),
             DF.set_type('location', type='array', transform=lambda v: [updated_locations.get(v, v)]),
             filter_by_items(updated_orgs, ['organization']),
-            DF.filter_rows(lambda r: len(r['organization'] or []) > 0),
+            stats.filter_with_stat('Data Import: Branches: No Valid Organization', lambda r: len(r['organization'] or []) > 0),
             collect_ids(updated_branches),
             DF.delete_fields(['source', 'status'], resources=-1),
             fetch_mapper(fields=branch_fields),
@@ -143,12 +146,12 @@ def copy_from_curation_base(curation_base, source_id):
             # load_from_airtable(curation_base, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.load(CHECKPOINT + settings.AIRTABLE_SERVICE_TABLE + '/datapackage.json'),
             DF.update_resource(-1, name='services'),
-            DF.filter_rows(lambda r: r.get('status') == 'ACTIVE', resources='services'),
-            DF.filter_rows(lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='services'),
+            stats.filter_with_stat('Data Import: Services: Inactive ', lambda r: r.get('status') == 'ACTIVE', resources='services'),
+            stats.filter_with_stat('Data Import: Services: Rejected/Suspended', lambda r: r.get('decision') not in ('Rejected', 'Suspended'), resources='services'),
             manual_fixes.apply_manual_fixes(),
             filter_by_items(updated_orgs, ['organizations']),
             filter_by_items(updated_branches, ['branches']),
-            DF.filter_rows(lambda r: len(r.get('organizations') or []) > 0 or len(r.get('branches') or []) > 0),
+            stats.filter_with_stat('Data Import: Services: No Valid Organization/Branch', lambda r: len(r['organizations'] or []) > 0 or len(r['branches'] or []) > 0),
             DF.delete_fields(['source', 'status'], resources=-1),
             fetch_mapper(fields=service_fields),
         ),
