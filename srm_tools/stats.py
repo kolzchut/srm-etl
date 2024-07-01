@@ -37,6 +37,16 @@ class Stats():
         else:
             self.data[stat] = rec
 
+    def increase(self, stat):
+        current = 0
+        if stat in self.dirty:
+            current = self.dirty[stat]
+        self.dirty[stat] = current + 1
+
+    def save(self):
+        for stat, value in self.dirty.items():
+            self.set_stat(stat, value)
+        self.dirty = {}
 
     def filter_with_stat(self, stat: str, filter_func, passing=False, resources=None):
 

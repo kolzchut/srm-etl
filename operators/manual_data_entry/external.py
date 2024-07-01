@@ -8,11 +8,18 @@ from srm_tools.stats import Stats
 
 from .mde_utils import load_manual_data
 
-stats = Stats()
 
 CHECKPOINT = 'external-mde'
 
-def fetch_google_spreadsheet():
+def filter_ready_to_publish(stats: Stats):
+    def func(row):
+        if row['Status'] == 'בייצור':
+            return True
+        stats.increase('External Manual Data: Entry not ready to publish')
+        return False
+    return func
+
+def fetch_google_spreadsheet(stats):
     def func(rows):
         for row in rows:
             URL = row.get('Google Spreadsheet')
@@ -21,7 +28,7 @@ def fetch_google_spreadsheet():
                 services = DF.Flow(
                     DF.load(URL, headers=2, deduplicate_headers=True),
                     DF.filter_rows(lambda r: bool(r['שם השירות'])),
-                    stats.filter_with_stat('External Manual Data: Entry not ready to publish', lambda r: r['סטטוס'] == 'מוכן לפרסום'),
+                    filter_ready_to_publish(stats),
                     # DF.printer(),
                 ).results()[0][0]
                 for service in services:
@@ -143,16 +150,18 @@ def main():
 
     shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
 
+    stats = Stats()
     DF.Flow(
         DFA.load_from_airtable('app4yocYm963dR5Tt', 'Sheets', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         stats.filter_with_stat('External Manual Data: Sheet not ready to publish', lambda r: r['Status'] == 'בייצור'),
-        fetch_google_spreadsheet(),
+        fetch_google_spreadsheet(stats),
         DF.delete_fields([DFA.AIRTABLE_ID_FIELD, 'Status', 'Google Spreadsheet', 'Source Legalese', 'Source Name']),
         handle_taxonomies(taxonomies),
         DF.printer(),
         DF.dump_to_path('test', format='xlsx'),
         DF.checkpoint(CHECKPOINT)
     ).process()
+    stats.save()
 
     load_manual_data(DF.Flow(DF.checkpoint(CHECKPOINT)), data_sources, 'external-manual-data')
 
