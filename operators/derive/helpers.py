@@ -122,7 +122,7 @@ def preprocess_responses(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Responses'], name='responses', path='responses.csv'),
         filter_dummy_data(),
-        filter_active_data('Responses: Inactive'),
+        filter_active_data('Processing: Responses: Inactive'),
         set_staging_pkey('responses'),
         DF.set_type('synonyms', type='array', transform=lambda v: tuple(v.strip().split('\n')) if v else tuple(), resources=['responses']),
         DF.select_fields(select_fields, resources=['responses']) if select_fields else None,
@@ -134,7 +134,7 @@ def preprocess_situations(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Situations'], name='situations', path='situations.csv'),
         filter_dummy_data(),
-        filter_active_data('Situations: Inactive'),
+        filter_active_data('Processing: Situations: Inactive'),
         set_staging_pkey('situations'),
         DF.set_type('synonyms', type='array', transform=lambda v: tuple(v.strip().split('\n')) if v else tuple(), resources=['situations']),
         DF.select_fields(select_fields, resources=['situations']) if select_fields else None,
@@ -146,7 +146,7 @@ def preprocess_services(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Services'], name='services', path='services.csv'),
         filter_dummy_data(),
-        filter_active_data('Services: Inactive'),
+        filter_active_data('Processing: Services: Inactive'),
         set_staging_pkey('services'),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['services']),
         DF.set_type('name', transform=lambda v, row: row['name_manual'] or v, resources=['services']),
@@ -175,8 +175,8 @@ def preprocess_organizations(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Organizations'], name='organizations', path='organizations.csv'),
         filter_dummy_data(),
-        filter_active_data('Organizations: Inactive'),
-        get_stats().filter_with_stat('Organizations: No Name', lambda r: bool(r.get('name')), resources=['organizations']),
+        filter_active_data('Processing: Organizations: Inactive'),
+        get_stats().filter_with_stat('Processing: Organizations: No Name', lambda r: bool(r.get('name')), resources=['organizations']),
         set_staging_pkey('organizations'),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['organizations']),
         DF.set_type('short_name', transform=lambda v, row: row.get('manual_short_name') or v, resources=['organizations']),
@@ -201,7 +201,7 @@ def preprocess_branches(validate=False):
     return DF.Flow(
         DF.update_resource(['Branches'], name='branches', path='branches.csv'),
         filter_dummy_data(),
-        filter_active_data('Branches: Inactive'),
+        filter_active_data('Processing: Branches: Inactive'),
         set_staging_pkey('branches'),
         DF.select_fields(select_fields, resources=['branches']),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['branches']),
@@ -230,7 +230,7 @@ def preprocess_locations(validate=False):
             lambda r: r['accuracy'] == 'NATIONAL_SERVICE',
             resources=['locations'],
         ),
-        get_stats().filter_with_stat('Locations: No Location',
+        get_stats().filter_with_stat('Processing: Locations: No Location',
             lambda r: any(
                 all(r.get(f) for f in fields)
                 for fields in [('resolved_lat', 'resolved_lon'), ('fixed_lat', 'fixed_lon'), ('national_service',)]
@@ -242,8 +242,8 @@ def preprocess_locations(validate=False):
             lambda r: (r['accuracy'] in ACCURATE_TYPES) or all((r.get('fixed_lat'), r['fixed_lon'])) or False,
             resources=['locations'],
         ),
-        get_stats().filter_with_stat('Locations: No Lat', lambda r: any(r[x] for x in ('fixed_lat', 'resolved_lat', 'national_service')), resources=['locations']),
-        get_stats().filter_with_stat('Locations: No Lon', lambda r: any(r[x] for x in ('fixed_lon', 'resolved_lon', 'national_service')), resources=['locations']),
+        get_stats().filter_with_stat('Processing: Locations: No Lat', lambda r: any(r[x] for x in ('fixed_lat', 'resolved_lat', 'national_service')), resources=['locations']),
+        get_stats().filter_with_stat('Processing: Locations: No Lon', lambda r: any(r[x] for x in ('fixed_lon', 'resolved_lon', 'national_service')), resources=['locations']),
         DF.add_field(
             'lat',
             'number',
