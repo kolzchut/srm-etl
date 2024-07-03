@@ -13,7 +13,7 @@ CHECKPOINT = 'external-mde'
 
 def filter_ready_to_publish(stats: Stats):
     def func(row):
-        if row['Status'] == 'בייצור':
+        if row.get('Status') == 'בייצור':
             return True
         stats.increase('External Manual Data: Entry not ready to publish')
         return False
