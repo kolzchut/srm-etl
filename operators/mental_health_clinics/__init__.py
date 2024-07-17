@@ -9,6 +9,7 @@ from operators.shil import ORGANIZATION
 from srm_tools.update_table import airtable_updater
 from srm_tools.processors import update_mapper
 from srm_tools.datagovil import fetch_datagovil_datastore
+from srm_tools.stats import Stats
 
 FIELD_RENAME = {
     'name': 'clinic_name',
@@ -153,6 +154,7 @@ def clinic_hash(row):
 
 
 def operator(*_):
+    stats = Stats()
     # Prepare data
     def ren(k, v):
         return DF.add_field(k, 'string', default=lambda row: row.pop(v, None))
@@ -171,8 +173,8 @@ def operator(*_):
         DF.validate(on_error=DF.schema_validator.clear),
 
         # Filter out stuff
-        DF.filter_rows(lambda r: 'קליניקה' not in r['age_group'], resources=-1),
-        DF.filter_rows(lambda r: r['street_address'] is not None, resources=-1),
+        stats.filter_with_stat('Mental Healtch Clinics: Not a clinic', lambda r: 'קליניקה' not in r['age_group'], resources=-1),
+        stats.filter_with_stat('Mental Healtch Clinics: No address', lambda r: r['street_address'] is not None, resources=-1),
 
         # Prepare branch data
         DF.set_type('phone_numbers', transform=lambda v: '\n'.join(phone_number.findall(str(v))) if v else None, resources=-1),

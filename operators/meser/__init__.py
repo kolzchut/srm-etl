@@ -10,6 +10,7 @@ from dataflows_airtable import load_from_airtable, dump_to_airtable
 
 from srm_tools.processors import update_mapper
 from srm_tools.logger import logger
+from srm_tools.stats import Stats
 from srm_tools.update_table import airtable_updater
 from srm_tools.unwind import unwind
 from srm_tools.hash import hasher
@@ -40,6 +41,8 @@ def good_company(r):
 
 def operator(*_):
     logger.info('Starting Meser Data Flow')
+
+    stats = Stats()
 
     tags = DF.Flow(
         load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
@@ -102,7 +105,7 @@ def operator(*_):
                 r for t in r['tagging'] for r in (tags.get(t, {}).get('situation_ids') or [])
             ))),
 
-            DF.filter_rows(good_company),
+            stats.filter_with_stat('MESER: No Org Id', good_company),
 
             DF.dump_to_path(os.path.join(dirname, 'meser', 'denormalized')),
         ).process()
