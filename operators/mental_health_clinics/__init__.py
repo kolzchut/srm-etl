@@ -5,7 +5,6 @@ from pathlib import Path
 import dataflows as DF
 
 from conf import settings
-from operators.shil import ORGANIZATION
 from srm_tools.update_table import airtable_updater
 from srm_tools.processors import update_mapper
 from srm_tools.datagovil import fetch_datagovil_datastore
