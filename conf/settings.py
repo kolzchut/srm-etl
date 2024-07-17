@@ -5,6 +5,10 @@ from .utils import get_env
 
 load_dotenv()
 
+import csv
+
+csv.field_size_limit(2*1024*1024)
+
 
 CLICK_API = r'https://clickrevaha-app.molsa.gov.il/public/solr?rows=1000&fq[]=lang_code_s:he&facet.limit=2000&defType=edismax&fq[]=group_id_is:1&fq[]=type_i:1&facet.field[]=group_id_is&facet.field[]={!ex=Target_Population_A_ss,Target_Population_ss}Target_Population_A_ss&facet.field[]={!ex=Target_Population_A_ss,Target_Population_ss}Target_Population_ss&facet.field[]={!ex=Domin_ss}Domin_ss&q=*&start=0&group.ngroups=true&group.field=GroupFamilyName_s&facet.pivot={!ex=Target_Population_A_ss,Target_Population_ss}Target_Population_A_ss,Target_Population_ss&mm=50%&pf[]=FamilyName_t^30 Service_Purpose_t^22 Age_Minimum_i^10 Age_Maximum_i^10 Target_Population_A_t^14  Target_Population_t^14 Domin_t^8 Naming_Outputs_t^6&qf[]=FamilyName_t^15 Service_Purpose_t^11 Age_Minimum_i^5 Age_Maximum_i^5 Target_Population_A_t^7  Target_Population_t^7 Domin_t^4 Naming_Outputs_t^3 text^1&bq[]=(product_id_i:(498 OR 198 OR 484))^0.005&bq[]=(product_id_i:(612))^200&fq[]=distribution_channel_is:1&fq[]=-group_name_s:"כתובות"'
 # https://clickrevaha-sys.molsa.gov.il/api/solr?rows=1000'
