@@ -435,8 +435,8 @@ def updateServiceFromSourceData(taxonomies, stats: Stats):
 
             if national:
                 row['branches'].append(f'guidestar:{orgId}:national')
-            # if len(row['branches']) == 0:
-            #     continue
+            if len(row['branches']) == 0:
+                row['organizations'] = [orgId]
 
             when = data.pop('whenServiceActive')
             if when == 'All Year':
