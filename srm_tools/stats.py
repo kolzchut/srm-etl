@@ -8,6 +8,7 @@ class Stats():
 
     def __init__(self):
         self.load()
+        self.dirty = {}
 
     def load(self):
         self.data = DF.Flow(
