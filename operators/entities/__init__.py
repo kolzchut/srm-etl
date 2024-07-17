@@ -591,6 +591,7 @@ def operator(name, params, pipeline):
     fetchOrgData(ga, stats)
     fetchBranchData(ga, stats)
     fetchServiceData(ga, stats, taxonomy)
+    stats.save()
 
 
 if __name__ == '__main__':
