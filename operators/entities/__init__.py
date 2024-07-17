@@ -9,6 +9,7 @@ from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
 from openlocationcode import openlocationcode as olc
 
+from srm_tools.stats import Stats
 from srm_tools.update_table import airtable_updater
 from srm_tools.guidestar_api import GuidestarAPI
 from srm_tools.budgetkey import fetch_from_budgetkey
@@ -42,7 +43,7 @@ def fetchEntityFromBudgetKey(regNum):
         return rec
 
 
-def updateOrgFromSourceData(ga: GuidestarAPI):
+def updateOrgFromSourceData(ga: GuidestarAPI, stats: Stats):
     def func(rows):
         for row in rows:
             regNums = [row['id']]
@@ -80,8 +81,8 @@ def updateOrgFromSourceData(ga: GuidestarAPI):
                 data = fetchEntityFromBudgetKey(row['id'])
                 if data is not None:
                     row.update(data['data'])
-                # else:
-                #     print('NOT FOUND', regNums)
+                else:
+                    stats.increase('Entities: Unknown ID')
             yield row
     return func
 
@@ -95,13 +96,13 @@ def recent_org(row):
     return False
 
 
-def fetchOrgData(ga):
+def fetchOrgData(ga, stats: Stats):
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='orgs'),
         DF.filter_rows(lambda row: row.get('source') == 'entities'),
         DF.select_fields([AIRTABLE_ID_FIELD, 'id', 'kind']),
-        updateOrgFromSourceData(ga),
+        updateOrgFromSourceData(ga, stats),
         dump_to_airtable({
             (settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE): {
                 'resource-name': 'orgs',
@@ -111,7 +112,7 @@ def fetchOrgData(ga):
 
 
 ## BRANCHES
-def unwind_branches(ga:GuidestarAPI):
+def unwind_branches(ga:GuidestarAPI, stats: Stats):
     def func(rows: ResourceWrapper):
         if rows.res.name != 'orgs':
             yield from rows        
@@ -149,8 +150,10 @@ def unwind_branches(ga:GuidestarAPI):
                     yield ret
                 if not branches:
                     # print('FETCHING FROM GUIDESTAR', regNum)
+                    stats.increase('Entities: Org with no branches')
                     ret = list(ga.organizations(regNums=[regNum], cacheOnly=True))
                     if len(ret) > 0 and ret[0]['data'].get('fullAddress'):
+                        stats.increase('Entities: Org with no branches, used Guidestar official address')
                         data = ret[0]['data']
                         yield dict(
                             id='guidestar:' + regNum,
@@ -164,7 +167,7 @@ def unwind_branches(ga:GuidestarAPI):
                     else:
                         if ret:
                             if row['kind'] not in ('עמותה', 'חל"צ', 'הקדש'):
-                                print('FETCHING FROM BUDGETKEY', regNum, ret, row)
+                                stats.increase('Entities: Org with no branches, using org name as address')
                                 ret = dict()
                                 ret.update(row)
                                 name = row['name']
@@ -237,7 +240,7 @@ def updateBranchFromSourceData():
     return func
 
 
-def fetchBranchData(ga):
+def fetchBranchData(ga, stats: Stats):
     print('FETCHING ALL ORGANIZATION BRANCHES')
 
     DF.Flow(
@@ -254,7 +257,7 @@ def fetchBranchData(ga):
         ['name', 'organization', 'address', 'address_details', 'location', 'description', 'phone_numbers', 'urls', 'situations'],
         DF.Flow(
             DF.load('temp/entities-orgs/datapackage.json'),
-            unwind_branches(ga),
+            unwind_branches(ga, stats),
         ),
         updateBranchFromSourceData(),
         airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE,
@@ -263,7 +266,7 @@ def fetchBranchData(ga):
 
 
 ## SERVICES
-def unwind_services(ga: GuidestarAPI):
+def unwind_services(ga: GuidestarAPI, stats: Stats):
     def func(rows: ResourceWrapper):
         if rows.res.name != 'orgs':
             yield from rows        
@@ -284,8 +287,10 @@ def unwind_services(ga: GuidestarAPI):
                         print('GOT RELATED SERVICE', service['serviceId'])
                         service['relatedMalkarService'] = govServices.get(service['serviceId'])
                     if service.get('recordType') != 'GreenInfo':
+                        stats.increase('Guidestar: Non-GreenInfo Service')
                         continue
                     if not service.get('serviceName'):
+                        stats.increase('Guidestar: Service with no name')
                         continue
                     ret = dict()
                     ret.update(row)
@@ -304,7 +309,7 @@ def unwind_services(ga: GuidestarAPI):
     )
 
 
-def updateServiceFromSourceData(taxonomies):
+def updateServiceFromSourceData(taxonomies, stats: Stats):
     def update_from_taxonomy(names, responses, situations):
         for name in names:
             if name:
@@ -314,6 +319,7 @@ def updateServiceFromSourceData(taxonomies):
                     situations.update(mapping['situation_ids'] or [])
                 except KeyError:
                     print('WARNING: no mapping for {}'.format(name))
+                    stats.increase('Guidestar: Guidestar tag with no mapping')
                     taxonomies[name] = dict(response_ids=[], situation_ids=[])
                     DF.Flow(
                         [dict(name=name)],
@@ -517,7 +523,7 @@ def updateServiceFromSourceData(taxonomies):
     )
 
 
-def fetchServiceData(ga, taxonomy):
+def fetchServiceData(ga, stats: Stats, taxonomy):
     print('FETCHING ALL ORGANIZATION SERVICES')
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'guidestar',
@@ -528,11 +534,11 @@ def fetchServiceData(ga, taxonomy):
             DF.update_resource(-1, name='orgs'),
             DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
             DF.select_fields(['id', 'name', 'source'], resources='orgs'),
-            unwind_services(ga),
+            unwind_services(ga, stats),
             # DF.checkpoint('unwind_services'),
         ),
         DF.Flow(
-            updateServiceFromSourceData(taxonomy),
+            updateServiceFromSourceData(taxonomy, stats),
             # lambda rows: (r for r in rows if 'drop' in r), 
         ),
         airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
@@ -578,12 +584,13 @@ def operator(name, params, pipeline):
         (r.pop('id'), r) for r in soproc_mappings
     ))
 
+    stats = Stats()
     ga = GuidestarAPI()
     ga.fetchCaches()
     getGuidestarOrgs(ga)
-    fetchOrgData(ga)
-    fetchBranchData(ga)
-    fetchServiceData(ga, taxonomy)
+    fetchOrgData(ga, stats)
+    fetchBranchData(ga, stats)
+    fetchServiceData(ga, stats, taxonomy)
 
 
 if __name__ == '__main__':

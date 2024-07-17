@@ -4,6 +4,11 @@ import requests
 
 from srm_tools.logger import logger
 
+HEADERS = {
+    "User-Agent": "kz-data-reader",
+    # 'User-Agent': 'curl/8.4.0',
+    'Accept': '*/*'
+}
 
 def get_gov_api(url, skip):
     # Note: The gov API is buggy or just weird. It looks like you can set a high limit of items,
@@ -18,11 +23,7 @@ def get_gov_api(url, skip):
     # also, we get blocked sometimes, but it is not consistent - the retry logic is for that.
     timeout = 5
     wait_when_blocked = 180
-    headers = {
-        "User-Agent": "kz-data-reader",
-        # 'User-Agent': 'curl/8.4.0',
-        'Accept': '*/*'
-    }
+    headers = HEADERS
     retries = 5
     while retries:
         try:
