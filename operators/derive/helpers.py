@@ -86,8 +86,8 @@ def filter_dummy_data():
     return DF.filter_rows(lambda r: not any([r.get('id') == 'dummy', r.get('name') == 'dummy']))
 
 
-def filter_active_data(statName):
-    return get_stats().filter_with_stat(statName, lambda r: r.get('status') != 'INACTIVE')
+def filter_active_data(resource, statName):
+    return get_stats().filter_with_stat(statName, lambda r: r.get('status') != 'INACTIVE', resources=resource)
 
 
 def set_staging_pkey(resource_name):
@@ -122,7 +122,7 @@ def preprocess_responses(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Responses'], name='responses', path='responses.csv'),
         filter_dummy_data(),
-        filter_active_data('Processing: Responses: Inactive'),
+        filter_active_data('responses', 'Processing: Responses: Inactive'),
         set_staging_pkey('responses'),
         DF.set_type('synonyms', type='array', transform=lambda v: tuple(v.strip().split('\n')) if v else tuple(), resources=['responses']),
         DF.select_fields(select_fields, resources=['responses']) if select_fields else None,
@@ -134,7 +134,7 @@ def preprocess_situations(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Situations'], name='situations', path='situations.csv'),
         filter_dummy_data(),
-        filter_active_data('Processing: Situations: Inactive'),
+        filter_active_data('situations', 'Processing: Situations: Inactive'),
         set_staging_pkey('situations'),
         DF.set_type('synonyms', type='array', transform=lambda v: tuple(v.strip().split('\n')) if v else tuple(), resources=['situations']),
         DF.select_fields(select_fields, resources=['situations']) if select_fields else None,
@@ -146,7 +146,7 @@ def preprocess_services(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Services'], name='services', path='services.csv'),
         filter_dummy_data(),
-        filter_active_data('Processing: Services: Inactive'),
+        filter_active_data('services', 'Processing: Services: Inactive'),
         set_staging_pkey('services'),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['services']),
         DF.set_type('name', transform=lambda v, row: row['name_manual'] or v, resources=['services']),
@@ -175,7 +175,7 @@ def preprocess_organizations(select_fields=None, validate=False):
     return DF.Flow(
         DF.update_resource(['Organizations'], name='organizations', path='organizations.csv'),
         filter_dummy_data(),
-        filter_active_data('Processing: Organizations: Inactive'),
+        filter_active_data('organizations', 'Processing: Organizations: Inactive'),
         get_stats().filter_with_stat('Processing: Organizations: No Name', lambda r: bool(r.get('name')), resources=['organizations']),
         set_staging_pkey('organizations'),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['organizations']),
@@ -201,7 +201,7 @@ def preprocess_branches(validate=False):
     return DF.Flow(
         DF.update_resource(['Branches'], name='branches', path='branches.csv'),
         filter_dummy_data(),
-        filter_active_data('Processing: Branches: Inactive'),
+        filter_active_data('branches', 'Processing: Branches: Inactive'),
         set_staging_pkey('branches'),
         DF.select_fields(select_fields, resources=['branches']),
         DF.set_type('urls', type='array', transform=transform_urls, resources=['branches']),
