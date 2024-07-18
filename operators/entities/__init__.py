@@ -276,8 +276,8 @@ def unwind_services(ga: GuidestarAPI, stats: Stats):
                 regNum = row['id']
 
                 branches = ga.branches(regNum)
-                # if len(branches) == 0:
-                #     continue
+                if len(branches) == 0:
+                    continue
                 services = ga.services(regNum)
                 govServices = dict(
                     (s['relatedMalkarService'], s) for s in services if s.get('serviceGovName') is not None and s.get('relatedMalkarService') is not None
@@ -436,7 +436,8 @@ def updateServiceFromSourceData(taxonomies, stats: Stats):
             if national:
                 row['branches'].append(f'guidestar:{orgId}:national')
             if len(row['branches']) == 0:
-                row['organizations'] = [orgId]
+                stats.increase('Guidestar: Service with no branches')
+                continue
 
             when = data.pop('whenServiceActive')
             if when == 'All Year':
