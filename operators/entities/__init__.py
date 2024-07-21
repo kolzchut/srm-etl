@@ -186,7 +186,7 @@ def unwind_branches(ga:GuidestarAPI, nationals, stats: Stats):
                 if regNum in nationals:
                     national = {}
                     national.update(row)
-                    national['id'] = 'guidestar:' + regNum + ':national'
+                    national['id'] = 'national:' + regNum
                     national['data'] = {
                         'branchId': national['id'],
                         'organization': regNum,
@@ -430,7 +430,7 @@ def updateServiceFromSourceData(taxonomies, stats: Stats, nationals: set):
                 details.append('השירות ניתן ' + ''.join(areas))
 
             if national:
-                row['branches'].append(f'guidestar:{orgId}:national')
+                row['branches'].append(f'national:{orgId}')
                 nationals.add(orgId)
             if len(row['branches']) == 0:
                 stats.increase('Guidestar: Service with no branches')
