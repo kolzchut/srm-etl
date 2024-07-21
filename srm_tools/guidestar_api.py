@@ -139,6 +139,10 @@ class GuidestarAPI():
                 params['filter'] = f'serviceId>{minServiceId}'
             resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizationServices', params=params))
             for row in resp:
+                if row.get('recordType') != 'GreenInfo':
+                    continue
+                if not row.get('serviceName'):
+                    continue
                 regNum = row.pop('regNum')
                 rec = self.service_cache.get(regNum, default=[])
                 rec.append(row)
@@ -151,7 +155,11 @@ class GuidestarAPI():
                 assert minServiceId is None or newMin > minServiceId, '{!r} should be bigger than {!r}'.format(newMin, minServiceId)
                 minServiceId = newMin
             if count % 1000 == 0:
-                print(f'{count} services fetched')                
+                print(f'{count} services fetched')    
+        for regNum, services in self.service_cache.items():
+            if len(services) == 0:
+                self.org_cache.pop(regNum)
+                self.branch_cache.pop(regNum)
 
     def branches(self, regnum):
         # if regnum not in self.branch_cache:

@@ -288,12 +288,6 @@ def unwind_services(ga: GuidestarAPI, stats: Stats):
                     if service['serviceId'] in govServices:
                         print('GOT RELATED SERVICE', service['serviceId'])
                         service['relatedMalkarService'] = govServices.get(service['serviceId'])
-                    if service.get('recordType') != 'GreenInfo':
-                        stats.increase('Guidestar: Non-GreenInfo Service')
-                        continue
-                    if not service.get('serviceName'):
-                        stats.increase('Guidestar: Service with no name')
-                        continue
                     ret = dict()
                     ret.update(row)
                     ret['data'] = service
