@@ -29,7 +29,7 @@ DEPLOY_CONFIG = [
                'id', ['short_name', 'manual_short_name', 'situation_ids:situations']),
     # Home Page Layout
     DeploySpec(settings.AIRTABLE_HOMEPAGE_TABLE,
-               'id', ['group', 'title', 'situation_id:situation', 'response_id:response'], add_missing=True),
+               'id', ['group', 'title', 'group_link', 'situation_id:situation', 'response_id:response'], add_missing=True),
     # Service Manual Tagging
     # DeploySpec(settings.AIRTABLE_SERVICE_TABLE,
     #            'id', ['name_manual']),
