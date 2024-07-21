@@ -75,6 +75,7 @@ class GuidestarAPI():
         minRegNum = '0'
         done = False
         count = 0
+        usedIds = set()
         while not done:
             params = dict(
                 includingInactiveMalkars='false',
@@ -90,6 +91,8 @@ class GuidestarAPI():
                 self.branch_cache.set(regNum, [])
                 self.service_cache.set(regNum, [])
                 count += 1
+                assert regNum not in usedIds, f'{regNum} already used'
+                usedIds.add(regNum)
             if len(resp) == 0:
                 done = True
             else:
@@ -103,6 +106,7 @@ class GuidestarAPI():
         minBranchId = None
         done = False
         count = 0
+        usedIds = set()
         while not done:
             params = dict(
                 isDesc='false',
@@ -117,6 +121,8 @@ class GuidestarAPI():
                 rec.append(row)
                 self.branch_cache.set(regNum, rec)
                 count += 1
+                assert row['branchId'] not in usedIds, f'{row["branchId"]} already used'
+                usedIds.add(row['branchId'])
             if len(resp) == 0:
                 done = True
             else:
@@ -130,6 +136,7 @@ class GuidestarAPI():
         minServiceId = None
         done = False
         count = 0
+        usedIds = set()
         while not done:
             params = dict(
                 isDesc='false',
@@ -148,6 +155,8 @@ class GuidestarAPI():
                 rec.append(row)
                 self.service_cache.set(regNum, rec)
                 count += 1
+                assert row['serviceId'] not in usedIds, f'{row["serviceId"]} already used'
+                usedIds.add(row['serviceId'])
             if len(resp) == 0:
                 done = True
             else:
@@ -158,8 +167,8 @@ class GuidestarAPI():
                 print(f'{count} services fetched')    
         for regNum, services in self.service_cache.items():
             if len(services) == 0:
-                self.org_cache.pop(regNum)
-                self.branch_cache.pop(regNum)
+                self.org_cache.delete(regNum)
+                self.branch_cache.delete(regNum)
 
     def branches(self, regnum):
         # if regnum not in self.branch_cache:
