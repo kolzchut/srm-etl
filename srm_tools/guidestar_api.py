@@ -4,6 +4,7 @@ import time
 import requests
 from requests.api import head
 import kvfile
+import shutil
 
 from conf import settings
 
@@ -18,9 +19,10 @@ class GuidestarAPI():
     VERIFY_SSL = True
 
     def __init__(self):
-        self.org_cache = kvfile.KVFile(location='guidestar_org_cache')
-        self.branch_cache = kvfile.KVFile(location='guidestar_branch_cache')
-        self.service_cache = kvfile.KVFile(location='guidestar_service_cache')
+        shutil.rmtree('gacache', ignore_errors=True, onerror=None)
+        self.org_cache = kvfile.KVFile(location='gacache/guidestar_org_cache')
+        self.branch_cache = kvfile.KVFile(location='gacache/guidestar_branch_cache')
+        self.service_cache = kvfile.KVFile(location='gacache/guidestar_service_cache')
 
     def to_json(self, callable):
         resp = None
@@ -117,7 +119,7 @@ class GuidestarAPI():
             resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizationBranches', params=params))
             for row in resp:
                 regNum = row.pop('regNum')
-                rec = self.branch_cache.get(regNum, default=[])
+                rec = self.branch_cache.get(regNum, default=None) or list()
                 rec.append(row)
                 self.branch_cache.set(regNum, rec)
                 count += 1

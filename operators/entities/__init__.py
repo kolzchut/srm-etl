@@ -121,6 +121,8 @@ def unwind_branches(ga:GuidestarAPI, stats: Stats):
             for _, row in enumerate(rows):
                 regNum = row['id']
                 branches = ga.branches(regNum)
+                ids = [b['branchId'] for b in branches]
+                assert len(ids) == len(set(ids)), f'DUPDUP2 {row} {ids}'
                 for branch in branches:
                     ret = dict()
                     ret.update(row)
