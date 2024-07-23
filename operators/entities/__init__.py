@@ -426,10 +426,10 @@ def updateServiceFromSourceData(taxonomies, stats: Stats):
                 row['branches'].append(f'national:{orgId}')
                 national = {}
                 national.update(row)
-                national['id'] = 'national:' + regNum
+                national['id'] = 'national:' + orgId
                 national['data'] = {
                     'branchId': national['id'],
-                    'organization': regNum,
+                    'organization': orgId,
                     'name': row['name'],
                     'address': 'שירות ארצי',
                     'location': 'שירות ארצי',

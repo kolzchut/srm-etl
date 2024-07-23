@@ -20,6 +20,7 @@ class GuidestarAPI():
 
     def __init__(self):
         shutil.rmtree('gacache', ignore_errors=True, onerror=None)
+        os.mkdir('gacache')
         self.org_cache = kvfile.KVFile(location='gacache/guidestar_org_cache')
         self.branch_cache = kvfile.KVFile(location='gacache/guidestar_branch_cache')
         self.service_cache = kvfile.KVFile(location='gacache/guidestar_service_cache')
