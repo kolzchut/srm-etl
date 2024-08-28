@@ -96,6 +96,12 @@
             "display": "Scrape Tipat Halav",
             "dgp": false,
             "admin": true
+        },
+        {
+            "name": "tipat",
+            "display": "Scrape Gil Hazahav",
+            "dgp": false,
+            "admin": true
         }
     ],
     "theme": {
