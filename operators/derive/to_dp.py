@@ -709,7 +709,6 @@ def card_data_flow():
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/card_data'),
     )
 
-
 def operator(*_):
     logger.info('Starting Data Package Flow')
 
