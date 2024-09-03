@@ -583,7 +583,8 @@ def operator(name, params, pipeline):
         # DF.printer(),
         DF.select_fields(['name', 'Status', 'situation_ids', 'response_ids']),
     ).results()[0][0]
-    rejected_taxonomies = [x['name'] for x in taxonomy if x['Status'] == 'REJECTED']
+    rejected_taxonomies = [x['name'] for x in taxonomy if 'REJECTED' == x.get('Status')]
+    print('REJECTED TAXONOMIES', rejected_taxonomies)
     taxonomy = dict(
         (r.pop('name'), r) for r in taxonomy
         if r['name'] not in rejected_taxonomies
