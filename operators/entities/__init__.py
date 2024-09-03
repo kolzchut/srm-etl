@@ -297,7 +297,7 @@ def unwind_services(ga: GuidestarAPI, stats: Stats):
     )
 
 
-def updateServiceFromSourceData(taxonomies, stats: Stats):
+def updateServiceFromSourceData(taxonomies, rejected_taxonomies, stats: Stats):
     def update_from_taxonomy(names, responses, situations):
         for name in names:
             if name:
@@ -320,6 +320,12 @@ def updateServiceFromSourceData(taxonomies, stats: Stats):
                         }, settings.AIRTABLE_API_KEY),
                     ).process()
 
+    def rejected(names):
+        for name in names:
+            if name in rejected_taxonomies:
+                return True
+        return False
+    
     def func(rows):
         count = 0
         full_count = 0
@@ -351,12 +357,17 @@ def updateServiceFromSourceData(taxonomies, stats: Stats):
 
             relatedMalkarService = data.pop('relatedMalkarService') or {}
 
+            tags = []
             if 'serviceTypeNum' in data:
-                update_from_taxonomy([data.pop('serviceTypeNum')], responses, situations)
+                tags.append(data.pop('serviceTypeNum'))
             if 'serviceTypeName' in data:
-                update_from_taxonomy([data.pop('serviceTypeName')], responses, situations)
-            update_from_taxonomy((data.pop('serviceTargetAudience') or '').split(';'), responses, situations)
-            update_from_taxonomy(['soproc:' + relatedMalkarService.get('serviceGovId', '')], responses, situations)
+                tags.append(data.pop('serviceTypeName'))
+            tags.extend((data.pop('serviceTargetAudience') or '').split(';'))
+            tags.append('soproc:' + relatedMalkarService.get('serviceGovId', ''))
+            if rejected(tags):
+                stats.increase('Guidestar: Service with rejected tags')
+                continue
+            update_from_taxonomy(tags, responses, situations)
 
             payment_required = data.pop('paymentMethod')
             if payment_required in ('Free service', None):
@@ -524,7 +535,7 @@ def updateServiceFromSourceData(taxonomies, stats: Stats):
     )
 
 
-def fetchServiceData(ga, stats: Stats, taxonomy):
+def fetchServiceData(ga, stats: Stats, taxonomy, rejected_taxonomies):
     print('FETCHING ALL ORGANIZATION SERVICES')
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'guidestar',
@@ -539,7 +550,7 @@ def fetchServiceData(ga, stats: Stats, taxonomy):
             # DF.checkpoint('unwind_services'),
         ),
         DF.Flow(
-            updateServiceFromSourceData(taxonomy, stats),
+            updateServiceFromSourceData(taxonomy, rejected_taxonomies, stats),
             # lambda rows: (r for r in rows if 'drop' in r), 
         ),
         airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
@@ -570,10 +581,12 @@ def operator(name, params, pipeline):
     taxonomy = DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_GUIDESTAR_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         # DF.printer(),
-        DF.select_fields(['name', 'situation_ids', 'response_ids']),
+        DF.select_fields(['name', 'Status', 'situation_ids', 'response_ids']),
     ).results()[0][0]
+    rejected_taxonomies = [x['name'] for x in taxonomy if x['Status'] == 'REJECTED']
     taxonomy = dict(
         (r.pop('name'), r) for r in taxonomy
+        if r['name'] not in rejected_taxonomies
     )
 
     print('FETCHING SOPROC MAPPING')
@@ -591,7 +604,7 @@ def operator(name, params, pipeline):
     getGuidestarOrgs(ga)
     fetchOrgData(ga, stats)
     fetchBranchData(ga, stats)
-    fetchServiceData(ga, stats, taxonomy)
+    fetchServiceData(ga, stats, taxonomy, rejected_taxonomies)
     stats.save()
 
 
