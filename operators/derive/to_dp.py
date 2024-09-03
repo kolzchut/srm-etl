@@ -195,8 +195,11 @@ def flat_branches_flow(branch_mapping):
         DF.add_field(
             'organization_key',
             'string',
-            lambda r: r['organization'][0],
+            lambda r: (r.get('organization') or [None])[0],
             resources=['flat_branches'],
+        ),
+        helpers.get_stats().filter_with_stat('Processing: Branches: No Organization',
+            lambda r: r['organization_key'] is not None, resources=['flat_branches']
         ),
         DF.join(
             'organizations',
