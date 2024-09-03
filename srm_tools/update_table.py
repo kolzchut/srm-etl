@@ -42,8 +42,8 @@ def test_hash(table_fields):
                 count_existing += 1
                 new_h = hash_row(table_fields)(row)
                 if h != new_h:
-                    if count_different < 10:
-                        print('DIFFERENT\n', h, '\n', new_h)
+                    # if count_different < 10:
+                    #     print('DIFFERENT\n', h, '\n', new_h)
                     count_different += 1
                     yield row
             else:
