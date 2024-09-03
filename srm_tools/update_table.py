@@ -18,10 +18,11 @@ def airtable_updater(table, source_id, table_fields, fetch_data_flow, update_dat
         Needs to add a new resource with two fields - 'id' (unique row id) and 'data' (object with the newly fetched data).
     :param update_data_flow: Flow to use to map the 'data' field into the table standard fields.
     """
-    DF.Flow(
+    dp, stats = DF.Flow(
         airtable_updater_flow(table, source_id, table_fields, fetch_data_flow, update_data_flow, manage_status=manage_status, airtable_base=airtable_base),
-        DF.printer()
+        # DF.printer()
     ).process()
+    print(f'AIRTABLE UPDATER {table} ({source_id})', dp.descriptor)
 
 
 def hash_row(table_fields):

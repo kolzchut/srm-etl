@@ -524,7 +524,7 @@ class RSScoreCalc():
             DF.add_field('situation_count', 'object', lambda r: dict(situation_id=r['situation_id'], freq=r['frequency']), resources=['card_data']),
             DF.join_with_self('card_data', ['response_id'], dict(response_id=None, situations=dict(aggregate='array', name='situation_count'))),
             DF.select_fields(['response_id', 'situations']),
-            DF.printer()
+            # DF.printer()
         ).results()[0][0]
     
         self.scores = dict()
