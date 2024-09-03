@@ -305,7 +305,7 @@ def generate_offset(item_key, siblings_key):
 def most_common_category(row):
     response_categories = row['response_categories']
     if len(response_categories) == 0:
-        print('ERROR: no response categories', repr(row))
+        # print('ERROR: no response categories', repr(row))
         return None
     return Counter(response_categories).most_common(1)[0][0]
 
