@@ -33,6 +33,7 @@ SERVICE = {
         'data_sources': f'המידע התקבל מ<a target="_blank" href="{GZ_WEBSITE}" target="_blank">אתר משרד הבינוי והשיכון</a>',
         'responses': [
             'human_services:housing:residential_housing:long_term_housing',
+            'human_services:housing:residential_housing:long_term_housing:old_age_home'
         ],
         'situations': [
             'human_situations:age_group:seniors',
