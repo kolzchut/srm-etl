@@ -188,6 +188,17 @@ def unwind_branches(ga:GuidestarAPI, stats: Stats):
                                 ))
                                 yield ret
 
+                national = {}
+                national.update(row)
+                national['id'] = 'national:' + regNum
+                national['data'] = {
+                    'organization': [regNum],
+                    'name': (row.get('short_name') or row.get('name')) + ' - ארצי',
+                    'address': 'שירות ארצי',
+                    'location': 'שירות ארצי',
+                }
+                yield national
+
     return DF.Flow(
         DF.add_field('data', 'object', resources='orgs'),
         func,
@@ -322,7 +333,7 @@ def updateServiceFromSourceData(taxonomies, rejected_taxonomies, stats: Stats):
 
     def rejected(names):
         for name in names:
-            if name in rejected_taxonomies:
+            if str(name) in rejected_taxonomies:
                 return True
         return False
     
@@ -435,17 +446,6 @@ def updateServiceFromSourceData(taxonomies, rejected_taxonomies, stats: Stats):
 
             if national:
                 row['branches'].append(f'national:{orgId}')
-                national = {}
-                national.update(row)
-                national['id'] = 'national:' + orgId
-                national['data'] = {
-                    'branchId': national['id'],
-                    'organization': orgId,
-                    'name': row['name'],
-                    'address': 'שירות ארצי',
-                    'location': 'שירות ארצי',
-                }
-                yield national
             if len(row['branches']) == 0:
                 stats.increase('Guidestar: Service with no branches')
                 continue
