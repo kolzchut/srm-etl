@@ -193,7 +193,7 @@ def unwind_branches(ga:GuidestarAPI, stats: Stats):
                 national['id'] = 'national:' + regNum
                 national['data'] = {
                     'organization': [regNum],
-                    'name': (row.get('short_name') or row.get('name')) + ' - ארצי',
+                    'name': 'סניף ארצי',
                     'address': 'שירות ארצי',
                     'location': 'שירות ארצי',
                 }
