@@ -211,7 +211,7 @@ def mde_service_flow(data_sources, source_id):
     services = DF.Flow(
         DF.checkpoint(CHECKPOINT),
         DF.update_resource(-1, name='services'),
-        DF.select_fields(['Org Id', 'Branch Address', 'Branch Geocode', 'Data Source',
+        DF.select_fields(['Org Id', 'Org Name', 'Org Short Name', 'Branch Address', 'Branch Geocode', 'Data Source',
                           'Service Name', 'Service Description', 'Service Conditions', 'Service Phone Number', 'Service Email', 'Service Website',
                           'responses_ids', 'situations_ids', 'target_audiences', 'notes']),
         DF.rename_fields({
@@ -226,7 +226,8 @@ def mde_service_flow(data_sources, source_id):
             'Service Email': 'email_address',
             'Service Website': 'urls',
         }),
-        DF.add_field('branch_id', 'string', lambda r: mde_id(r['organization'], r.get('branch_address'), r.get('branch_geocode'))),
+        DF.add_field('operating_unit', 'string', lambda r: r.get('Org Short Name') or r.get('Org Name')),
+        DF.add_field('branch_id', 'string', lambda r: mde_id(r['organization'], r['operating_unit'], r.get('branch_address'), r.get('branch_geocode'))),
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
             description=r.get('description'),
