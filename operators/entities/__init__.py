@@ -517,16 +517,18 @@ def unwind_services(ga: GuidestarAPI, taxonomies, rejected_taxonomies, stats: St
                     ret['data']['organization_id'] = regNum
                     ret['data']['actual_branch_ids'] = [b['branchId'] for b in branches]
                     ret['id'] = 'guidestar:' + service['serviceId']
-                    count += 1
-                    if count % 1000 == 0:
-                        print('COLLECTED {} services'.format(count))
                     ret = process_service(ret, taxonomies, rejected_taxonomies, stats)
+                    for k in ['source', 'status']:
+                        ret.pop(k, None)
                     if ret:
+                        count += 1
+                        if count % 1000 == 0:
+                            print('COLLECTED {} services: {}'.format(count, ret))
                         yield ret
     return DF.Flow(
         DF.add_field('data', 'object', resources='orgs'),
         func,
-        DF.delete_fields(['source', 'status']),
+        DF.delete_fields(['source', 'status'], resources='orgs'),
     )
 
 
