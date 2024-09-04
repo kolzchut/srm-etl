@@ -332,6 +332,9 @@ def process_service(row, taxonomies, rejected_taxonomies, stats: Stats):
     if rejected(tags):
         stats.increase('Guidestar: Service with rejected tags')
         return None
+    if 'נדרש סיוע' in (data.get('serviceName') or ''):
+        stats.increase('Guidestar: Other "help needed" Service')
+        return None
     if data.get('serviceId') == 'a0y0800000N15xoAAB':
         print('GOT SERVICE', data)
         print('HAS TAGS', tags, rejected_taxonomies)
