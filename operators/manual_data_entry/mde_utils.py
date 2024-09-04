@@ -146,7 +146,7 @@ def mde_branch_flow(source_id):
         }),
         DF.add_field('operating_unit', 'string', lambda r: r.get('Org Short Name') or r.get('Org Name')),
         DF.delete_fields(['Org Name', 'Org Short Name']),
-        DF.add_field('id', 'string', lambda r: mde_id(r['organization'], r.get('address'), r.get('geocode'))),
+        DF.add_field('id', 'string', lambda r: mde_id(r['organization'], r['operating_unit'], r.get('address'), r.get('geocode'))),
         DF.join_with_self('branches', ['id'], dict(
             id=None, 
             name=None, 
