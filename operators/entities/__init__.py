@@ -518,9 +518,9 @@ def unwind_services(ga: GuidestarAPI, taxonomies, rejected_taxonomies, stats: St
                     ret['data']['actual_branch_ids'] = [b['branchId'] for b in branches]
                     ret['id'] = 'guidestar:' + service['serviceId']
                     ret = process_service(ret, taxonomies, rejected_taxonomies, stats)
-                    for k in ['source', 'status']:
-                        ret.pop(k, None)
                     if ret:
+                        for k in ['source', 'status']:
+                            ret.pop(k, None)
                         count += 1
                         if count % 1000 == 0:
                             print('COLLECTED {} services: {}'.format(count, ret))
