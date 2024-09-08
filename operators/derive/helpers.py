@@ -270,7 +270,7 @@ def preprocess_locations(validate=False):
 
 def point_offset_table():
     """Lookup table for positioning up to seven points."""
-    # https://github.com/whiletrue-industries/srm-etl/issues/8
+    # https://github.com/kolzchut/srm-etl/issues/8
     from math import cos, pi, sin
 
     diameters = [(d / 2 - 0.5) for d in [2, 2.15470, 2.41421, 2.70130, 3.00000]]
