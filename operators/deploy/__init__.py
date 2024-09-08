@@ -6,6 +6,8 @@ from dataflows_airtable import load_from_airtable, dump_to_airtable, AIRTABLE_ID
 
 from conf import settings
 from srm_tools.logger import logger
+from srm_tools.processors import update_mapper
+from srm_tools.update_table import airtable_updater
 
 @dataclass
 class DeploySpec:
@@ -28,8 +30,8 @@ DEPLOY_CONFIG = [
     DeploySpec(settings.AIRTABLE_ORGANIZATION_TABLE,
                'id', ['short_name', 'manual_short_name', 'situation_ids:situations']),
     # Home Page Layout
-    DeploySpec(settings.AIRTABLE_HOMEPAGE_TABLE,
-               'id', ['group', 'title', 'group_link', 'situation_id:situation', 'response_id:response'], add_missing=True),
+    # DeploySpec(settings.AIRTABLE_HOMEPAGE_TABLE,
+    #            'id', ['group', 'title', 'group_link', 'situation_id:situation', 'response_id:response'], add_missing=True),
     # Service Manual Tagging
     # DeploySpec(settings.AIRTABLE_SERVICE_TABLE,
     #            'id', ['name_manual']),
@@ -85,6 +87,23 @@ def operator(*_):
             }, settings.AIRTABLE_API_KEY)
         ).process()
 
+    airtable_updater(
+        settings.AIRTABLE_HOMEPAGE_TABLE, 'homepage',
+        ['group', 'title', 'group_link', 'situation', 'response'],
+        DF.Flow(
+            load_from_airtable(settings.AIRTABLE_ALTERNATE_BASE, settings.AIRTABLE_HOMEPAGE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            DF.rename_fields({'situation_id': 'situation', 'response_id': 'response'}),
+            DF.add_field('data', 'object', default=lambda row: dict(
+                group=row.get('group'),
+                title=row.get('title'),
+                group_link=row.get('group_link'),
+                situation=row.get('situation'),
+                response=row.get('response'),
+            ), resources=-1),
+            DF.select_fields(['id', 'data'], resources=-1),
+        ),
+        update_mapper()
+    )
     logger.info('Deploy done')
 
 if __name__ == '__main__':
