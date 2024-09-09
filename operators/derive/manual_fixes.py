@@ -74,7 +74,7 @@ class ManualFixes():
                         fixed_value = self.situation_ids(fixed_value)
                         actual_value = sorted(actual_value or [])
 
-                    if actual_value == current_value:
+                    if actual_value == current_value or current_value == '*':
                         row[field] = fixed_value
                         print('FIXED!', fix_id, field, str(actual_value)[:100], '->', str(fixed_value)[:100])
                         # if extra_field is not None:
