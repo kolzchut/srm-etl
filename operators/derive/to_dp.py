@@ -695,8 +695,13 @@ def card_data_flow():
             ])}
         ),
         DF.add_field(
-            'organization_resolved_name', 'string', lambda row: row.get('branch_operating_unit') or row.get('organization_short_name') or row.get('organization_name'),
-        ),
+            'organization_resolved_name',
+            'array',
+            lambda row: list(filter(None, 
+                    [row.get('branch_operating_unit')]
+                    if row.get('branch_operating_unit') else 
+                    [row.get('organization_short_name'), row.get('organization_name')]
+            )), **{'es:itemType': 'string'}),
         DF.set_type('card_id', **{'es:keyword': True}),
         DF.set_type('branch_id', **{'es:keyword': True}),
         DF.set_type('service_id', **{'es:keyword': True}),
