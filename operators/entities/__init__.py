@@ -55,7 +55,7 @@ def updateOrgFromSourceData(ga: GuidestarAPI, stats: Stats):
             for data in ga.organizations(regNums=regNums, cacheOnly=True):
                 try:
                     data = data['data']
-                    row['name'] = data['name'].replace(' (חל"צ)', '').replace(' (ע"ר)', '')
+                    row['name'] = data['name']
                     row['short_name'] = data.get('abbreviatedOrgName')
                     row['kind'] = data['malkarType']
                     row['description'] = None
@@ -83,6 +83,8 @@ def updateOrgFromSourceData(ga: GuidestarAPI, stats: Stats):
                     row.update(data['data'])
                 else:
                     stats.increase('Entities: Unknown ID')
+            if 'name' in row:
+                row['name'] = row['name'].replace(' (חל"צ)', '').replace(' (ע"ר)', '')
             yield row
     return func
 
