@@ -640,7 +640,7 @@ def card_data_flow():
         DF.add_field(
             'response_categories',
             'array',
-            lambda r: [rr['id'].split(':')[1] for rr in r['responses'] if 'internal' not in rr['id']],
+            lambda r: [rr['id'].split(':')[1] for rr in r['responses']],
             **{'es:itemType': 'string', 'es:keyword': True},
             resources=['card_data'],
         ),
