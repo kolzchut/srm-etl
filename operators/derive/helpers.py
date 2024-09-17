@@ -8,8 +8,8 @@ import regex
 from srm_tools.stats import Stats
 
 ACCURATE_TYPES = ('ROOFTOP', 'RANGE_INTERPOLATED', 'STREET_MID_POINT', 'ADDR_V1', 'ADDRESS_POINT', 'ADDRESS') #'POI_MID_POINT')
-DIGIT = re.compile('\d')
-ENGLISH = re.compile('[a-zA-Z+]')
+DIGIT = re.compile(r'\d')
+ENGLISH = re.compile(r'[a-zA-Z+]')
 
 __stats: Stats = None
 
@@ -324,7 +324,7 @@ def address_parts(row):
         )
     address = (resolved_address if accurate else orig_address) or orig_address
     city: str = row['branch_city'].replace('-', ' ')
-    cc = regex.compile('\m(%s){e<2}' % city)
+    cc = regex.compile(r'\m(%s){e<2}' % city)
     m = cc.search(address.replace('-', ' '))
     if m:
         prefix = address[:m.start()].strip(' -,\n\t')
@@ -358,7 +358,7 @@ def org_name_parts(row):
         short_name = short_name.split('(')[0]
         short_name = short_name.replace(')', '').strip()
         if short_name:
-            cc = regex.compile('\m(%s){e<2}' % short_name)
+            cc = regex.compile(r'\m(%s){e<2}' % short_name)
             m = cc.search(name)
     if m:
         prefix = name[: m.start()].strip(' -,\n\t')

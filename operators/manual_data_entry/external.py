@@ -14,7 +14,7 @@ CHECKPOINT = 'external-mde'
 def filter_ready_to_publish(stats: Stats):
     def func(rows):
         for row in rows:
-            if row.get('Status') == 'בייצור':
+            if row.get('סטטוס') == 'מוכן לפרסום':
                 yield row
             else:
                 stats.increase('External Manual Data: Entry not ready to publish')

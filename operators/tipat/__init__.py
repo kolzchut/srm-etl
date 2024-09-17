@@ -179,7 +179,7 @@ def get_tipat_data():
 
 
 def operator(*_):
-    logger.info('Starting Shil Flow')
+    logger.info('Starting Tipat Halav Flow')
 
     shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
 
@@ -187,7 +187,7 @@ def operator(*_):
     DATA = get_tipat_data()
     tipat_branch_data_flow(DATA)
 
-    logger.info('Finished Shil Flow')
+    logger.info('Finished Tipat Halav Flow')
 
 
 if __name__ == '__main__':
