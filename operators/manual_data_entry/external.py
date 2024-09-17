@@ -60,7 +60,7 @@ def fetch_google_spreadsheet(stats):
                         emit['Org Website'] = service['אתר אינטרנט']
                     else:
                         emit['Org Name'] = row['Org Name']
-                        emit['Org Short Name'] = row['Org Short Name']
+                        emit['Org Short Name'] = row.get('Org Short Name')
                         emit['Org Id'] = row['Org Id']
                         emit['Org Phone Number'] = row.get('Org Phone Number')
                         emit['Org Email'] = row.get('Org Email')
