@@ -19,12 +19,18 @@ TABLES_TO_BACK_UP = [
 ]
 
 def backup():
-    DF.Flow(
-        *[
+    for b, t in TABLES_TO_BACK_UP:
+        DF.Flow(
             load_from_airtable(
                 b, t, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY
-            )
-            for b, t in TABLES_TO_BACK_UP
+            ),
+            DF.dump_to_path(f'backup/{t}')
+        ).process()
+
+    DF.Flow(
+        *[
+            DF.load(f'backup/{t}/datapackage.json'),
+            for _, t in TABLES_TO_BACK_UP
         ],
         DF.validate(),
         DF.update_package(title='Manual Input Backup', name='backup'),
@@ -32,9 +38,8 @@ def backup():
             settings.CKAN_HOST,
             settings.CKAN_API_KEY,
             settings.CKAN_OWNER_ORG,
-        ),            
+        ),
     ).process()
-
 
 def operator(*_):
     backup()
