@@ -29,7 +29,7 @@ def backup():
 
     DF.Flow(
         *[
-            DF.load(f'backup/{t}/datapackage.json'),
+            DF.load(f'backup/{t}/datapackage.json')
             for _, t in TABLES_TO_BACK_UP
         ],
         DF.validate(),
