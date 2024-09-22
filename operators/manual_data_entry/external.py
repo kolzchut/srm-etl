@@ -35,7 +35,7 @@ def fetch_google_spreadsheet(stats):
                 for service in services:
                     emit = dict()
                     emit['Status'] = 'בייצור'
-                    emit['Branch Address'] = service['כתובת או שם ישוב בו מסופק השירות'] or row['Branch Address']
+                    emit['Branch Address'] = service['כתובת או שם ישוב בו מסופק השירות'] or row.get('Branch Address')
                     emit['Branch Details'] = None
                     emit['Branch Geocode'] = None
                     emit['Branch Email'] = None

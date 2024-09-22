@@ -26,15 +26,6 @@ DEPLOY_CONFIG = [
                'id', ['synonyms'], add_missing=True),
     DeploySpec(settings.AIRTABLE_RESPONSE_TABLE,
                'id', ['synonyms'], add_missing=True),
-    # Organization Short Names and Situations
-    DeploySpec(settings.AIRTABLE_ORGANIZATION_TABLE,
-               'id', ['short_name', 'manual_short_name', 'situation_ids:situations']),
-    # Home Page Layout
-    # DeploySpec(settings.AIRTABLE_HOMEPAGE_TABLE,
-    #            'id', ['group', 'title', 'group_link', 'situation_id:situation', 'response_id:response'], add_missing=True),
-    # Service Manual Tagging
-    # DeploySpec(settings.AIRTABLE_SERVICE_TABLE,
-    #            'id', ['name_manual']),
     # Manual Location Geo-Tagging
     DeploySpec(settings.AIRTABLE_LOCATION_TABLE,
                'id', ['status', 'provider', 'accuracy',
