@@ -24,6 +24,7 @@ def backup():
             load_from_airtable(
                 b, t, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY
             ),
+            DF.validate(),
             DF.dump_to_path(f'backup/{t}')
         ).process()
 
@@ -32,7 +33,6 @@ def backup():
             DF.load(f'backup/{t}/datapackage.json')
             for _, t in TABLES_TO_BACK_UP
         ],
-        DF.validate(),
         DF.update_package(title='Manual Input Backup', name='backup'),
         dump_to_ckan(
             settings.CKAN_HOST,
