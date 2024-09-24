@@ -32,15 +32,17 @@ class ManualFixes():
 
     def response_ids(self, slugs):
         slugs = slugs or ''
-        slugs = [s.strip() for s in slugs.split(',')]
-        self.responses = self.fetch_aux_table(self.responses, settings.AIRTABLE_RESPONSE_TABLE)
-        return sorted(self.responses[k][AIRTABLE_ID_FIELD] for k in slugs if k in self.responses)
+        return sorted(set(s.strip() for s in slugs.split(',')))
+        # slugs = [s.strip() for s in slugs.split(',')]
+        # self.responses = self.fetch_aux_table(self.responses, settings.AIRTABLE_RESPONSE_TABLE)
+        # return sorted(self.responses[k][AIRTABLE_ID_FIELD] for k in slugs if k in self.responses)
 
     def situation_ids(self, slugs):
         slugs = slugs or ''
-        slugs = [s.strip() for s in slugs.split(',')]
-        self.situations = self.fetch_aux_table(self.situations, settings.AIRTABLE_SITUATION_TABLE)
-        return sorted(self.situations[k][AIRTABLE_ID_FIELD] for k in slugs if k in self.situations)
+        return sorted(set(s.strip() for s in slugs.split(',')))
+        # slugs = [s.strip() for s in slugs.split(',')]
+        # self.situations = self.fetch_aux_table(self.situations, settings.AIRTABLE_SITUATION_TABLE)
+        # return sorted(self.situations[k][AIRTABLE_ID_FIELD] for k in slugs if k in self.situations)
 
     def apply_manual_fixes(self):
         def func(row):
@@ -62,17 +64,17 @@ class ManualFixes():
                     extra_field = None
                     extra_value = None
                     if field == 'responses':
-                        current_value = self.response_ids(current_value)
+                        # current_value = self.response_ids(current_value)
                         # extra_field = 'response_ids'
                         # extra_value = [x.strip() for x in fixed_value.split(',')]
                         fixed_value = self.response_ids(fixed_value)
-                        actual_value = sorted(actual_value or [])
+                        actual_value = ','.join(sorted(actual_value or []))
                     elif field == 'situations':
                         current_value = self.situation_ids(current_value)
                         # extra_field = 'situation_ids'
                         # extra_value = [x.strip() for x in fixed_value.split(',')]
                         fixed_value = self.situation_ids(fixed_value)
-                        actual_value = sorted(actual_value or [])
+                        actual_value = ','.join(sorted(actual_value or []))
 
                     if actual_value == current_value or current_value == '*':
                         row[field] = fixed_value
