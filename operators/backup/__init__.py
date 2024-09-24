@@ -25,6 +25,7 @@ def backup():
                 b, t, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY
             ),
             DF.validate(),
+            DF.update_resource(-1, path=f'{t}.csv'),
             DF.dump_to_path(f'backup/{t}')
         ).process()
 
