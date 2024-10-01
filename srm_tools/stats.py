@@ -96,6 +96,8 @@ class Stats():
                             report.add(row)
                         count += 1
             self.set_stat(stat, count)
+            if report:
+                report.save()
 
         def func(package: DF.PackageWrapper):
             matcher = ResourceMatcher(resources, package.pkg)
