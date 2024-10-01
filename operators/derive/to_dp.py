@@ -450,7 +450,6 @@ def flat_table_flow():
             ),
             mode='inner'
         ),
-        helpers.get_stats().filter_with_stat('Processing: Cards: No Responses', lambda r: bool(r['service_responses']), resources=['flat_table']),
         DF.add_field(
             'branch_short_name', 'string', helpers.calculate_branch_short_name, resources=['flat_table']
         ),
@@ -601,6 +600,13 @@ def card_data_flow():
             return list(set(map(lambda x: taxonomy[x]['id'], filter(lambda y: y in taxonomy, ids))))
         return func
 
+    no_responses_report = Report(
+        'Processing: Cards: No Responses Report',
+        'cards-no-responses',
+        ['service_id', 'service_name', 'branch_id', 'branch_name', 'organization_id', 'organization_name'],
+        ['service_id', 'branch_id', 'organization_id']
+    )
+
     DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/flat_table/datapackage.json'),
         DF.update_package(name='Card Data'),
@@ -618,6 +624,12 @@ def card_data_flow():
         DF.add_field('response_ids', 'array', merge_array_fields(['service_responses']), resources=['card_data']),
         DF.set_type('response_ids', transform=map_taxonomy(responses), resources=['card_data']),
         apply_auto_tagging(),
+        helpers.get_stats().filter_with_stat(
+            'Processing: Cards: No Responses',
+            lambda r: bool(r['service_responses']),
+            resources=['flat_table'],
+            report=no_responses_report
+        ),
         DF.checkpoint(CHECKPOINT),
     ).process()
 
@@ -626,7 +638,7 @@ def card_data_flow():
     invalid_location_report = Report(
         'Processing: Cards: Invalid Location Report',
         'cards-invalid-location',
-        ['branch_id', 'organization_id', 'organization_name', 'branch_address', 'branch_geometry'],
+        ['organization_id', 'organization_name', 'branch_address', 'branch_id'],
         ['branch_id']
     )
 
