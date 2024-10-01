@@ -20,7 +20,7 @@ class Report():
         if key in self.added:
             return
         self.added.add(key)
-        self.records.append([rec.get(f) for f in self.fields])
+        self.records.append(dict((f, rec.get(f)) for f in self.fields))
 
     def save(self):
         DF.Flow(
