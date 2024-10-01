@@ -7,6 +7,7 @@ from dataflows_airtable import load_from_airtable
 from thefuzz import fuzz
 
 from conf import settings
+from srm_tools.stats import Report
 from .autocomplete import IGNORE_SITUATIONS
 from srm_tools.logger import logger
 from srm_tools.unwind import unwind
@@ -622,6 +623,13 @@ def card_data_flow():
 
     rs_score = RSScoreCalc()
 
+    invalid_location_report = Report(
+        'Processing: Cards: Invalid Location Report',
+        'cards-invalid-location',
+        ['branch_id', 'organization_id', 'organization_name', 'branch_address', 'branch_geometry'],
+        ['branch_id']
+    )
+
     return DF.Flow(
         DF.checkpoint(CHECKPOINT),
         DF.add_field('situations', 'array', lambda r: [situations[s] for s in r['situation_ids']], resources=['card_data']),
@@ -653,7 +661,12 @@ def card_data_flow():
         ),
         helpers.get_stats().filter_with_stat('Processing: Cards: No Response Category', lambda r: r['response_category'], resources=['card_data']),
         DF.set_type('responses', transform=lambda v, row: helpers.reorder_responses_by_category(v, row['response_category'])),
-        helpers.get_stats().filter_with_stat('Processing: Cards: Invalid Location',lambda r: helpers.validate_geometry(r['branch_geometry']) or r['national_service'], resources=['card_data']),
+        helpers.get_stats().filter_with_stat(
+            'Processing: Cards: Invalid Location',
+            lambda r: helpers.validate_geometry(r['branch_geometry']) or r['national_service'],
+            resources=['card_data'],
+            report=invalid_location_report
+        ),
         DF.add_field('possible_autocomplete', 'array', default=possible_autocomplete, resources=['card_data'], **{'es:itemType': 'string', 'es:keyword': True}),
         DF.add_field(
             'point_id', 'string',
