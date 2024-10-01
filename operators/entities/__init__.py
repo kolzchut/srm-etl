@@ -9,7 +9,7 @@ from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
 from openlocationcode import openlocationcode as olc
 
-from srm_tools.stats import Stats
+from srm_tools.stats import Report, Stats
 from srm_tools.update_table import airtable_updater
 from srm_tools.guidestar_api import GuidestarAPI
 from srm_tools.budgetkey import fetch_from_budgetkey
@@ -44,6 +44,14 @@ def fetchEntityFromBudgetKey(regNum):
 
 
 def updateOrgFromSourceData(ga: GuidestarAPI, stats: Stats):
+
+    unknown_entity_ids = Report(
+        'Entities: Unknown ID Report',
+        'entities-unknown-id-report',
+        ['id', 'kind'],
+        ['id']
+    )
+
     def func(rows):
         for row in rows:
             regNums = [row['id']]
@@ -83,9 +91,11 @@ def updateOrgFromSourceData(ga: GuidestarAPI, stats: Stats):
                     row.update(data['data'])
                 else:
                     stats.increase('Entities: Unknown ID')
+                    unknown_entity_ids.add(row)
             if 'name' in row:
                 row['name'] = row['name'].replace(' (חל"צ)', '').replace(' (ע"ר)', '')
             yield row
+        unknown_entity_ids.save()
     return func
 
 def recent_org(row):
