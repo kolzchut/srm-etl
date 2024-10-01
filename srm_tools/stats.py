@@ -24,7 +24,7 @@ class Report():
 
     def save(self):
         DF.Flow(
-            [self.records],
+            self.records,
             DF.update_package(title=self.name, name=self.slug),
             DF.update_resource(-1, name='report', path='report.csv'),
             dump_to_ckan(
