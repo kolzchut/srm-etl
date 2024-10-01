@@ -626,8 +626,8 @@ def card_data_flow():
         apply_auto_tagging(),
         helpers.get_stats().filter_with_stat(
             'Processing: Cards: No Responses',
-            lambda r: bool(r['service_responses']),
-            resources=['flat_table'],
+            lambda r: bool(r['response_ids']),
+            resources=['card_data'],
             report=no_responses_report
         ),
         DF.checkpoint(CHECKPOINT),
