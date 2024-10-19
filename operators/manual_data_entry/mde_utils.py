@@ -156,7 +156,7 @@ def mde_branch_flow(source_id, branch_ids):
         DF.add_field('_id', 'string', lambda r: mde_branch_id(r)),
         DF.join_with_self('branches', ['_id'], dict(
             _id=None,
-            id=dict(name='row_id', aggregate='min'),
+            id=dict(name='_row_id', aggregate='min'),
             name=None, 
             operating_unit=None,
             address=None,
