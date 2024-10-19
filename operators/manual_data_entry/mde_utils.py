@@ -107,8 +107,8 @@ def mde_organization_flow():
 def mde_id(*args):
     return 'mde:' + hasher(*map(str, args))
 
-def mde_branch_id(row):
-    return mde_id(row['organization'], row['operating_unit'], row.get('address'), row.get('geocode'))
+def mde_branch_id(row, prefix=''):
+    return mde_id(row['organization'], row['operating_unit'], row.get(prefix + 'address'), row.get(prefix + 'geocode'))
 
 def branch_updater():
     def func(row):
@@ -236,7 +236,7 @@ def mde_service_flow(data_sources, source_id, branch_ids):
             'Service Website': 'urls',
         }),
         DF.add_field('operating_unit', 'string', lambda r: r.get('Org Short Name') or r.get('Org Name')),
-        DF.add_field('branch_id', 'string', lambda r: branch_ids[mde_branch_id(r)]),
+        DF.add_field('branch_id', 'string', lambda r: branch_ids[mde_branch_id(r, prefix='branch_')]),
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
             description=r.get('description'),
