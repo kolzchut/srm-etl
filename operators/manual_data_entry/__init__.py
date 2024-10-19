@@ -24,6 +24,7 @@ def mde_prepare():
         DF.filter_rows(lambda r: r.get('Org Id') != 'dummy'),
         stats.filter_with_stat('Manual Data Entry: Entry not ready to publish', lambda r: r.get('Status') == 'בייצור'),
         stats.filter_with_stat('Manual Data Entry: No Org ID or Org Name', lambda r: (r.get('Org Id') or r.get('Org Name')), report=unknown_entity_ids),
+        DF.add_field('_row_id', 'string', lambda r: r[AIRTABLE_ID_FIELD]),
     )
 
     data_sources = DF.Flow(

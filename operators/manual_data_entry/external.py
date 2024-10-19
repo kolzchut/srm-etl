@@ -32,8 +32,9 @@ def fetch_google_spreadsheet(stats):
                     filter_ready_to_publish(stats),
                     # DF.printer(),
                 ).results()[0][0]
-                for service in services:
+                for i, service in enumerate(services):
                     emit = dict()
+                    emit['_row_id'] = f'{URL}#{i}'
                     emit['Status'] = 'בייצור'
                     emit['Branch Address'] = service['כתובת או שם ישוב בו מסופק השירות'] or row.get('Branch Address')
                     emit['Branch Details'] = None
@@ -103,6 +104,7 @@ def fetch_google_spreadsheet(stats):
         DF.add_field('taxonomies', 'array'),
         DF.add_field('target_audiences', 'string'),
         DF.add_field('notes', 'string'),
+        DF.add_field('_row_id', 'string'),
         func
     )
 

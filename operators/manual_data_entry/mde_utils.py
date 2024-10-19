@@ -107,6 +107,9 @@ def mde_organization_flow():
 def mde_id(*args):
     return 'mde:' + hasher(*map(str, args))
 
+def mde_branch_id(row):
+    return mde_id(row['organization'], row['operating_unit'], row.get('address'), row.get('geocode'))
+
 def branch_updater():
     def func(row):
         if not row.get('data'):
@@ -129,12 +132,16 @@ def branch_updater():
     return func
 
 
-def mde_branch_flow(source_id):
+def mde_branch_flow(source_id, branch_ids):
+
+    def update_branch_ids(row):
+        branch_ids[row['_id']] = row['id']
+
     branches = DF.Flow(
         DF.checkpoint(CHECKPOINT),
         DF.update_resource(-1, name='branches'),
         DF.select_fields(['Org Id', 'Org Name', 'Org Short Name', 'Branch Details', 'Branch Address', 'Branch Geocode', 
-                          'Branch Phone Number', 'Branch Email', 'Branch Website']),
+                          'Branch Phone Number', 'Branch Email', 'Branch Website', '_row_id']),
         DF.rename_fields({
             'Org Id': 'organization',
             'Branch Details': 'name',
@@ -146,9 +153,10 @@ def mde_branch_flow(source_id):
         }),
         DF.add_field('operating_unit', 'string', lambda r: r.get('Org Short Name') or r.get('Org Name')),
         DF.delete_fields(['Org Name', 'Org Short Name']),
-        DF.add_field('id', 'string', lambda r: mde_id(r['organization'], r['operating_unit'], r.get('address'), r.get('geocode'))),
-        DF.join_with_self('branches', ['id'], dict(
-            id=None, 
+        DF.add_field('_id', 'string', lambda r: mde_branch_id(r)),
+        DF.join_with_self('branches', ['_id'], dict(
+            _id=None,
+            id=dict(name='row_id', aggregate='min'),
             name=None, 
             operating_unit=None,
             address=None,
@@ -158,6 +166,7 @@ def mde_branch_flow(source_id):
             urls=None,
             organization=None,
         )),
+        update_branch_ids,
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
             operating_unit=r['operating_unit'],
@@ -201,7 +210,7 @@ def service_updater(data_sources):
 
     return func
 
-def mde_service_flow(data_sources, source_id):
+def mde_service_flow(data_sources, source_id, branch_ids):
 
     # data_sources = DF.Flow(
     #     load_from_airtable(settings.AIRTABLE_DATAENTRY_BASE, 'DataReferences', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
@@ -213,7 +222,7 @@ def mde_service_flow(data_sources, source_id):
         DF.update_resource(-1, name='services'),
         DF.select_fields(['Org Id', 'Org Name', 'Org Short Name', 'Branch Address', 'Branch Geocode', 'Data Source',
                           'Service Name', 'Service Description', 'Service Conditions', 'Service Phone Number', 'Service Email', 'Service Website',
-                          'responses_ids', 'situations_ids', 'target_audiences', 'notes']),
+                          'responses_ids', 'situations_ids', 'target_audiences', 'notes', '_row_id']),
         DF.rename_fields({
             'Org Id': 'organization',
             'Data Source': 'data_source',
@@ -227,7 +236,7 @@ def mde_service_flow(data_sources, source_id):
             'Service Website': 'urls',
         }),
         DF.add_field('operating_unit', 'string', lambda r: r.get('Org Short Name') or r.get('Org Name')),
-        DF.add_field('branch_id', 'string', lambda r: mde_id(r['organization'], r['operating_unit'], r.get('branch_address'), r.get('branch_geocode'))),
+        DF.add_field('branch_id', 'string', lambda r: branch_ids[mde_branch_id(r)]),
         DF.add_field('data', 'object', lambda r: dict(
             name=r['name'],
             description=r.get('description'),
@@ -243,7 +252,7 @@ def mde_service_flow(data_sources, source_id):
             notes=r.get('notes'),
         )),
         handle_no_taxonomies(),
-        DF.add_field('id', 'string', lambda r: mde_id(r['branch_id'], r['name'])),
+        DF.add_field('id', 'string', lambda r: mde_id(r['branch_id'], r['_row_id'])),
         DF.select_fields(['id', 'data']),
     ).results()[0][0]
 
@@ -267,6 +276,7 @@ def load_manual_data(source_flow, data_sources, source_id='manual-data-entry'):
     ).process()
 
     mde_organization_flow()
-    mde_branch_flow(source_id)
-    mde_service_flow(data_sources, source_id)
+    branch_ids = {}
+    mde_branch_flow(source_id, branch_ids)
+    mde_service_flow(data_sources, source_id, branch_ids)
 
