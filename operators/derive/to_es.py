@@ -20,20 +20,26 @@ CHECKPOINT = 'to_es'
 def card_score(row):
     branch_count = row['organization_branch_count'] or 1
     national_service = bool(row['national_service'])
+    is_meser = row['service_id'].startswith('meser-')
+    has_description = row['service_description'] and len(row['service_description']) > 5
+    score = 1
+    if not is_meser:
+        score *= 10
+    if has_description:
+        score *= 10
     if national_service:
-        score = 10
+        score *= 10
         phone_numbers = list(filter(None, (row['service_phone_numbers'] or []) + (row['organization_phone_numbers'] or [])))
         if phone_numbers:
             phone_number = phone_numbers[0]
             if len(phone_number) <= 5 or phone_number.startswith('1'):
-                score = 50
+                score *= 5
     else:
-        score = 1
         if branch_count > 100:
-            score += branch_count / 10
+            score *= branch_count / 10
         else:
-            score += branch_count**0.5
-    response_ids = row['response_ids'] or []
+            score *= branch_count**0.5
+    # response_ids = row['response_ids'] or []
     # if 'human_services:internal_emergency_services' in response_ids:
     #     score *= 10
     organization_kind = row['organization_kind']
