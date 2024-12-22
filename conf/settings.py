@@ -64,7 +64,7 @@ MAPBOX_TILESET_INACCURATE_NAME = get_env('ETL_MAPBOX_TILESET_INACCURATE_NAME', '
 GOOGLE_MAPS_API_KEY = get_env('ETL_GOOGLE_MAPS_API_KEY')
 
 OPENELIGIBILITY_YAML_URL = (
-    'https://raw.githubusercontent.com/hasadna/openeligibility/main/taxonomy.tx.yaml'
+    'https://raw.githubusercontent.com/kolzchut/openeligibility/main/taxonomy.tx.yaml'
 )
 
 BUDGETKEY_DATABASE_URL = 'postgresql://readonly:readonly@data-next.obudget.org/budgetkey'
