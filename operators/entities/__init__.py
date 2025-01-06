@@ -157,7 +157,9 @@ def unwind_branches(ga:GuidestarAPI, stats: Stats):
                     data['organization'] = [regNum]
                     if branch.get('language'):
                         data['situations'] = [
-                            'human_situations:language:{}_speaking'.format(l.lower().strip()) for l in branch['language'].split(';')
+                            'human_situations:language:{}_speaking'.format(l.lower().strip())
+                            for l in branch['language'].split(';')
+                            if l != 'other'
                         ]
 
                     ret['data'] = data
