@@ -46,7 +46,7 @@ def operator(*_):
 
     tags = DF.Flow(
         load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-        DF.filter_rows(lambda r: r['tag'] != 'dummy'),
+        DF.filter_rows(lambda r: r.get('tag') not in (None, 'dummy')),
         DF.select_fields(['tag', 'response_ids', 'situation_ids']),
     ).results()[0][0]
     tags = {r.pop('tag'): r for r in tags}
