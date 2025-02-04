@@ -2,6 +2,7 @@ import dataflows as DF
 
 from dataflows_airtable import load_from_airtable
 from dataflows_ckan import dump_to_ckan
+from srm_tools.error_notifier import invoke_on
 
 from conf import settings
 
@@ -42,8 +43,5 @@ def backup():
         ),
     ).process()
 
-def operator(*_):
-    backup()
-
 if __name__ == "__main__":
-    backup()
+    invoke_on(lambda: backup(), 'Backup')

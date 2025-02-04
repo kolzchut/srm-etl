@@ -9,6 +9,7 @@ from srm_tools.update_table import airtable_updater
 from srm_tools.processors import update_mapper
 from srm_tools.datagovil import fetch_datagovil_datastore
 from srm_tools.stats import Stats
+from srm_tools.error_notifier import invoke_on
 
 FIELD_RENAME = {
     'name': 'clinic_name',
@@ -265,4 +266,4 @@ def operator(*_):
 
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    invoke_on(lambda: operator(None, None, None), 'Mental Health Clinics')

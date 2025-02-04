@@ -19,6 +19,7 @@ from srm_tools.processors import update_mapper
 from conf import settings
 from srm_tools.logger import logger
 from srm_tools.url_utils import fix_url
+from srm_tools.error_notifier import invoke_on
 
 
 
@@ -622,4 +623,4 @@ def operator(name, params, pipeline):
 
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    invoke_on(lambda: operator(None, None, None), 'Entities')

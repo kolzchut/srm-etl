@@ -9,6 +9,7 @@ import dataflows as DF
 
 from srm_tools.logger import logger
 from srm_tools.processors import fetch_mapper, update_mapper
+from srm_tools.error_notifier import invoke_on
 from dataflows_airtable import load_from_airtable, AIRTABLE_ID_FIELD, dump_to_airtable
 
 from conf import settings
@@ -296,4 +297,4 @@ def operator(*_):
 
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    invoke_on(lambda: operator(None, None, None), 'Benchmark')

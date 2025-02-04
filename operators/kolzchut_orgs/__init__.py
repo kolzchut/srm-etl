@@ -8,6 +8,7 @@ from srm_tools.situations import Situations
 
 from conf import settings
 from srm_tools.logger import logger
+from srm_tools.error_notifier import invoke_on
 
 
 situations = Situations()
@@ -44,4 +45,4 @@ def operator(name, params, pipeline):
 
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    invoke_on(lambda: operator(None, None, None), 'kolzchut_orgs')

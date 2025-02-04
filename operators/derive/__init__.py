@@ -1,6 +1,8 @@
 from . import to_dp, to_es, to_mapbox, to_sitemap, from_curation, autocomplete, to_sql
 
 from srm_tools.logger import logger
+from srm_tools.error_notifier import invoke_on
+
 
 
 def operator(*_):
@@ -19,5 +21,4 @@ def operator(*_):
 
 
 if __name__ == '__main__':
-
-    operator(None, None, None)
+    invoke_on(lambda: operator(None, None, None), 'Derive')

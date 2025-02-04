@@ -1,5 +1,9 @@
 {
     "siteTitle": "מפת המענים החברתיים",
+    "errorNotifier": {
+        "SMTP_SERVER": "smtp.gmail.com",
+        "SMTP_PORT": 587
+      },
     "kinds": [
         {
             "name": "entities",
