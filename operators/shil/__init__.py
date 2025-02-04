@@ -6,6 +6,7 @@ from srm_tools.gov import get_gov_api
 from srm_tools.logger import logger
 from srm_tools.processors import update_mapper
 from srm_tools.update_table import airtable_updater
+from srm_tools.error_notifier import invoke_on
 
 from openlocationcode import openlocationcode as olc
 from pyproj import Transformer
@@ -186,4 +187,4 @@ def operator(*_):
 
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    invoke_on(lambda: operator(None, None, None), 'Shil')

@@ -7,6 +7,7 @@ import dataflows as DF
 
 from srm_tools.logger import logger
 from srm_tools.update_table import airtable_updater
+from srm_tools.error_notifier import invoke_on
 
 from conf import settings
 
@@ -98,4 +99,4 @@ def operator(*_):
 
 
 if __name__ == '__main__':
-    operator()
+    invoke_on(lambda: operator(), 'Taxonomies')

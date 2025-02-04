@@ -8,6 +8,7 @@ from srm_tools.logger import logger
 from srm_tools.processors import update_mapper
 from srm_tools.update_table import airtable_updater
 from srm_tools.situations import Situations
+from srm_tools.error_notifier import invoke_on
 
 from conf import settings
 from .click_scraper import scrape_click
@@ -116,11 +117,6 @@ def operator(name, params, pipeline):
 
 
 if __name__ == '__main__':
-    operator(None, None, None)
-    # query = '''
-    #     select * from activities
-    # '''
-    # social_service_activities = fetch_from_budgetkey(query)
-    # svc = list(soprocServices(social_service_activities))
-    # print(svc[0])
+    invoke_on(lambda: operator(None, None, None), 'Soproc')
+
     

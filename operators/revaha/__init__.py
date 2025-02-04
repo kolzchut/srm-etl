@@ -16,7 +16,7 @@ from srm_tools.datagovil import fetch_datagovil_datastore
 from srm_tools.logger import logger
 from srm_tools.processors import ensure_fields, update_mapper
 from srm_tools.update_table import airtable_updater
-
+from srm_tools.error_notifier import invoke_on
 
 def transform_phone_numbers(r):
     phone_numbers = (r['authority_phone'] or '').split(',')
@@ -320,5 +320,5 @@ def operator(*_):
 
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    invoke_on(lambda: operator(None, None, None), 'Revaha')
     # DF.Flow(revaha_branch_data_flow(),DF.printer()).process()

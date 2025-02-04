@@ -8,6 +8,7 @@ from conf import settings
 from srm_tools.logger import logger
 from srm_tools.processors import update_mapper
 from srm_tools.update_table import airtable_updater
+from srm_tools.error_notifier import invoke_on
 
 @dataclass
 class DeploySpec:
@@ -98,4 +99,4 @@ def operator(*_):
     logger.info('Deploy done')
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    invoke_on(lambda: operator(None, None, None), 'Deploy')

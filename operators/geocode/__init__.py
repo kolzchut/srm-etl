@@ -13,6 +13,7 @@ import geocoder
 from conf import settings
 from operators.derive.helpers import ACCURATE_TYPES
 from srm_tools.logger import logger
+from srm_tools.error_notifier import invoke_on
 
 
 def geocode(session):
@@ -157,4 +158,4 @@ def operator(*_):
 
 
 if __name__ == '__main__':
-    operator()
+    invoke_on(lambda: operator(), 'Geocode')

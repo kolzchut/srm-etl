@@ -15,6 +15,7 @@ from srm_tools.update_table import airtable_updater
 from srm_tools.unwind import unwind
 from srm_tools.hash import hasher
 from srm_tools.datagovil import fetch_datagovil
+from srm_tools.error_notifier import invoke_on
 
 
 from conf import settings
@@ -184,4 +185,4 @@ def operator(*_):
 
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    invoke_on(lambda: operator(None, None, None), 'Meser')
