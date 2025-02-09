@@ -66,9 +66,11 @@ def invoke_on(func, name, is_test=False, on_success=None, on_failure=None):
         if on_success:
             on_success()
     except Exception as e:
+        logger.info(f"Error in {name}: {e}")
         print(f"Error in {name}: {e}")
         if on_failure:
             on_failure()
         send_failure_email(name, traceback.format_exc(), is_test)
     except BaseException as e:
+        logger.info(f"BaseException caught: {e}")  # Catch anything else
         print(f"BaseException caught: {e}")  # Catch anything else
