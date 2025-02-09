@@ -106,6 +106,12 @@
             "display": "Scrape Gil Hazahav",
             "dgp": false,
             "admin": true
+        },
+        {
+            "name": "test_email_notifier",
+            "display": "Send failure email to recipient list",
+            "dgp": false,
+            "admin": true
         }
     ],
     "theme": {
