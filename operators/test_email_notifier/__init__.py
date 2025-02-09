@@ -9,4 +9,4 @@ def operator(*_):
 
 
 if __name__ == '__main__':
-    invoke_on(lambda: operator(None, None, None), 'email_notifier', True)
+    invoke_on(lambda: operator(), 'email_notifier', True)
