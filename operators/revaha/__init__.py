@@ -312,13 +312,15 @@ def revaha_service_data_flow():
     )
 
 
-def operator(*_):
+def run(*_):
     logger.info('Starting Revaha Flow')
     revaha_service_data_flow()
     revaha_branch_data_flow()
     logger.info('Finished Revaha Flow')
 
+def operator(*_):
+    invoke_on(run, 'Revaha')
 
 if __name__ == '__main__':
-    invoke_on(lambda: operator(None, None, None), 'Revaha')
+    operator(None, None, None)
     # DF.Flow(revaha_branch_data_flow(),DF.printer()).process()

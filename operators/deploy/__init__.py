@@ -49,7 +49,7 @@ def update_from_source(spec, source_index):
     return func
 
 
-def operator(*_):
+def run(*_):
     logger.info('Deploy starting')
     for spec in DEPLOY_CONFIG:
         logger.info(f'Deploying {spec.table}')
@@ -98,5 +98,9 @@ def operator(*_):
     )
     logger.info('Deploy done')
 
+
+def operator(*_):
+    invoke_on(run, 'Deploy')
+
 if __name__ == '__main__':
-    invoke_on(lambda: operator(None, None, None), 'Deploy')
+    operator(None, None, None)

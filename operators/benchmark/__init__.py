@@ -292,9 +292,9 @@ def run_benchmark():
 
 def operator(*_):
     logger.info('Running benchmarks')
-    run_benchmark()
+    invoke_on(run_benchmark, 'Benchmark')
     logger.info('Finished running benchmarks')
 
 
 if __name__ == '__main__':
-    invoke_on(lambda: operator(None, None, None), 'Benchmark')
+    operator()

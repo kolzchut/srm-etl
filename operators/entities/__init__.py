@@ -586,7 +586,7 @@ def getGuidestarOrgs(ga: GuidestarAPI):
     )
 
 
-def operator(name, params, pipeline):
+def scrapeGuidestarEntities(name, params, pipeline):
     logger.info('STARTING Entity + Guidestar Scraping')
 
     taxonomy = dict()
@@ -621,6 +621,9 @@ def operator(name, params, pipeline):
     fetchServiceData(ga, stats, taxonomy, rejected_taxonomies)
     stats.save()
 
+def operator(name, params, pipeline):
+    invoke_on(lambda: scrapeGuidestarEntities(name, params, pipeline), 'Entities')
+
 
 if __name__ == '__main__':
-    invoke_on(lambda: operator(None, None, None), 'Entities')
+    operator(None, None, None)

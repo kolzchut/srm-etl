@@ -19,7 +19,7 @@ TABLES_TO_BACK_UP = [
     (settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_BRANCH_TABLE),
 ]
 
-def backup():
+def run():
     for b, t in TABLES_TO_BACK_UP:
         DF.Flow(
             load_from_airtable(
@@ -43,5 +43,8 @@ def backup():
         ),
     ).process()
 
+def backup():
+    invoke_on(run, 'Backup')
+
 if __name__ == "__main__":
-    invoke_on(lambda: backup(), 'Backup')
+    backup()

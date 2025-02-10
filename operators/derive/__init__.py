@@ -5,7 +5,7 @@ from srm_tools.error_notifier import invoke_on
 
 
 
-def operator(*_):
+def deriveData(*_):
 
     logger.info('Starting Derive Data Flow')
 
@@ -20,5 +20,8 @@ def operator(*_):
     logger.info('Finished Derive Data Flow')
 
 
+def operator(*_):
+    invoke_on(deriveData, 'Derive')
+
 if __name__ == '__main__':
-    invoke_on(lambda: operator(None, None, None), 'Derive')
+    operator()

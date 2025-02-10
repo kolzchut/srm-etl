@@ -35,7 +35,7 @@ def mde_prepare():
     return source_flow, data_sources
 
 
-def operator(*_):
+def run(*_):
     logger.info('Starting Manual Data Entry Flow')
         
     source_flow, data_sources = mde_prepare()
@@ -50,5 +50,8 @@ def operator(*_):
     logger.info('Finished External Manual Data Entry Flow')
 
 
+def operator(*_):
+    invoke_on(run, 'Manual Data Entry')
+
 if __name__ == '__main__':
-    invoke_on(lambda: operator(None, None, None), 'Manual Data Entry')
+    operator(None, None, None)

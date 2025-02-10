@@ -177,7 +177,7 @@ def shil_branch_data_flow():
     )
 
 
-def operator(*_):
+def run(*_):
     logger.info('Starting Shil Flow')
 
     shil_service_data_flow()
@@ -186,5 +186,9 @@ def operator(*_):
     logger.info('Finished Shil Flow')
 
 
+def operator(*_):
+    invoke_on(run, 'Shil')
+
+
 if __name__ == '__main__':
-    invoke_on(lambda: operator(None, None, None), 'Shil')
+    operator(None, None, None)
