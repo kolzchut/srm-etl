@@ -60,6 +60,15 @@ ReActivate the virtual environment
 . .venv/Scripts/activate
 ```
 
+### `run a script in venv`
+ReActivate the virtual environment
+
+```bash
+.venv/Scripts/python -m  operators.test_email_notifier.__init__
+```
+example    .venv/Scripts/python -m  operators.{dir_name}.__init__
+
+
 ## Other
 ### `dgp-app`
 

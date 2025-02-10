@@ -20,8 +20,8 @@ def send_failure_email(operation_name: str, error: str, is_test: bool = False):
         logger.info(f"sender email: {SENDER_EMAIL}.")
         logger.info(f"recipient list: {RECIPIENT_LIST}.")
     
-    subject = f"ETL Task Failed - {ENV_NAME}:{operation_name}"
-    body = f"Operation `{operation_name}` encountered an error:\n\n{error}"
+    subject = f"ETL Task - {ENV_NAME} : {operation_name} Failed"
+    body = f"Operation `{operation_name}` encountered an error:\n\nError Log:\n{error}"
 
     # Create email message
     msg = MIMEMultipart()
