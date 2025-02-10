@@ -10,4 +10,4 @@ def operator(*_):
     invoke_on(raise_exception, 'email_notifier', True)
 
 if __name__ == '__main__':
-    pass
+    invoke_on(raise_exception, 'email_notifier', True)
