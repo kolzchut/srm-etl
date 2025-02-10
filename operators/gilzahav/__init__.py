@@ -121,7 +121,7 @@ def get_gz_data():
     ).results()[0][0]
 
 
-def operator(*_):
+def runFlow(*_):
     logger.info('Starting GilZahav Flow')
 
     shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
@@ -132,6 +132,8 @@ def operator(*_):
 
     logger.info('Finished GilZahav Flow')
 
+def operator(*_):
+    invoke_on(runFlow, 'GilZahav')
 
 if __name__ == '__main__':
-    invoke_on(lambda: operator(None, None, None), 'GilZahav')
+    operator(None, None, None)

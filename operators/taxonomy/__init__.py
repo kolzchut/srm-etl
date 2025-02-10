@@ -79,7 +79,7 @@ def fetch_taxonomy(keys, extra=[], renames=[]):
     )
 
 
-def operator(*_):
+def run(*_):
     airtable_updater(
         settings.AIRTABLE_SITUATION_TABLE, 'openeligibility',
         ['name', 'name_en', 'description', 'description_en', 'breadcrumbs', 'pk'],
@@ -97,6 +97,8 @@ def operator(*_):
         )
     )
 
+def operator(*_):
+    invoke_on(run, 'Taxonomies')
 
 if __name__ == '__main__':
-    invoke_on(lambda: operator(), 'Taxonomies')
+    operator()

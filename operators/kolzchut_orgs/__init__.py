@@ -41,8 +41,8 @@ def fetchKZOrgData():
 
 def operator(name, params, pipeline):
     logger.info('STARTING KZ Scraping')
-    fetchKZOrgData()
+    invoke_on(fetchKZOrgData(), 'kolzchut_orgs')
 
 
 if __name__ == '__main__':
-    invoke_on(lambda: operator(None, None, None), 'kolzchut_orgs')
+    operator(None, None, None)

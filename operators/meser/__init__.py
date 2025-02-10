@@ -40,7 +40,7 @@ def good_company(r):
     return r['organization_id'] is not None and len(r['organization_id']) == 9
 
 
-def operator(*_):
+def run(*_):
     logger.info('Starting Meser Data Flow')
 
     stats = Stats()
@@ -183,6 +183,8 @@ def operator(*_):
 
         logger.info('Finished Meser Data Flow')
 
+def operator(*_):
+    invoke_on(run, 'Meser')
 
 if __name__ == '__main__':
-    invoke_on(lambda: operator(None, None, None), 'Meser')
+    operator(None, None, None)

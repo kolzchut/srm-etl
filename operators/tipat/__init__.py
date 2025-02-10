@@ -179,7 +179,7 @@ def get_tipat_data():
     ).results()[0][0] + [NATIONAL_BRANCH]
 
 
-def operator(*_):
+def run(*_):
     logger.info('Starting Tipat Halav Flow')
 
     shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
@@ -191,5 +191,8 @@ def operator(*_):
     logger.info('Finished Tipat Halav Flow')
 
 
+def operator(*_):
+    run()
+
 if __name__ == '__main__':
-    invoke_on(lambda: operator(None, None, None), 'Tipat Halav')
+    operator(None, None, None)

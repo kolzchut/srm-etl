@@ -32,3 +32,37 @@ The ETL System we use is based on the DGP-APP Platform
 **Scraper Specific**:
 
 See `.env.example` for a full list of scraper-specific environment variables.
+
+## Venv
+### `Init`
+1. This creates a virtual environment named .venv in the current directory.
+
+    ```bash
+    python -m venv .venv 
+    ```
+
+2. This activates the virtual environment.
+
+    ```bash
+    . .venv/Scripts/activate
+    ```
+
+3. This installs all the dependencies listed in the requirements.txt file into the virtual environment.
+
+    ```bash
+    pip install -r requirements.txt 
+    ```
+
+### `activate`
+ReActivate the virtual environment
+
+```bash
+. .venv/Scripts/activate
+```
+
+## Other
+### `dgp-app`
+
+- the dgp-app seems to runs the **operator** function, not the file.
+
+

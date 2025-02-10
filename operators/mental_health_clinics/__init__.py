@@ -153,7 +153,7 @@ def clinic_hash(row):
     return 'mhclinic-' + hashlib.sha1(items.encode('utf-8')).hexdigest()[:8]
 
 
-def operator(*_):
+def run(*_):
     stats = Stats()
     # Prepare data
     def ren(k, v):
@@ -263,7 +263,8 @@ def operator(*_):
         airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
 
-
+def operator(*_):
+    invoke_on(run, 'Mental Health Clinics')
 
 if __name__ == '__main__':
-    invoke_on(lambda: operator(None, None, None), 'Mental Health Clinics')
+    operator(None, None, None)

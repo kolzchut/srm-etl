@@ -137,7 +137,7 @@ def get_session():
     return session
 
 
-def operator(*_):
+def runGeocoding(*_):
     print('GEOCODING')
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_LOCATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
@@ -156,6 +156,8 @@ def operator(*_):
         DF.dump_to_path('geocode'),
     ).process()
 
+def operator():
+    invoke_on(runGeocoding, 'Geocode')
 
 if __name__ == '__main__':
-    invoke_on(lambda: operator(), 'Geocode')
+    operator()
