@@ -40,7 +40,11 @@ def send_failure_email(operation_name: str, error: str, is_test: bool = False):
         logger.info(f"Email sent about {operation_name}.")
     except Exception as e:
         logger.info(f"Failed to send email: {e}")
-        raise # Re-raise the exception
+        raise Exception(f"Failed to send email:{e}. \nOperation {operation_name} encountered an error. \nERROR:{error}")
+    
+    if not is_test:
+        raise # Re-raise the original exception
+
 
 def invoke_on(func, name, is_test=False, on_success=None, on_failure=None):
     try:
