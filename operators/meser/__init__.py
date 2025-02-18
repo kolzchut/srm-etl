@@ -21,7 +21,8 @@ from srm_tools.error_notifier import invoke_on
 from conf import settings
 
 transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
-
+noOrgIdCount = 0
+badOrgIdLengthCount = {}
 
 def alternate_address(row):
     assert '999' not in row['address'], str(row)
@@ -37,7 +38,20 @@ def alternate_address(row):
 
 
 def good_company(r):
-    return r['organization_id'] is not None and len(r['organization_id']) == 9
+    global noOrgIdCount, badOrgIdLengthCount
+    
+    is_org_id = r['organization_id'] is not None
+    if not is_org_id:
+        noOrgIdCount += 1
+    print(orgId := r['organization_id'])
+    is_length_good = is_org_id and len(r['organization_id']) == 9
+    if is_org_id and not is_length_good:
+        orgLength = len(r['organization_id'])
+        if orgLength not in badOrgIdLengthCount:
+            badOrgIdLengthCount[orgLength] = 0
+        badOrgIdLengthCount[orgLength] += 1
+
+    return is_org_id and is_length_good
 
 
 def run(*_):
@@ -52,7 +66,8 @@ def run(*_):
     ).results()[0][0]
     tags = {r.pop('tag'): r for r in tags}
 
-    with tempfile.TemporaryDirectory() as td:
+    with tempfile.TemporaryDirectory(prefix='meser_') as td:
+        os.chmod(td, 0o755)
         dirname = td
         source_data = os.path.join(td, 'data.csv')
 
@@ -180,6 +195,9 @@ def run(*_):
                 }
             }, settings.AIRTABLE_API_KEY)
         ).process()
+
+        logger.info('No org id Count:', noOrgIdCount)
+        logger.info('bad org id length Count:', badOrgIdLengthCount)
 
         logger.info('Finished Meser Data Flow')
 

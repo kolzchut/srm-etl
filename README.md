@@ -2,6 +2,9 @@
 
 The ETL System we use is based on the DGP-APP Platform
 
+## PreRequisites
+- The operators will only run on Linux or WSL!!!
+
 ## Important files and directories
 
 - `configuration.json` - the main DGP app configuration file
