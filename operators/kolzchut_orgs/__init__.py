@@ -22,7 +22,7 @@ def fetchKZOrgs():
     return regs
 
 
-def fetchKZOrgData():
+def fetchKZOrgData(*_):
     print('FETCHING ALL ORGANIZATIONS')
     today = datetime.date.today().isoformat()
     regNums = [
@@ -40,7 +40,7 @@ def fetchKZOrgData():
     print('FINISHED KZ ORG DATA')
 
 
-def operator(name, params, pipeline):
+def operator(*_):
     logger.info('STARTING KZ Scraping')
     invoke_on(fetchKZOrgData, 'kolzchut_orgs')
 

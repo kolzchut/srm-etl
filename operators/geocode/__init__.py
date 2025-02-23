@@ -156,7 +156,7 @@ def runGeocoding(*_):
         DF.dump_to_path('geocode'),
     ).process()
 
-def operator():
+def operator(*_):
     invoke_on(runGeocoding, 'Geocode')
 
 if __name__ == '__main__':

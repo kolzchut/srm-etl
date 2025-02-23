@@ -192,7 +192,7 @@ def run_single_benchmark(found, result_mapping, bad_performers):
 
     return func
 
-def run_benchmark():
+def run_benchmark(*_):
     results = DF.Flow(
         load_from_airtable('appkZFe6v5H63jLuC', 'Results', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
     ).results()[0][0]
@@ -297,4 +297,4 @@ def operator(*_):
 
 
 if __name__ == '__main__':
-    operator()
+    run_benchmark()

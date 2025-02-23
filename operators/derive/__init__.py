@@ -21,7 +21,7 @@ def deriveData(*_):
 
 
 def operator(*_):
-    invoke_on(deriveData, 'Derive')
+    invoke_on(deriveData, 'Upload to DB (Derive)')
 
 if __name__ == '__main__':
     operator()

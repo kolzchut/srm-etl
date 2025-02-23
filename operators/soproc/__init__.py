@@ -110,14 +110,14 @@ def fetchServiceData():
     )
 
 
-def run(name, params, pipeline):
+def run(*_):
     logger.info('STARTING SoProc Scraping')
     fetchOrgData()
     fetchServiceData()
 
 
 def operator(*_):
-    invoke_on(run, 'Soproc')
+    invoke_on(run, 'Social Procurement Data (Soproc)')
 
 
 if __name__ == '__main__':
