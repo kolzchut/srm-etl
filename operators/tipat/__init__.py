@@ -192,7 +192,7 @@ def run(*_):
 
 
 def operator(*_):
-    run()
+    invoke_on(run, 'Tipat Halav')
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    run(None, None, None)

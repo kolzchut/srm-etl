@@ -37,12 +37,13 @@ def fetchKZOrgData():
         manage_status=False,
         airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
     )
+    print('FINISHED KZ ORG DATA')
 
 
 def operator(name, params, pipeline):
     logger.info('STARTING KZ Scraping')
-    invoke_on(fetchKZOrgData(), 'kolzchut_orgs')
+    invoke_on(fetchKZOrgData, 'kolzchut_orgs')
 
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    fetchKZOrgData()

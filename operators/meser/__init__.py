@@ -205,4 +205,4 @@ def operator(*_):
     invoke_on(run, 'Meser')
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    run(None, None, None)
