@@ -133,85 +133,23 @@ def unwind_branches(ga:GuidestarAPI, stats: Stats):
             branchIds = set()
             for _, row in enumerate(rows):
                 regNum = row['id']
-                branches = ga.branches(regNum)
-                ids = [b['branchId'] for b in branches]
-                assert len(ids) == len(set(ids)), f'DUPDUP2 {row} {ids}'
-                for branch in branches:
-                    ret = dict()
-                    ret.update(row)
-
-                    data = dict()
-                    if branch.get('placeNickname'):
-                        data['name'] = branch['placeNickname']
-                    else:
-                        data['name'] = (ret.get('short_name') or ret.get('name')) + ' - ' + branch['cityName']
-                    data['address'] = calc_address(branch)
-                    data['location'] = calc_location_key(branch, data)
-                    data['address_details'] = branch.get('drivingInstructions')
-                    data['description'] = None
-                    data['urls'] = None
-                    # if data.get('branchURL'):
-                    #     row['urls'] = data['branchURL'] + '#הסניף בגיידסטאר'
-                    data['phone_numbers'] = None
-                    if branch.get('phone'):
-                        data['phone_numbers'] = branch['phone']
-                    data['organization'] = [regNum]
-                    if branch.get('language'):
-                        data['situations'] = [
-                            'human_situations:language:{}_speaking'.format(l.lower().strip())
-                            for l in branch['language'].split(';')
-                            if l != 'other'
-                        ]
-
-                    ret['data'] = data
-                    ret['id'] = 'guidestar:' + branch['branchId']
-                    assert ret['id'] not in branchIds, f'DUPDUP {ret}: {branches}'
-                    branchIds.add(ret['id'])
-                    yield ret
-                if not branches:
-                    # print('FETCHING FROM GUIDESTAR', regNum)
-                    stats.increase('Entities: Org with no branches')
-                    ret = list(ga.organizations(regNums=[regNum], cacheOnly=True))
-                    if len(ret) > 0 and ret[0]['data'].get('fullAddress'):
-                        stats.increase('Entities: Org with no branches, used Guidestar official address')
-                        data = ret[0]['data']
-                        yield dict(
-                            id='guidestar:' + regNum,
-                            data=dict(
-                                name=row['name'],
-                                address=data['fullAddress'],
-                                location=data['fullAddress'],
-                                organization=[regNum]
-                            )
-                        )
-                    else:
-                        if ret:
-                            if row['kind'] not in ('עמותה', 'חל"צ', 'הקדש'):
-                                stats.increase('Entities: Org with no branches, using org name as address')
-                                ret = dict()
-                                ret.update(row)
-                                name = row['name']
-                                cleaned_name = clean_org_name(name)
-                                ret.update(dict(
-                                    id='budgetkey:' + regNum,
-                                    data=dict(
-                                        name=name,
-                                        address=cleaned_name,
-                                        location=cleaned_name,
-                                        organization=[regNum]
-                                    )
-                                ))
-                                yield ret
-
                 national = {}
                 national.update(row)
                 national['id'] = 'national:' + regNum
-                national['data'] = {
+                national_data = {
                     'organization': [regNum],
                     'name': 'סניף ארצי',
                     'address': 'שירות ארצי',
                     'location': 'שירות ארצי',
                 }
+                disclaimer_text = "שימו לב, ייתכן כי המיקום המוצג אינו מדויק וכי קיימים סניפים נוספים שבהם ניתן לקבל את השירות. מומלץ ליצור קשר ישירות עם הארגון לקבלת מידע מדויק ומעודכן."
+                existing_description = row.get('description', '')
+                if existing_description:
+                    national_data['description'] = existing_description + "\n\n" + disclaimer_text
+                else:
+                    national_data['description'] = disclaimer_text
+                
+                national['data'] = national_data
                 yield national
 
     return DF.Flow(
@@ -260,7 +198,7 @@ def updateBranchFromSourceData():
     return func
 
 
-def fetchBranchData(ga, stats: Stats):
+def fetchBranchData(ga:GuidestarAPI, stats: Stats):
     print('FETCHING ALL ORGANIZATION BRANCHES')
 
     DF.Flow(
@@ -626,4 +564,4 @@ def operator(*_):
 
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    scrapeGuidestarEntities(None, None, None)

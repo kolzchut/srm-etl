@@ -137,3 +137,5 @@ data/
 
 .idea
 .checkpoints
+temp/
+gacache/

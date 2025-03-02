@@ -12,3 +12,4 @@ regex
 openlocationcode
 thefuzz
 python-Levenshtein
+psycopg2-binary

@@ -121,4 +121,4 @@ def operator(*_):
 
 
 if __name__ == '__main__':
-    operator(None, None, None)
+    run(None, None, None)
