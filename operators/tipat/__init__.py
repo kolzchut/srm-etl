@@ -15,7 +15,7 @@ ITEM_URL_BASE = 'https://tipatchalavappointments.health.gov.il/patient-details?c
 
 DATA_SOURCE_ID = 'tipat-halav'
 
-TIPAT_URL = 'https://healthinstitutionsapi.health.gov.il/api/TipotChalav/GetTipotChalavResult?maxResults=1000&city=&instituteExtended=&ownerShip=&district=&alternative=false&instCode=&xCordinate=0&yCordinate=0'
+TIPAT_URL = 'https://tipatchalavlocater.health.gov.il/api/TipotChalav/GetAllTipotChalavResult'
 TIPAT_WEBSITE = 'https://healthinstitutions.health.gov.il/TipotChalav'
 
 CHECKPOINT = 'tipat-halav'
