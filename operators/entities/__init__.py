@@ -21,7 +21,7 @@ from srm_tools.logger import logger
 from srm_tools.url_utils import fix_url
 from srm_tools.error_notifier import invoke_on
 
-
+isDebug = False
 
 ## ORGANIZATIONS
 def fetchEntityFromBudgetKey(regNum):
@@ -550,20 +550,27 @@ def scrapeGuidestarEntities(*_):
         (r.pop('id'), r) for r in soproc_mappings
     ))
 
-    print(1)
     stats = Stats()
-    print(2)
     ga = GuidestarAPI()
+    if (not isDebug):
+        print('FETCHING Caches')
     ga.fetchCaches()
+    if (not isDebug):
+        print('FETCHING GUIDESTAR ORGANIZATIONS')
     getGuidestarOrgs(ga)
-    print(3)
+    if (not isDebug):
+        print('FETCHING ORG DATA')
     fetchOrgData(ga, stats)
-    print(4)
+    if (not isDebug):
+        print('FETCHING GUIDESTAR BRANCHES')
     fetchBranchData(ga, stats)
-    print(5)
+    if (not isDebug):
+        print('FETCHING GUIDESTAR SERVICES')
     fetchServiceData(ga, stats, taxonomy, rejected_taxonomies)
-    print(6)
+    if (not isDebug):
+        print('SAVING')
     stats.save()
+    print('DONE')
 
 def operator(*_):
     invoke_on(scrapeGuidestarEntities, 'Entities')
