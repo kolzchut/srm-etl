@@ -204,7 +204,7 @@ def fetchBranchData(ga:GuidestarAPI, stats: Stats):
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='orgs'),
-        DF.filter_rows(lambda r: r['source'] == 'entities', resources='orgs'),
+        DF.filter_rows(lambda r: r.get('source') == 'entities', resources='orgs'),
         DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
         # DF.filter_rows(lambda r: len(r.get('branches') or []) == 0, resources='orgs'),
         DF.select_fields(['id', 'name', 'short_name', 'kind'], resources='orgs'),
@@ -550,13 +550,19 @@ def scrapeGuidestarEntities(*_):
         (r.pop('id'), r) for r in soproc_mappings
     ))
 
+    print(1)
     stats = Stats()
+    print(2)
     ga = GuidestarAPI()
     ga.fetchCaches()
     getGuidestarOrgs(ga)
+    print(3)
     fetchOrgData(ga, stats)
+    print(4)
     fetchBranchData(ga, stats)
+    print(5)
     fetchServiceData(ga, stats, taxonomy, rejected_taxonomies)
+    print(6)
     stats.save()
 
 def operator(*_):
