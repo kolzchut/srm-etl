@@ -205,7 +205,7 @@ def fetchBranchData(ga:GuidestarAPI, stats: Stats):
         load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_resource(-1, name='orgs'),
         DF.filter_rows(lambda r: r.get('source') == 'entities', resources='orgs'),
-        DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
+        DF.filter_rows(lambda r: r.get('status', '') == 'ACTIVE', resources='orgs'),
         # DF.filter_rows(lambda r: len(r.get('branches') or []) == 0, resources='orgs'),
         DF.select_fields(['id', 'name', 'short_name', 'kind'], resources='orgs'),
         DF.dump_to_path('temp/entities-orgs')
@@ -494,7 +494,7 @@ def fetchServiceData(ga, stats: Stats, taxonomies, rejected_taxonomies):
         DF.Flow(
             load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_ORGANIZATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
             DF.update_resource(-1, name='orgs'),
-            DF.filter_rows(lambda r: r['status'] == 'ACTIVE', resources='orgs'),
+            DF.filter_rows(lambda r: r.get('status', '') == 'ACTIVE', resources='orgs'),
             DF.select_fields(['id', 'name', 'source'], resources='orgs'),
             unwind_services(ga, taxonomies, rejected_taxonomies, stats),
             # DF.checkpoint('unwind_services'),
