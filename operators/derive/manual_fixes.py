@@ -81,19 +81,20 @@ class ManualFixes():
         )
 
     def finalize(self):
-        # print('FINALIZING', self.used, self.status)
         records = [self.status[id] for id in self.used]
         if len(records) > 0:
             logger.info(f'Updating {len(records)} manual fix records')
-            DF.Flow(
-                records,
-                DF.update_resource(-1, name='manual_fixes'),
-                dump_to_airtable({
-                    (settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_MANUAL_FIXES_TABLE): {
-                        'resource-name': 'manual_fixes',
-                        'typecast': True
-                    }
-                }, settings.AIRTABLE_API_KEY),
-            ).process()
-
-    
+            batch_size = 50  # Adjust this number based on your data
+            for i in range(0, len(records), batch_size):
+                batch = records[i:i+batch_size]
+                logger.info(f'Updating batch of {len(batch)} records ({i+1} to {min(i+batch_size, len(records))})')
+                DF.Flow(
+                    batch,
+                    DF.update_resource(-1, name='manual_fixes'),
+                    dump_to_airtable({
+                        (settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_MANUAL_FIXES_TABLE): {
+                            'resource-name': 'manual_fixes',
+                            'typecast': True
+                        }
+                    }, settings.AIRTABLE_API_KEY),
+                ).process()
