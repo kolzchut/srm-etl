@@ -14,8 +14,8 @@ def send_failure_email(operation_name: str, error: str, is_test: bool = False):
     SENDER_PASSWORD = settings.EMAIL_NOTIFIER_PASSWORD
     RECIPIENT_LIST = settings.EMAIL_NOTIFIER_RECIPIENT_LIST
 
+    RECIPIENT_LIST.append(SENDER_EMAIL)
     if is_test:
-        RECIPIENT_LIST.append(SENDER_EMAIL)
         logger.info("send_failure_email triggered")
         logger.info(f"sender email: {SENDER_EMAIL}.")
         logger.info(f"recipient list: {RECIPIENT_LIST}.")
