@@ -292,7 +292,7 @@ def run_benchmark(*_):
 
 def check_api_health(timeout=5):
     try:
-        resp = requests.get(f'{BASE}/api/health', timeout=timeout)
+        resp = requests.get(f'{BASE}/api/db/query?query=select%201', timeout=timeout) # just a simple query to check if the API is up
         return resp.status_code == 200
     except requests.exceptions.RequestException:
         return False
