@@ -194,7 +194,7 @@ def run_single_benchmark(found, result_mapping, bad_performers):
 
 def run_benchmark(*_):
     if not check_api_health():
-        raise(f"API at {BASE} appears to be unavailable. Skipping benchmark run.")
+        raise RuntimeError(f"API at {BASE} appears to be unavailable. Skipping benchmark run.")
     results = DF.Flow(
         load_from_airtable('appkZFe6v5H63jLuC', 'Results', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
     ).results()[0][0]
