@@ -141,6 +141,14 @@
             "display": "3-Hourly"
         },
         {
+            "name": "7 */6 * * *",
+            "display": "6-Hourly"
+        },
+        {
+            "name": "7 */12 * * *",
+            "display": "12-Hourly"
+        },
+        {
             "name": "manual",
             "display": "Manual"
         }
