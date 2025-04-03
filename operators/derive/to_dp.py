@@ -642,9 +642,9 @@ def card_data_flow():
         ['branch_id']
     )
 
-    def get_valid_responses(row):
+    def get_valid_parent(parent:string, row):
         valid_responses = []
-        for s in row['response_ids_parents']:
+        for s in row[parent]:
             if s in responses:
                 valid_responses.append(responses[s])
             else:
@@ -659,8 +659,8 @@ def card_data_flow():
         DF.add_field('situation_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['situation_ids']), resources=['card_data']),
         DF.add_field('response_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_ids']), resources=['card_data']),
         DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses', 'auto_tagged'], resources=['card_data']),
-        DF.add_field('situations_parents', 'array', lambda r: [situations[s] for s in r['situation_ids_parents']], resources=['card_data']),
-        DF.add_field('responses_parents', 'array', get_valid_responses, resources=['card_data']),
+        DF.add_field('responses_parents', 'array', lambda r: get_valid_parent('response_ids_parents', r), resources=['card_data']),
+        DF.add_field('situations_parents', 'array', lambda r: get_valid_parent('situation_ids_parents', r), resources=['card_data']),
         DF.set_type('situation_ids', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
         DF.set_type('response_ids', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
         DF.set_type('situation_ids_parents', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
