@@ -642,7 +642,7 @@ def card_data_flow():
         ['branch_id']
     )
 
-    def get_valid_parent(parent:string, row):
+    def get_valid_parent(parent: str, row):
         valid_responses = []
         for s in row[parent]:
             if s in responses:
