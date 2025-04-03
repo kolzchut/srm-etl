@@ -698,7 +698,7 @@ def card_data_flow():
         ),
         DF.add_field(
             'collapse_key', 'string',
-            lambda r: r['service_name'],
+            lambda r: f"{r['service_name']} {r['service_description'] or ''}".strip(),
             **{'es:keyword': True},
             resources=['card_data']
         ),
