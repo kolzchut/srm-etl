@@ -642,6 +642,15 @@ def card_data_flow():
         ['branch_id']
     )
 
+    def get_valid_responses(row):
+        valid_responses = []
+        for s in row['response_ids_parents']:
+            if s in responses:
+                valid_responses.append(responses[s])
+            else:
+                print(f"Warning: Response key not found: {s}")
+        return valid_responses
+    
     return DF.Flow(
         DF.checkpoint(CHECKPOINT),
         DF.add_field('situations', 'array', lambda r: [situations[s] for s in r['situation_ids']], resources=['card_data']),
@@ -651,7 +660,7 @@ def card_data_flow():
         DF.add_field('response_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_ids']), resources=['card_data']),
         DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses', 'auto_tagged'], resources=['card_data']),
         DF.add_field('situations_parents', 'array', lambda r: [situations[s] for s in r['situation_ids_parents']], resources=['card_data']),
-        DF.add_field('responses_parents', 'array', lambda r: [responses[s] for s in r['response_ids_parents']], resources=['card_data']),
+        DF.add_field('responses_parents', 'array', get_valid_responses, resources=['card_data']),
         DF.set_type('situation_ids', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
         DF.set_type('response_ids', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
         DF.set_type('situation_ids_parents', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
