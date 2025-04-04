@@ -63,8 +63,8 @@ def unwind_templates():
         for row in rows:
             # print(row)
             for importance, template in enumerate(TEMPLATES):
-                responses = row['responses_parents'] if '{response}' in template else [dict()]
-                situations = row['situations_parents'] if '{situation}' in template else [dict()]
+                responses = row.get('responses_parents', [dict()]) if '{response}' in template else [dict()]
+                situations = row.get('situations_parents', [dict()]) if '{situation}' in template else [dict()]
                 direct_responses = row['response_ids'] + [None]
                 direct_situations = row['situation_ids'] + [None]
                 if '{org_name}' in template or '{org_id}' in template:
