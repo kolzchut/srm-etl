@@ -754,6 +754,8 @@ def operator(*_):
     srm_data_pull_flow().process()
     flat_branches_flow(branch_mapping).process()
     flat_services_flow(branch_mapping).process()
+    raise ValueError('TESTING')
+
     flat_table_flow().process()
     card_data_flow().process()
 
