@@ -324,7 +324,7 @@ def merge_duplicate_services():
 def flat_services_flow(branch_mapping):
     """Produce a denormalized view of service-related data."""
     print('-----------------------------------------')
-    print('BRANCH MAPPING: {}'.format(branch_mapping))
+    print('BRANCH MAPPING: service_id, service_name, organization_key, branches' )
 
     return DF.Flow(
         DF.load(
@@ -340,6 +340,7 @@ def flat_services_flow(branch_mapping):
         # branches onto services, through organizations (we already have direct branches)
         unwind('organizations', 'organization_key', resources=['flat_services']),
         DF.filter_rows(lambda r: r['national_service'] is not True, resources=['flat_branches']),
+        DF.printer(fields=['source','service_id', 'service_name', 'organization_key', 'branches']),
         DF.join(
             'flat_branches',
             ['organization_key'],
@@ -351,7 +352,6 @@ def flat_services_flow(branch_mapping):
         ),
         # merge multiple branch fields into a single field
 
-        DF.printer(),
         DF.set_type('branches', transform=lambda v: list(set(filter(None, map(lambda i: branch_mapping.get(i), v or [])))), resources=['flat_services']),
         # DF.set_type('organization_branches', transform=lambda v, row: [] if row['source']=='soproc' else v, resources=['flat_services']),
         DF.printer(),
