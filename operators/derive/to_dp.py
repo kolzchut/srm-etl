@@ -340,7 +340,7 @@ def flat_services_flow(branch_mapping):
         # branches onto services, through organizations (we already have direct branches)
         unwind('organizations', 'organization_key', resources=['flat_services']),
         DF.filter_rows(lambda r: r['national_service'] is not True, resources=['flat_branches']),
-        DF.printer(num_rows=None, fields=['source','service_id', 'service_name', 'organization_key', 'branches']),
+        DF.printer(num_rows=1000000,fields=['source','service_id', 'service_name', 'organization_key', 'branches']),
         DF.join(
             'flat_branches',
             ['organization_key'],
