@@ -323,9 +323,24 @@ def merge_duplicate_services():
 
 def flat_services_flow(branch_mapping):
     """Produce a denormalized view of service-related data."""
-    print('-----------------------------------------')
     print('BRANCH MAPPING: service_id, service_name, organization_key, branches' )
 
+    branch_names = {}
+
+    # Function to collect branch names
+    def collect_branch_names(rows):
+        for row in rows:
+            branch_names[row['branch_key']] = row.get('branch_name')
+            yield row
+
+    # Function to filter branches for SOPROC services
+    def filter_soproc_branches(v, row):
+        if row.get('source') == 'soproc':
+            # Keep only branches named 'סניף ארצי'
+            return [branch for branch in (v or []) if branch_names.get(branch) == 'סניף ארצי']
+        # For non-SOPROC, keep all branches
+        return v
+    
     return DF.Flow(
         DF.load(
             f'{settings.DATA_DUMP_DIR}/flat_branches/datapackage.json',
@@ -337,10 +352,12 @@ def flat_services_flow(branch_mapping):
         ),
         DF.update_package(name='Flat Services'),
         DF.update_resource(['services'], name='flat_services', path='flat_services.csv'),
+        # Process flat_branches to collect branch names
+        collect_branch_names,
+
         # branches onto services, through organizations (we already have direct branches)
         unwind('organizations', 'organization_key', resources=['flat_services']),
         DF.filter_rows(lambda r: r['national_service'] is not True, resources=['flat_branches']),
-        DF.printer(num_rows=1000000,fields=['source','service_id', 'service_name', 'organization_key', 'branches']),
         DF.join(
             'flat_branches',
             ['organization_key'],
@@ -353,8 +370,7 @@ def flat_services_flow(branch_mapping):
         # merge multiple branch fields into a single field
 
         DF.set_type('branches', transform=lambda v: list(set(filter(None, map(lambda i: branch_mapping.get(i), v or [])))), resources=['flat_services']),
-        # DF.set_type('organization_branches', transform=lambda v, row: [] if row['source']=='soproc' else v, resources=['flat_services']),
-        DF.printer(),
+        DF.set_type('organization_branches', transform=filter_soproc_branches, resources=['flat_services']),
         DF.add_field(
             'merge_branches',
             'array',
@@ -754,7 +770,6 @@ def operator(*_):
     srm_data_pull_flow().process()
     flat_branches_flow(branch_mapping).process()
     flat_services_flow(branch_mapping).process()
-    raise ValueError('TESTING')
 
     flat_table_flow().process()
     card_data_flow().process()
