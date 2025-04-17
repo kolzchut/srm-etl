@@ -329,10 +329,9 @@ def flat_services_flow(branch_mapping):
 
     # Function to collect branch names
     def collect_branch_names(rows):
-        print('collect_branch_names')
         for row in rows:
-            print(row)
-            branch_names[row['branch_key']] = row.get('branch_name','')
+            if 'branch_key' in row:
+                branch_names[row['branch_key']] = row.get('branch_name','')
             yield row
 
     # Function to filter branches for SOPROC services
