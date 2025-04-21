@@ -5,6 +5,7 @@ from dataflows_ckan import dump_to_ckan
 from conf import settings
 
 from ..derive.es_utils import dump_to_es_and_delete
+from srm_tools.error_notifier import invoke_on
 
 
 def enumerate_rows():
@@ -31,7 +32,7 @@ def homepage_query(row):
     q = '_'.join(q.split())
     return q
 
-def operator(*args):
+def run(*args):
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_PRESETS_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_package(name='presets', title='Presets for Website'),
@@ -74,3 +75,6 @@ def operator(*args):
             format='json'
         ),
     ).process()
+
+def operator(*_):
+    invoke_on(run, 'Presets')
