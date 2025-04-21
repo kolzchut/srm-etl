@@ -164,6 +164,7 @@ def merge_duplicate_branches(branch_mapping):
 
 def flat_branches_flow(branch_mapping):
     """Produce a denormalized view of branch-related data."""
+    print('BRANCH MAPPING: branch_key, branch_id, organization_key, branches' )
 
     return DF.Flow(
         DF.load(
@@ -334,14 +335,25 @@ def flat_services_flow(branch_mapping):
                 branch_names[row['branch_key']] = row.get('branch_name','')
             yield row
 
-    # Function to filter branches for SOPROC services
     def filter_soproc_branches(v, row):
-        if row.get('source') == 'soproc':
-            # Keep only branches named 'סניף ארצי'
-            return [branch for branch in (v or []) if branch_names.get(branch) == 'סניף ארצי']
-        # For non-SOPROC, keep all branches
+        v = v or []
+        total_branches = len(v)
+
+        # Check if this is a SOPROC service
+        service_id = row.get('id', '')
+        is_soproc_by_id = isinstance(service_id, str) and service_id.startswith('soproc:')
+        if is_soproc_by_id and total_branches > 5:
+            
+            national_branches = [branch for branch in v if branch_names.get(branch) == 'סניף ארצי']
+
+            if national_branches:
+                return national_branches
+            else:
+                return v
+                # Fallback: keep first branch if no national branch found
+                # return v[:5]
         return v
-    
+
     return DF.Flow(
         DF.load(
             f'{settings.DATA_DUMP_DIR}/flat_branches/datapackage.json',
