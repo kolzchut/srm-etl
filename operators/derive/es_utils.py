@@ -12,7 +12,7 @@ from conf import settings
 
 def es_instance():
     return elasticsearch.Elasticsearch(
-        [dict(host=settings.ES_HOST, port=int(settings.ES_PORT))],
+        [dict(host=settings.ES_HOST, port=int(settings.ES_PORT), scheme="http")],
         timeout=60,
         **({"http_auth": settings.ES_HTTP_AUTH.split(':')} if settings.ES_HTTP_AUTH else {}),
     )
