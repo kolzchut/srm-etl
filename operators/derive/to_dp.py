@@ -344,7 +344,7 @@ def flat_services_flow(branch_mapping):
         is_soproc_by_id = isinstance(service_id, str) and service_id.startswith('soproc:')
         if is_soproc_by_id and total_branches > 5:
             
-            national_branches = [branch for branch in v if branch_locations.get(branch) == 'סניף ארצי']
+            national_branches = [branch for branch in v if branch_locations.get(branch) in ['סניף ארצי', 'שירות ארצי']]
 
             if national_branches:
                 return national_branches
