@@ -326,13 +326,13 @@ def flat_services_flow(branch_mapping):
     """Produce a denormalized view of service-related data."""
     print('BRANCH MAPPING: service_id, service_name, organization_key, branches' )
 
-    branch_names = {}
+    branch_locations = {}
 
     # Function to collect branch names
-    def collect_branch_names(rows):
+    def collect_branch_locations(rows):
         for row in rows:
             if 'branch_key' in row:
-                branch_names[row['branch_key']] = row.get('branch_name','')
+                branch_locations[row['branch_key']] = row.get('location', '')
             yield row
 
     def filter_soproc_branches(v, row):
@@ -344,7 +344,7 @@ def flat_services_flow(branch_mapping):
         is_soproc_by_id = isinstance(service_id, str) and service_id.startswith('soproc:')
         if is_soproc_by_id and total_branches > 5:
             
-            national_branches = [branch for branch in v if branch_names.get(branch) == 'סניף ארצי']
+            national_branches = [branch for branch in v if branch_locations.get(branch) == 'סניף ארצי']
 
             if national_branches:
                 return national_branches
@@ -366,7 +366,7 @@ def flat_services_flow(branch_mapping):
         DF.update_package(name='Flat Services'),
         DF.update_resource(['services'], name='flat_services', path='flat_services.csv'),
         # Process flat_branches to collect branch names
-        collect_branch_names,
+        collect_branch_locations,
 
         # branches onto services, through organizations (we already have direct branches)
         unwind('organizations', 'organization_key', resources=['flat_services']),
