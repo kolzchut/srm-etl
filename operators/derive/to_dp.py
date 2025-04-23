@@ -323,35 +323,35 @@ def merge_duplicate_services():
 
 
 def flat_services_flow(branch_mapping):
-    """Produce a denormalized view of service-related data."""
-    print('BRANCH MAPPING: service_id, service_name, organization_key, branches' )
-
-    branch_locations = {}
-
-    # Function to collect branch names
-    def collect_branch_locations(rows):
-        for row in rows:
-            if 'branch_key' in row:
-                branch_locations[row['branch_key']] = row.get('location', '')
-            yield row
+    """
+    Filter branches for SOPROC services.
+    For SOPROC services with many branches, prioritize national branches.
+    """
 
     def filter_soproc_branches(v, row):
         v = v or []
         total_branches = len(v)
-
-        # Check if this is a SOPROC service
-        service_id = row.get('id', '')
+        service_id = row.get('service_id', '')
         is_soproc_by_id = isinstance(service_id, str) and service_id.startswith('soproc:')
-        if is_soproc_by_id and total_branches > 5:
-            
-            national_branches = [branch for branch in v if branch_locations.get(branch) in ['סניף ארצי', 'שירות ארצי']]
 
+        if is_soproc_by_id and total_branches > 5:
+            branch_location = row.get('location (from branches)', [])
+            national_branches = []
+            
+            # Check if branch_location is a list with national service indicators
+            if isinstance(branch_location, list):
+                # Create a map of index to branch key
+                branch_to_index = {i: branch for i, branch in enumerate(v) if i < len(branch_location)}
+                
+                # Find branches that have national service indicators
+                for i, location in enumerate(branch_location):
+                    if i in branch_to_index and (location == 'סניף ארצי' or location == 'שירות ארצי'):
+                        national_branches.append(branch_to_index[i])
+            
+            # Return national branches if available, otherwise all branches
             if national_branches:
                 return national_branches
-            else:
-                return v
-                # Fallback: keep first branch if no national branch found
-                # return v[:5]
+            
         return v
 
     return DF.Flow(
@@ -365,10 +365,6 @@ def flat_services_flow(branch_mapping):
         ),
         DF.update_package(name='Flat Services'),
         DF.update_resource(['services'], name='flat_services', path='flat_services.csv'),
-        # Process flat_branches to collect branch names
-        collect_branch_locations,
-
-        # branches onto services, through organizations (we already have direct branches)
         unwind('organizations', 'organization_key', resources=['flat_services']),
         DF.filter_rows(lambda r: r['national_service'] is not True, resources=['flat_branches']),
         DF.join(
