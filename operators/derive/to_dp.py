@@ -336,22 +336,16 @@ def flat_services_flow(branch_mapping):
 
         if is_soproc_by_id and total_branches > 5:
             branch_location = row.get('location (from branches)', [])
-            national_branches = []
             
             # Check if branch_location is a list with national service indicators
-            if isinstance(branch_location, list):
-                # Create a map of index to branch key
-                branch_to_index = {i: branch for i, branch in enumerate(v) if i < len(branch_location)}
-                
-                # Find branches that have national service indicators
-                for i, location in enumerate(branch_location):
-                    if i in branch_to_index and (location == 'סניף ארצי' or location == 'שירות ארצי'):
-                        national_branches.append(branch_to_index[i])
+            branch_to_index = {i: branch for i, branch in enumerate(v) if i < len(branch_location)}
             
-            # Return national branches if available, otherwise all branches
-            if national_branches:
-                return national_branches
-            
+            # Find branches that have national service indicators
+            for i, location in enumerate(branch_location):
+                if i in branch_to_index and (location == 'סניף ארצי' or location == 'שירות ארצי'):
+                    print(f'FOUND NATIONAL BRANCH FOR {service_id}: {branch_to_index[i]}')
+                    return (branch_to_index[i])
+
         return v
 
     return DF.Flow(
