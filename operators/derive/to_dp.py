@@ -332,8 +332,11 @@ def flat_services_flow(branch_mapping):
     def collect_branch_locations(rows):
         for row in rows:
             if 'branch_key' in row:
-                address = row.get('branch_name', '')
-                branch_locations[row['branch_key']] = address
+                name = row.get('branch_name', '')
+                address = row.get('branch_address', '')
+                branch_locations[row['branch_key']] = name
+                print(f"location: {address}")
+
             yield row
 
     def filter_soproc_branches(v, row):
@@ -790,7 +793,6 @@ def operator(*_):
     srm_data_pull_flow().process()
     flat_branches_flow(branch_mapping).process()
     flat_services_flow(branch_mapping).process()
-    raise Exception('STOP HERE')
     flat_table_flow().process()
     card_data_flow().process()
 
