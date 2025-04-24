@@ -327,6 +327,9 @@ def flat_services_flow(branch_mapping):
     print('BRANCH MAPPING: service_id, service_name, organization_key, branches' )
 
     branch_map = {}
+    non_national_branches = {}
+    national_branches = {}
+
 
     # Function to collect branch names
     def collect_branches(rows):
@@ -334,6 +337,11 @@ def flat_services_flow(branch_mapping):
             if 'branch_key' in row:
                 branch_id = row.get('branch_id', '')
                 branch_map[row['branch_key']] = branch_id
+
+                is_national = row.get('national_service')
+                if not is_national:
+                    non_national_branches[row['branch_key']] = branch_id
+                
             yield row
 
     def filter_soproc_branches(v, row):
@@ -341,23 +349,23 @@ def flat_services_flow(branch_mapping):
         total_branches = len(v)
         service_id = row.get('id', '')
         is_soproc_by_id = isinstance(service_id, str) and service_id.startswith('soproc:')
-        
-        if is_soproc_by_id and total_branches > 5:
-            national_branches = []
-            for branch in v:
-                id = branch_map.get(branch, '')
-                if isinstance(id, str) and id.lower().startswith('national'):
-                    national_branches.append(branch)
 
-            if national_branches:
-                # print(f'Found national branches for {service_id}')
-                return national_branches
-            # else:
-                # print(f'No national branch for {service_id}')
-                # return v
-                # Fallback: keep first branch if no national branch found
-                # return v[:5]
-        return v
+        if is_soproc_by_id and total_branches > 5:
+            national_id_branches = []
+            for branch in v:
+                id = branch_map.get(branch, '')                    
+                if isinstance(id, str) and id.lower().startswith('national'):
+                    national_id_branches.append(branch)
+
+            if national_id_branches:
+                return national_id_branches
+        
+        without_national_branches = []
+        for branch in v:
+            if branch in non_national_branches:
+                without_national_branches.append(branch)
+
+        return without_national_branches
 
     return DF.Flow(
         DF.load(
@@ -375,7 +383,6 @@ def flat_services_flow(branch_mapping):
 
         # branches onto services, through organizations (we already have direct branches)
         unwind('organizations', 'organization_key', resources=['flat_services']),
-        DF.filter_rows(lambda r: r['national_service'] is not True, resources=['flat_branches']),
         DF.join(
             'flat_branches',
             ['organization_key'],
