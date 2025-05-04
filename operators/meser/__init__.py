@@ -143,7 +143,7 @@ def run(*_):
 
         airtable_updater(
             settings.AIRTABLE_BRANCH_TABLE,
-            'meser', ['id', 'organization', 'location', 'address', 'phone_numbers'],
+            'meser', ['id', 'name', 'organization', 'location', 'address', 'phone_numbers'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
                 DF.join_with_self('meser', ['branch_id'], fields=dict(
@@ -152,6 +152,7 @@ def run(*_):
                 DF.rename_fields({
                     'branch_id': 'id',
                 }, resources='meser'),
+                DF.add_field('name', 'string', lambda r: '', resources='meser'),
                 DF.add_field('organization', 'array', lambda r: [r['organization_id']], resources='meser'),
                 DF.add_field('data', 'object', lambda r: dict((k,v) for k,v in r.items() if k!='id'), resources='meser'),
                 DF.printer()
