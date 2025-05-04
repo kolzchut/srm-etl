@@ -74,7 +74,7 @@ def soprocServices(services):
         #     (service['target_audience'] or [])
         # )
         data = dict(
-            name=service['name'],
+            operating_unit=service['name'],
             description=service['description'],
             organizations=[s['entity_id'] for s in (service['suppliers'] or []) if s['active'] == 'yes'],
             urls=None,
@@ -99,11 +99,10 @@ def fetchServiceData():
         select * from activities
     '''
     social_service_activities = list(fetch_from_budgetkey(query))
-    # print(social_service_activities[0])
     print('COLLECTED {} relevant services'.format(len(social_service_activities)))
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'social-procurement',
-        ['name', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers', 'organizations', 'data_sources', 'soproc-service-tagging'],
+        ['operating_unit', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers', 'organizations', 'data_sources', 'soproc-service-tagging'],
         soprocServices(social_service_activities),
         updateFromSourceData(),
         airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE

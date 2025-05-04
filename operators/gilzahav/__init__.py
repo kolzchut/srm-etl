@@ -54,7 +54,7 @@ def branch_description(r):
 FIELD_MAP = {
     'id': {'transform': lambda r: f'{DATA_SOURCE_ID}:{r["field9"]}'},
     # 'source': {'transform': lambda r: DATA_SOURCE_ID},
-    'name': {'transform': lambda r: f'בית דיור גיל הזהב - {r["field2"]}'},
+    'name': {'transform': lambda r: r["field2"]},
     'organization': {'type': 'array', 'transform': lambda r: [ORG_ID]},
     'services': {'type': 'array', 'transform': lambda r: [SERVICE['id']]},
     'description': {'transform': branch_description},
