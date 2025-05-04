@@ -189,6 +189,7 @@ FIELD_MAP = {
     },
     # covered by airtable updater
     # 'source': {'transform': lambda r: DATA_SOURCE_ID},
+    'name': {'transform': lambda r: ''},
     'phone_numbers': {
         'source': 'machlaka_phone',
         'type': 'string',
