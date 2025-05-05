@@ -539,7 +539,7 @@ def flat_table_flow():
                 'organization_branch_count',
                 'organization_situations',
                 'branch_id',
-                # 'branch_name',
+                'branch_name',
                 # 'branch_short_name',
                 'branch_operating_unit',
                 'branch_description',
