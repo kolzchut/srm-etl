@@ -14,6 +14,7 @@ from .es_utils import dump_to_es_and_delete
 
 from srm_tools.logger import logger
 from srm_tools.unwind import unwind
+from .es_schemas import (URL_SCHEMA, TAXONOMY_ITEM_SCHEMA, NON_INDEXED_STRING, KEYWORD_STRING, KEYWORD_ONLY, ITEM_TYPE_STRING, NO_SCHEMA)
 
 CHECKPOINT = 'to_es'
 
@@ -59,163 +60,23 @@ def data_api_es_flow():
         DF.update_package(title='Card Data', name='srm_card_data'),
         DF.update_resource('card_data', name='cards'),
         DF.add_field('score', 'number', card_score, resources=['cards']),
-        DF.set_type(
-            'situations',
-            **{
-                'es:itemType': 'object',
-                'es:schema': {
-                    'fields': [
-                        {'type': 'string', 'name': 'id', 'es:keyword': True},
-                        {'type': 'string', 'name': 'name', 'es:title': True},
-                        {'type': 'string', 'name': 'synonyms', 'es:title': True},
-                    ]
-                },
-            },
-        ),
-        DF.set_type(
-            'responses',
-            **{
-                'es:itemType': 'object',
-                'es:schema': {
-                    'fields': [
-                        {'type': 'string', 'name': 'id', 'es:keyword': True},
-                        {'type': 'string', 'name': 'name', 'es:title': True},
-                        {'type': 'string', 'name': 'synonyms', 'es:title': True},
-                    ]
-                },
-            },
-        ),
-        DF.set_type(
-            'situations_parents',
-            **{
-                'es:itemType': 'object',
-                'es:schema': {
-                    'fields': [
-                        {'type': 'string', 'name': 'id', 'es:keyword': True},
-                        {'type': 'string', 'name': 'name', 'es:title': True},
-                        {'type': 'string', 'name': 'synonyms', 'es:title': True},
-                    ]
-                },
-            },
-        ),
-        DF.set_type(
-            'responses_parents',
-            **{
-                'es:itemType': 'object',
-                'es:schema': {
-                    'fields': [
-                        {'type': 'string', 'name': 'id', 'es:keyword': True},
-                        {'type': 'string', 'name': 'name', 'es:title': True},
-                        {'type': 'string', 'name': 'synonyms', 'es:title': True},
-                    ]
-                },
-            },
-        ),
-        DF.set_type(
-            'service_urls',
-            **{
-                'es:itemType': 'object',
-                'es:index': False,
-                'es:schema': {
-                    'fields': [
-                        {'type': 'string', 'name': 'href'},
-                        {'type': 'string', 'name': 'text'},
-                    ]
-                },
-            },
-        ),
-        DF.set_type(
-            'branch_urls',
-            **{
-                'es:itemType': 'object',
-                'es:index': False,
-                'es:schema': {
-                    'fields': [
-                        {'type': 'string', 'name': 'href'},
-                        {'type': 'string', 'name': 'text'},
-                    ]
-                },
-            },
-        ),
-        DF.set_type(
-            'organization_urls',
-            **{
-                'es:itemType': 'object',
-                'es:index': False,
-                'es:schema': {
-                    'fields': [
-                        {'type': 'string', 'name': 'href'},
-                        {'type': 'string', 'name': 'text'},
-                    ]
-                },
-            },
-        ),
-        DF.set_type(
-            'branch_email_address',
-            **{
-                'es:itemType': 'string',
-                'es:index': False,
-            },
-        ),
-        DF.set_type(
-            'organization_phone_numbers',
-            **{
-                'es:itemType': 'string',
-                'es:index': False,
-            },
-        ),
-        DF.set_type(
-            'organization_email_address',
-            **{
-                'es:itemType': 'string',
-                'es:index': False,
-            },
-        ),
-        DF.set_type(
-            'branch_phone_numbers',
-            **{
-                'es:itemType': 'string',
-                'es:index': False,
-            },
-        ),
-        DF.set_type(
-            'service_phone_numbers',
-            **{
-                'es:itemType': 'string',
-                'es:index': False,
-            },
-        ),
-        DF.set_type(
-            'service_email_address',
-            **{
-                'es:itemType': 'string',
-                'es:index': False,
-            },
-        ),
-        DF.set_type(
-            'data_sources',
-            **{
-                'es:itemType': 'string',
-                'es:index': False,
-            },
-        ),
-        DF.set_type(
-            'response_ids',
-            **{
-                'es:itemType': 'string',
-                'es:keyword': True,
-            },
-        ),
-        DF.set_type(
-            'situation_ids',
-            **{
-                'es:itemType': 'string',
-                'es:keyword': True,
-            },
-        ),
-        dump_to_es_and_delete(
-            indexes=dict(srm__cards=[dict(resource_name='cards')]),
-        ),
+        DF.set_type('situations', **TAXONOMY_ITEM_SCHEMA),
+        DF.set_type('responses', **TAXONOMY_ITEM_SCHEMA),
+        DF.set_type('situations_parents', **TAXONOMY_ITEM_SCHEMA),
+        DF.set_type('responses_parents', **TAXONOMY_ITEM_SCHEMA),
+        DF.set_type('service_urls', **URL_SCHEMA),
+        DF.set_type('branch_urls', **URL_SCHEMA),
+        DF.set_type('organization_urls', **URL_SCHEMA),
+        DF.set_type('branch_email_address', **NON_INDEXED_STRING),
+        DF.set_type('organization_phone_numbers', **NON_INDEXED_STRING),
+        DF.set_type('organization_email_address', **NON_INDEXED_STRING),
+        DF.set_type('branch_phone_numbers', **NON_INDEXED_STRING),
+        DF.set_type('service_phone_numbers', **NON_INDEXED_STRING),
+        DF.set_type('service_email_address', **NON_INDEXED_STRING),
+        DF.set_type('data_sources', **NON_INDEXED_STRING),
+        DF.set_type('response_ids', **KEYWORD_STRING),
+        DF.set_type('situation_ids', **KEYWORD_STRING),
+        dump_to_es_and_delete(indexes=dict(srm__cards=[dict(resource_name='cards')])),
         DF.checkpoint(checkpoint),
     ).process()
     DF.Flow(
@@ -225,21 +86,13 @@ def data_api_es_flow():
             'score', 'possible_autocomplete', 'situations', 'responses', 'collapse_key', 'organization_resolved_name',
             'responses_parents', 'situations_parents', 'situation_ids_parents', 'response_ids_parents',
             'data_sources', 'rs_score', 'situation_scores', 'point_id', 'coords']),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
-        ),
+        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
     ).process()
 
     DF.Flow(
         DF.checkpoint(checkpoint),
         DF.filter_rows(lambda r: False),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
-        ),
+        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
     ).process()
 
         # # TESTING FLOW
@@ -307,11 +160,7 @@ def load_locations_to_es_flow():
             dump_to_es_and_delete(
                 indexes=dict(srm__places=[dict(resource_name='places')]),
             ),
-            dump_to_ckan(
-                settings.CKAN_HOST,
-                settings.CKAN_API_KEY,
-                settings.CKAN_OWNER_ORG,
-            ),
+            dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
         )
 
 def load_responses_to_es_flow():
@@ -340,9 +189,9 @@ def load_responses_to_es_flow():
         DF.filter_rows(lambda r: r.get('status') == 'ACTIVE'),
         DF.filter_rows(lambda r: r['count'] is not None),
         DF.select_fields(['id', 'name', 'synonyms', 'breadcrumbs', 'count']),
-        DF.set_type('id', **{'es:keyword': True}),
+        DF.set_type('id', **KEYWORD_ONLY),
         # DF.set_type('name', **{'es:autocomplete': True}),
-        DF.set_type('synonyms', **{'es:itemType': 'string'}),
+        DF.set_type('synonyms', **ITEM_TYPE_STRING),
         DF.add_field('score', 'number', lambda r: r['count']),
         DF.set_primary_key(['id']),
         print_top,
@@ -351,12 +200,7 @@ def load_responses_to_es_flow():
             indexes=dict(srm__responses=[dict(resource_name='responses')]),
         ),
         DF.update_resource(-1, name='responses', path='responses.json'),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
-            format='json'
-        ),
+        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, format='json'),
         # DF.printer()
     )
 
@@ -386,8 +230,8 @@ def load_situations_to_es_flow():
         DF.filter_rows(lambda r: r.get('status') == 'ACTIVE'),
         DF.filter_rows(lambda r: r['count'] is not None),
         DF.select_fields(['id', 'name', 'synonyms', 'breadcrumbs', 'count']),
-        DF.set_type('id', **{'es:keyword': True}),
-        DF.set_type('synonyms', **{'es:itemType': 'string'}),
+        DF.set_type('id', **KEYWORD_ONLY),
+        DF.set_type('synonyms', **ITEM_TYPE_STRING),
         DF.add_field('score', 'number', lambda r: r['count']),
         DF.set_primary_key(['id']),
         print_top,
@@ -396,12 +240,7 @@ def load_situations_to_es_flow():
             indexes=dict(srm__situations=[dict(resource_name='situations')]),
         ),
         DF.update_resource(-1, name='situations', path='situations.json'),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
-            format='json'
-        ),
+        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, format='json'),
         # DF.printer()
     )
 
@@ -423,20 +262,16 @@ def load_organizations_to_es_flow():
         DF.update_package(title='Active Organizations', name='organizations'),
         DF.update_resource(-1, name='orgs'),
         # DF.select_fields(['id', 'name', 'description', 'kind']),
-        DF.set_type('id', **{'es:keyword': True}),
+        DF.set_type('id', **KEYWORD_ONLY),
         # DF.set_type('name', **{'es:autocomplete': True}),
-        DF.set_type('description'),
-        DF.set_type('kind', **{'es:keyword': True}),
+        DF.set_type('description', **NO_SCHEMA),
+        DF.set_type('kind', **KEYWORD_ONLY),
         DF.add_field('score', 'number', lambda r: 10*r['count']),
         DF.set_primary_key(['id']),
         dump_to_es_and_delete(
             indexes=dict(srm__orgs=[dict(resource_name='orgs')]),
         ),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
-        ),
+        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
     )
 
 def load_autocomplete_to_es_flow():
@@ -452,11 +287,7 @@ def load_autocomplete_to_es_flow():
         DF.load(f'{settings.DATA_DUMP_DIR}/autocomplete/datapackage.json', limit_rows=10000),
         DF.update_package(title='AutoComplete Queries', name='autocomplete'),
         DF.set_primary_key(['id']),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
-        ),
+        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
     ).process()
 
 def operator(*_):
