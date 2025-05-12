@@ -23,7 +23,7 @@ TAXONOMY_ITEM_SCHEMA = {
 ADDRESS_PARTS_SCHEMA = {
     'es:schema': {
         'fields': [
-            {'name': 'primary', 'type': 'string', 'es:keyword': True}, 
+            {'name': 'primary',  'type': 'string', 'es:fields': { 'keyword': { 'type': 'keyword' }}}, 
             {'name': 'secondary', 'type': 'string'}
         ]
     }
