@@ -20,9 +20,28 @@ TAXONOMY_ITEM_SCHEMA = {
     },
 }
 
+ADDRESS_PARTS_SCHEMA = {
+    'es:schema': {
+        'fields': [
+            {'name': 'primary', 'type': 'string', 'es:keyword': True}, 
+            {'name': 'secondary', 'type': 'string'}
+        ]
+    }
+}
+
+NON_INDEXED_ADDRESS_PARTS_SCHEMA = {
+    'es:schema': {
+        'fields': [
+            {'name': 'primary', 'type': 'string'}, 
+            {'name': 'secondary', 'type': 'string'}
+        ]
+    }
+}
+
 NON_INDEXED_STRING = {'es:itemType': 'string', 'es:index': False}
 KEYWORD_STRING = {'es:itemType': 'string', 'es:keyword': True}
 KEYWORD_ONLY = {'es:keyword': True}
 ITEM_TYPE_STRING = {'es:itemType': 'string'}
+ITEM_TYPE_NUMBER = {'es:itemType': 'number'}
 AUTOCOMPLETE_STRING = {'es:autocomplete': True}
 NO_SCHEMA = {}

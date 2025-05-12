@@ -18,6 +18,7 @@ from operators.derive import manual_fixes
 
 from . import helpers
 from .autotagging import apply_auto_tagging
+from .es_schemas import (ADDRESS_PARTS_SCHEMA, NON_INDEXED_ADDRESS_PARTS_SCHEMA, KEYWORD_STRING, KEYWORD_ONLY, ITEM_TYPE_NUMBER, ITEM_TYPE_STRING)
 
 
 CHECKPOINT = 'to_dp'
@@ -611,7 +612,7 @@ class RSScoreCalc():
             return row
         return DF.Flow(
             DF.add_field('rs_score', 'number', resources=resources),
-            DF.add_field('situation_scores', 'array', resources=resources, **{'es:itemType': 'number'}),
+            DF.add_field('situation_scores', 'array', resources=resources, **ITEM_TYPE_NUMBER),
             func
         )
 
@@ -699,25 +700,19 @@ def card_data_flow():
         DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses', 'auto_tagged'], resources=['card_data']),
         DF.add_field('situations_parents', 'array', lambda r: [situations[s] for s in r['situation_ids_parents']], resources=['card_data']),
         DF.add_field('responses_parents', 'array', lambda r: [responses[s] for s in r['response_ids_parents']], resources=['card_data']),
-        DF.set_type('situation_ids', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
-        DF.set_type('response_ids', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
-        DF.set_type('situation_ids_parents', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),
-        DF.set_type('response_ids_parents', **{'es:itemType': 'string', 'es:keyword': True}, resources=['card_data']),        
+        DF.set_type('situation_ids', **KEYWORD_STRING, resources=['card_data']),
+        DF.set_type('response_ids', **KEYWORD_STRING, resources=['card_data']),
+        DF.set_type('situation_ids_parents', **KEYWORD_STRING, resources=['card_data']),
+        DF.set_type('response_ids_parents', **KEYWORD_STRING, resources=['card_data']),        
 
         DF.add_field(
             'response_categories',
             'array',
             lambda r: [rr['id'].split(':')[1] for rr in r['responses']],
-            **{'es:itemType': 'string', 'es:keyword': True},
+            **KEYWORD_STRING,
             resources=['card_data'],
         ),
-        DF.add_field(
-            'response_category',
-            'string',
-            helpers.most_common_category,
-            resources=['card_data'],
-            **{'es:keyword': True},
-        ),
+        DF.add_field('response_category','string',helpers.most_common_category,resources=['card_data'],**KEYWORD_ONLY),
         helpers.get_stats().filter_with_stat('Processing: Cards: No Response Category', lambda r: r['response_category'], resources=['card_data']),
         DF.set_type('responses', transform=lambda v, row: helpers.reorder_responses_by_category(v, row['response_category'])),
         helpers.get_stats().filter_with_stat(
@@ -726,11 +721,11 @@ def card_data_flow():
             resources=['card_data'],
             report=invalid_location_report
         ),
-        DF.add_field('possible_autocomplete', 'array', default=possible_autocomplete, resources=['card_data'], **{'es:itemType': 'string', 'es:keyword': True}),
+        DF.add_field('possible_autocomplete', 'array', default=possible_autocomplete, resources=['card_data'], **KEYWORD_STRING),
         DF.add_field(
             'point_id', 'string',
             lambda r: helpers.calc_point_id(r['branch_geometry']) if not r['national_service'] else 'national_service',
-            **{'es:keyword': True},
+            **KEYWORD_ONLY,
             resources=['card_data']
         ),
         DF.add_field(
@@ -740,32 +735,21 @@ def card_data_flow():
         DF.add_field(
             'coords', 'string',
             lambda r: '[{},{}]'.format(*r['branch_geometry']) if r['branch_geometry'] else None,
-            **{'es:keyword': True},
+            **KEYWORD_ONLY,
             resources=['card_data']
         ),
         DF.add_field(
             'collapse_key', 'string',
             lambda r: f"{r['service_name']} {r['service_description'] or ''}".strip(),
-            **{'es:keyword': True},
+            **KEYWORD_ONLY,
             resources=['card_data']
         ),
-        DF.add_field(
-            'address_parts', 'object', helpers.address_parts,
-            **{'es:schema': dict(fields=[
-                dict(name='primary', type='string'),
-                dict(name='secondary', type='string'),
-            ])}
+        DF.add_field('address_parts', 'object', helpers.address_parts,**ADDRESS_PARTS_SCHEMA
         ),
         DF.add_field('organization_original_name', 'string', lambda r: r['organization_name']),
         DF.set_type('organization_name', transform=clean_org_name),
         DF.set_type('organization_short_name', transform=clean_org_name),
-        DF.add_field(
-            'organization_name_parts', 'object', helpers.org_name_parts,
-            **{'es:schema': dict(fields=[
-                dict(name='primary', type='string'),
-                dict(name='secondary', type='string'),
-            ])}
-        ),
+        DF.add_field('organization_name_parts', 'object', helpers.org_name_parts,**NON_INDEXED_ADDRESS_PARTS_SCHEMA),
         DF.add_field(
             'organization_resolved_name',
             'array',
@@ -773,13 +757,13 @@ def card_data_flow():
                     [row.get('branch_operating_unit')]
                     if row.get('branch_operating_unit') else 
                     [row.get('organization_short_name'), row.get('organization_name')]
-            )), **{'es:itemType': 'string'}),
-        DF.set_type('card_id', **{'es:keyword': True}),
-        DF.set_type('branch_id', **{'es:keyword': True}),
-        DF.set_type('service_id', **{'es:keyword': True}),
-        DF.set_type('organization_id', **{'es:keyword': True}),
-        DF.set_type('organization_resolved_name', **{'es:keyword': True}),
-        DF.set_type('response_categories', **{'es:itemType': 'string', 'es:keyword': True}),
+            )), **ITEM_TYPE_STRING),
+        DF.set_type('card_id', **KEYWORD_ONLY),
+        DF.set_type('branch_id', **KEYWORD_ONLY),
+        DF.set_type('service_id', **KEYWORD_ONLY),
+        DF.set_type('organization_id', **KEYWORD_ONLY),
+        DF.set_type('organization_resolved_name', **KEYWORD_ONLY),
+        DF.set_type('response_categories', **KEYWORD_STRING),
         DF.set_primary_key(['card_id'], resources=['card_data']),
         DF.update_resource(['card_data'], path='card_data.csv'),
         DF.validate(),
