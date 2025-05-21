@@ -92,7 +92,6 @@ def soprocServices(services):
             data=data
         )
 
-
 def fetchServiceData():
     print('FETCHING ALL SERVICES')
     query = '''
