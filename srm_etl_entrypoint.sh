@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export PGCONNECT_TIMEOUT=10
 if ! psql "${DATABASE_URL}" -c 'select 1'; then
   echo waiting for DB &&\
   while ! psql "${DATABASE_URL}" -c 'select 1'; do
