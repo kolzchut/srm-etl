@@ -12,10 +12,26 @@ from srm_tools.error_notifier import invoke_on
 
 from conf import settings
 from .click_scraper import scrape_click
-
-
+from srm_tools.error_notifier import send_failure_email
 situations = Situations()
 
+
+def verifyDataExistance(service, counter, max_count = 10):
+    if not service['name'] and not service['description']:
+        logger.error('SoProc: Service has no name or description')
+        send_failure_email('SoProc', 'Service name is invalid')
+    elif not service['name']:
+        logger.error('SoProc: Service name is empty')
+        send_failure_email('SoProc', 'Service name is empty')
+    elif not service['description']:
+        logger.error('SoProc: Service description is empty')
+        send_failure_email('SoProc', 'Service description is empty')
+    if not service['name'] or not service['description']:
+        counter += 1
+        if counter > max_count:
+            send_failure_email('SoProc', 'Too many services with missing data')
+            logger.error('SoProc: Too many services with missing data')
+            raise Exception('Too many services with missing data')
 
 ## ORGANIZATIONS
 def updateFromSourceData():
@@ -54,6 +70,7 @@ def fetchOrgData():
 
 def soprocServices(services):
     click_data = scrape_click()
+    counter = 0
     for service in services:
         catalog_number = str(service['catalog_number']) if service['catalog_number'] is not None else None
         extra_data = deepcopy(click_data.get(catalog_number)) or dict()
@@ -73,9 +90,12 @@ def soprocServices(services):
         #     (service['target_age_group'] or []) +
         #     (service['target_audience'] or [])
         # )
+
+        verifyDataExistance(service, counter)
+
         data = dict(
-            operating_unit=service['name'],
-            description=service['description'],
+            operating_unit=service.get('name', ''),
+            description=service.get('description', ''),
             organizations=[s['entity_id'] for s in (service['suppliers'] or []) if s['active'] == 'yes'],
             urls=None,
         )
