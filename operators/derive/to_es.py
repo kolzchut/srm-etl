@@ -47,8 +47,9 @@ def card_score(row):
     if organization_kind in ('משרד ממשלתי', 'רשות מקומית', 'תאגיד סטטוטורי'):
         score *= 5
 
+    score = max(score,1)
     boost = float(row['service_boost']) or 0
-    boost = 10**(boost/10)
+    boost = 10**boost
     score *= boost
 
     return score
