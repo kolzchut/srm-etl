@@ -19,7 +19,7 @@ from srm_tools.processors import update_mapper
 from conf import settings
 from srm_tools.logger import logger
 from srm_tools.url_utils import fix_url
-from srm_tools.error_notifier import invoke_on
+from srm_tools.error_notifier import invoke_on, send_failure_email
 
 isDebug = False
 
@@ -78,7 +78,9 @@ def updateOrgFromSourceData(ga: GuidestarAPI, stats: Stats):
                                     if website:
                                         urls.append(f'{website}#אתר הבית')
                                 except Exception as e:
-                                    logger.error(f'Error fixing URL "{data["website"]}": {e}')
+                                    log_error= f'Error fixing URL "{data["website"]}": {e}'
+                                    logger.error(log_error)
+                                    send_failure_email( operation_name="Enrich Entities",error=log_error)
 
                             row['urls'] = '\n'.join(urls)
 
@@ -94,7 +96,9 @@ def updateOrgFromSourceData(ga: GuidestarAPI, stats: Stats):
 
                             break  # exit inner loop on success
                         except Exception as e:
-                            logger.error(f'Error parsing organization data for {regNums}: {e} | data={data}')
+                            log_error=f'Error parsing organization data for {regNums}: {e} | data={data}'
+                            logger.error(log_error)
+                            send_failure_email(operation_name="Enrich Entities", error=log_error)
                     else:
                         # No break occurred, fallback to fetchEntityFromBudgetKey
                         try:
@@ -105,25 +109,35 @@ def updateOrgFromSourceData(ga: GuidestarAPI, stats: Stats):
                                 stats.increase('Entities: Unknown ID')
                                 unknown_entity_ids.add(row)
                         except Exception as e:
-                            logger.error(f'Error fetching entity from budget key {row["id"]}: {e}')
+                            log_error=f'Error fetching entity from budget key {row["id"]}: {e}'
+                            logger.error(log_error)
+                            send_failure_email(operation_name="Enrich Entities", error=log_error)
                 except Exception as e:
-                    logger.error(f'Error calling ga.organizations with {regNums}: {e}')
+                    log_error=f'Error calling ga.organizations with {regNums}: {e}'
+                    logger.error(log_error)
+                    send_failure_email(operation_name="Enrich Entities", error=log_error)
 
                 if 'name' in row:
                     try:
                         row['name'] = row['name'].replace(' (חל"צ)', '').replace(' (ע"ר)', '')
                     except Exception as e:
-                        logger.error(f'Error cleaning name for {row.get("id")}: {e}')
+                        log_error=f'Error cleaning name for {row.get("id")}: {e}'
+                        logger.error(log_error)
+                        send_failure_email(operation_name="Enrich Entities", error=log_error)
 
                 yield row
 
             except Exception as e:
-                logger.error(f'General row error for {row.get("id")}: {e}')
+                log_error=f'General row error for {row.get("id")}: {e}'
+                logger.error(log_error)
+                send_failure_email(operation_name="Enrich Entities", error=log_error)
 
         try:
             unknown_entity_ids.save()
         except Exception as e:
-            logger.error(f'Error saving unknown_entity_ids: {e}')
+            log_error=f'Error saving unknown_entity_ids: {e}'
+            logger.error(log_error)
+            send_failure_email(operation_name="Enrich Entities", error=log_error)
 
         return func
 
@@ -166,27 +180,35 @@ def unwind_branches(ga: GuidestarAPI, stats: Stats):
             try:
                 regNum = row.get('id')
                 if not regNum:
-                    logger.error(f'Missing id in row: {row}')
+                    log_error=f'Missing id in row: {row}'
+                    logger.error(log_error)
+                    send_failure_email(operation_name="Enrich Entities", error=log_error)
                     continue
 
                 try:
                     branches = ga.branches(regNum)
                 except Exception as e:
-                    logger.error(f'Error fetching branches for {regNum}: {e}')
+                    log_error=f'Error fetching branches for {regNum}: {e}'
+                    logger.error(log_error)
+                    send_failure_email(operation_name="Enrich Entities", error=log_error)
                     continue
 
                 try:
                     ids = [b.get('branchId') for b in branches if b.get('branchId')]
                     assert len(ids) == len(set(ids)), f'DUPDUP2 {row} {ids}'
                 except Exception as e:
-                    logger.error(f'Duplicate or missing branch IDs for {regNum}: {e}')
+                    log_error=f'Duplicate or missing branch IDs for {regNum}: {e}'
+                    logger.error(log_error)
+                    send_failure_email(operation_name="Enrich Entities", error=log_error)
                     continue
 
                 for branch in branches:
                     try:
                         branch_id = branch.get('branchId')
                         if not branch_id:
-                            logger.error(f'Missing branchId in branch for {regNum}: {branch}')
+                            log_error=f'Missing branchId in branch for {regNum}: {branch}'
+                            logger.error(log_error)
+                            send_failure_email(operation_name="Enrich Entities", error=log_error)
                             continue
 
                         ret = dict(row)  # shallow copy
@@ -218,19 +240,25 @@ def unwind_branches(ga: GuidestarAPI, stats: Stats):
                                     for l in language_str.split(';') if l != 'other'
                                 ]
                             except Exception as e:
-                                logger.error(f'Error parsing languages for {regNum}: {e}')
+                                log_error=f'Error parsing languages for {regNum}: {e}'
+                                logger.error(log_error)
+                                send_failure_email(operation_name="Enrich Entities", error=log_error)
 
                         ret['data'] = data
                         ret['id'] = f'guidestar:{branch_id}'
 
                         if ret['id'] in branchIds:
-                            logger.error(f'Duplicate branch ID {ret["id"]} for {regNum}')
+                            log_error=f'Duplicate branch ID {ret["id"]} for {regNum}'
+                            logger.error(log_error)
+                            send_failure_email(operation_name="Enrich Entities", error=log_error)
                             continue
 
                         branchIds.add(ret['id'])
                         yield ret
                     except Exception as e:
-                        logger.error(f'Error processing branch for {regNum}: {e}')
+                        log_error=f'Error processing branch for {regNum}: {e}'
+                        logger.error(log_error)
+                        send_failure_email(operation_name="Enrich Entities", error=log_error)
                         continue
 
                 if not branches:
@@ -270,9 +298,13 @@ def unwind_branches(ga: GuidestarAPI, stats: Stats):
                                     })
                                     yield ret_data
                                 except Exception as e:
-                                    logger.error(f'Error creating fallback data for {regNum}: {e}')
+                                    log_error=f'Error creating fallback data for {regNum}: {e}'
+                                    logger.error(log_error)
+                                    send_failure_email(operation_name="Enrich Entities", error=log_error)
                     except Exception as e:
-                        logger.error(f'Error fetching org fallback data for {regNum}: {e}')
+                        log_error=f'Error fetching org fallback data for {regNum}: {e}'
+                        logger.error(log_error)
+                        send_failure_email(operation_name="Enrich Entities", error=log_error)
 
                 # Add national fallback
                 try:
@@ -292,10 +324,14 @@ def unwind_branches(ga: GuidestarAPI, stats: Stats):
                     }
                     yield national
                 except Exception as e:
-                    logger.error(f'Error generating national fallback for {regNum}: {e}')
+                    log_error=f'Error generating national fallback for {regNum}: {e}'
+                    logger.error(log_error)
+                    send_failure_email(operation_name="Enrich Entities", error=log_error)
 
             except Exception as e:
-                logger.error(f'General error for row {row.get("id", "unknown")}: {e}')
+                log_error=f'General error for row {row.get("id", "unknown")}: {e}'
+                logger.error(log_error)
+                send_failure_email(operation_name="Enrich Entities", error=log_error)
 
     return DF.Flow(
         DF.add_field('data', 'object', resources='orgs'),
@@ -597,8 +633,9 @@ def process_service(row, taxonomies, rejected_taxonomies, stats: Stats):
             data=row
         )
     except Exception as e:
-        logger.error(
-            f'Processing service {row.get('name', 'unknown')} in "process_service" function has failed with error:\n {e}')
+        log_error=f'Processing service {row.get('name', 'unknown')} in "process_service" function has failed with error:\n {e}'
+        logger.error(log_error)
+        send_failure_email(operation_name="Enrich Entities", error=log_error)
 
 
 def unwind_services(ga: GuidestarAPI, taxonomies, rejected_taxonomies, stats: Stats):
@@ -618,13 +655,17 @@ def unwind_services(ga: GuidestarAPI, taxonomies, rejected_taxonomies, stats: St
                 try:
                     branches = ga.branches(regNum)
                 except Exception as e:
-                    logger.error(f'Error fetching branches for {regNum}: {e}')
+                    log_error=f'Error fetching branches for {regNum}: {e}'
+                    logger.error(log_error)
+                    send_failure_email(operation_name="Enrich Entities", error=log_error)
                     branches = []
 
                 try:
                     services = ga.services(regNum)
                 except Exception as e:
-                    logger.error(f'Error fetching services for {regNum}: {e}')
+                    log_error=f'Error fetching services for {regNum}: {e}'
+                    logger.error(log_error)
+                    send_failure_email(operation_name="Enrich Entities", error=log_error)
                     services = []
 
                 try:
@@ -633,7 +674,9 @@ def unwind_services(ga: GuidestarAPI, taxonomies, rejected_taxonomies, stats: St
                         if s.get('serviceGovName') is not None and s.get('relatedMalkarService') is not None
                     }
                 except Exception as e:
-                    logger.error(f'Error building govServices dict for {regNum}: {e}')
+                    log_error=f'Error building govServices dict for {regNum}: {e}'
+                    logger.error(log_error)
+                    send_failure_email(operation_name="Enrich Entities", error=log_error)
                     govServices = {}
 
                 for service in services:
@@ -664,11 +707,15 @@ def unwind_services(ga: GuidestarAPI, taxonomies, rejected_taxonomies, stats: St
                                 logger.info(f'COLLECTED {count} services: {ret}')
                             yield ret
                     except Exception as e:
-                        logger.error(f'Error processing service for {regNum}: {e}')
+                        log_error=f'Error processing service for {regNum}: {e}'
+                        logger.error(log_error)
+                        send_failure_email(operation_name="Enrich Entities", error=log_error)
                         continue
 
             except Exception as e:
-                logger.error(f'General error for row {row.get("id", "unknown")}: {e}')
+                log_error=f'General error for row {row.get("id", "unknown")}: {e}'
+                logger.error(log_error)
+                send_failure_email(operation_name="Enrich Entities", error=log_error)
 
     return DF.Flow(
         DF.add_field('data', 'object', resources='orgs'),
@@ -698,7 +745,9 @@ def fetchServiceData(ga, stats: Stats, taxonomies, rejected_taxonomies):
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
     except Exception as e:
-        logger.error(f'Error during airtable services fetching/updating: {e}')
+        log_error=f'Error during airtable services fetching/updating: {e}'
+        logger.error(log_error)
+        send_failure_email(operation_name="Enrich Entities", error=log_error)
 
 
 def getGuidestarOrgs(ga: GuidestarAPI):
@@ -718,7 +767,9 @@ def getGuidestarOrgs(ga: GuidestarAPI):
                     continue
                 regNums.append(dict(id=org_id, data=dict(id=org_id, last_tag_date=today)))
         except Exception as e:
-            print(f"Error fetching organizations: {e}")
+            log_error=f"Error fetching organizations: {e}"
+            logger.error(log_error)
+            send_failure_email(operation_name="Enrich Entities", error=log_error)
 
         print('COLLECTED {} guidestar organizations'.format(len(regNums)))
 
@@ -733,7 +784,9 @@ def getGuidestarOrgs(ga: GuidestarAPI):
                 airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
             )
         except Exception as e:
-            print(f"Error updating Airtable: {e}")
+            log_error=f"Error updating Airtable: {e}"
+            logger.error(log_error)
+            send_failure_email(operation_name="Enrich Entities", error=log_error)
 
 
 def scrapeGuidestarEntities(*_):
