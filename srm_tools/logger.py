@@ -12,7 +12,7 @@ MODULES = [
     'airflow.task',
 ]
 for module in MODULES:
-    logging.getLogger(module).setLevel(logging.INFO)
+    logging.getLogger(module).setLevel(logging.WARNING)
 
 logger = logging.getLogger('SRM')
 logger.setLevel(logging.DEBUG)
