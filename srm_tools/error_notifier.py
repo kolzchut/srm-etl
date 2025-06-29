@@ -39,7 +39,7 @@ def send_failure_email(operation_name: str, error: str, is_test: bool = False):
         server.quit()
         logger.info(f"Email sent about {operation_name}.")
     except Exception as e:
-        logger.info(f"Failed to send email: {e}")
+        logger.info(f"Failed to send email: {e}, {SENDER_EMAIL},{SENDER_PASSWORD}")
         raise Exception(f"Failed to send email:{e}. \nOperation {operation_name} encountered an error. \nERROR:{error}")
     
     if not is_test:
