@@ -87,7 +87,6 @@ class ManualFixes():
             batch_size = 50  # Adjust this number based on your data
             for i in range(0, len(records), batch_size):
                 batch = records[i:i+batch_size]
-                logger.info(f'Updating batch of {len(batch)} records ({i+1} to {min(i+batch_size, len(records))})')
                 DF.Flow(
                     batch,
                     DF.update_resource(-1, name='manual_fixes'),

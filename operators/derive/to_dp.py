@@ -15,7 +15,7 @@ from srm_tools.hash import hasher
 from srm_tools.data_cleaning import clean_org_name
 
 from operators.derive import manual_fixes
-
+from srm_tools.error_notifier import send_failure_email
 from . import helpers
 from .autotagging import apply_auto_tagging
 from .es_schemas import (ADDRESS_PARTS_SCHEMA, NON_INDEXED_ADDRESS_PARTS_SCHEMA, KEYWORD_STRING, KEYWORD_ONLY, ITEM_TYPE_NUMBER, ITEM_TYPE_STRING)
@@ -689,21 +689,29 @@ def card_data_flow():
         ['organization_id', 'organization_name', 'branch_address', 'branch_id'],
         ['branch_id']
     )
-    
+    def safe_lambda(func, *args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            log_error= f"Error but continue on lambda: {e}"
+            logger.error(log_error)
+            send_failure_email( operation_name="Upload To DB - DP process",error=log_error)
+            return None
+
     return DF.Flow(
         DF.checkpoint(CHECKPOINT),
-        DF.add_field('situations', 'array', lambda r: [situations[s] for s in r['situation_ids']], resources=['card_data']),
-        DF.add_field('responses', 'array', lambda r: [responses[s] for s in r['response_ids']], resources=['card_data']),
+        DF.add_field('situations', 'array', lambda r: safe_lambda(lambda r: [situations[s] for s in r['situation_ids']], r), resources=['card_data']),
+        DF.add_field('responses', 'array', lambda r: safe_lambda(lambda r: [responses[s] for s in r['response_ids']], r), resources=['card_data']),
         rs_score.process('card_data'),
-        DF.add_field('situation_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['situation_ids']), resources=['card_data']),
-        DF.add_field('response_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_ids']), resources=['card_data']),
+        DF.add_field('situation_ids_parents', 'array', lambda r: safe_lambda(helpers.update_taxonomy_with_parents, r['situation_ids']), resources=['card_data']),
+        DF.add_field('response_ids_parents', 'array', lambda r: safe_lambda(helpers.update_taxonomy_with_parents, r['response_ids']), resources=['card_data']),
         DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses', 'auto_tagged'], resources=['card_data']),
-        DF.add_field('situations_parents', 'array', lambda r: [situations[s] for s in r['situation_ids_parents']], resources=['card_data']),
-        DF.add_field('responses_parents', 'array', lambda r: [responses[s] for s in r['response_ids_parents']], resources=['card_data']),
+        DF.add_field('situations_parents', 'array', lambda r: safe_lambda(lambda r: [situations[s] for s in r['situation_ids_parents']], r), resources=['card_data']),
+        DF.add_field('responses_parents', 'array', lambda r: safe_lambda(lambda r: [responses[s] for s in r['response_ids_parents']], r), resources=['card_data']),
         DF.set_type('situation_ids', **KEYWORD_STRING, resources=['card_data']),
         DF.set_type('response_ids', **KEYWORD_STRING, resources=['card_data']),
         DF.set_type('situation_ids_parents', **KEYWORD_STRING, resources=['card_data']),
-        DF.set_type('response_ids_parents', **KEYWORD_STRING, resources=['card_data']),        
+        DF.set_type('response_ids_parents', **KEYWORD_STRING, resources=['card_data']),
 
         DF.add_field(
             'response_categories',
