@@ -692,8 +692,8 @@ def card_data_flow():
     def safe_lambda(func, *args, default=None, **kwargs):
         try:
             if isinstance(args[0], dict) and 'or' in str(args[0]):
-                warning=f"Fallback 'or' used in arguments: {args}"
-                logger.warning(f"Fallback 'or' used in arguments: {args}")
+                warning = f"Fallback 'or' used in arguments: {args}"
+                logger.warning(warning)
                 send_failure_email(operation_name="Upload To DB - DP process", error=warning)
             return func(*args, **kwargs)
         except Exception as e:
@@ -704,7 +704,9 @@ def card_data_flow():
                 f"\n⚙️ Kwargs: {kwargs}"
             )
             logger.error(log_error)
-            send_failure_email(operation_name="Upload To DB - DP process", error=log_error)
+            if not kwargs.get('email_sent', False):
+                send_failure_email(operation_name="Upload To DB - DP process", error=log_error)
+                kwargs['email_sent'] = True
             return default
 
     return DF.Flow(
