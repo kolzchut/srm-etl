@@ -689,11 +689,11 @@ def card_data_flow():
         ['organization_id', 'organization_name', 'branch_address', 'branch_id'],
         ['branch_id']
     )
-    def safe_lambda(func, default=None, *args, **kwargs):
+    def safe_lambda(func, *args, default=None, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            log_error = f"Error but continue on lambda: {e}"
+            log_error = f"Error BUT CONTINUE \nKEYERROR: {e}"
             logger.error(log_error)
             send_failure_email(operation_name="Upload To DB - DP process", error=log_error)
             return default
