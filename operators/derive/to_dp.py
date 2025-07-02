@@ -704,9 +704,6 @@ def card_data_flow():
                 f"\n⚙️ Kwargs: {kwargs}"
             )
             logger.error(log_error)
-            if not kwargs.get('email_sent', False):
-                send_failure_email(operation_name="Upload To DB - DP process", error=log_error)
-                kwargs['email_sent'] = True
             return default
 
     return DF.Flow(
