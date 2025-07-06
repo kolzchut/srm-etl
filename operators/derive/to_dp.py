@@ -8,8 +8,6 @@ from thefuzz import fuzz
 
 from conf import settings
 from srm_tools.stats import Report
-from urllib3.util.util import reraise
-
 from .autocomplete import IGNORE_SITUATIONS
 from srm_tools.logger import logger
 from srm_tools.unwind import unwind
@@ -696,8 +694,7 @@ def card_data_flow():
             if isinstance(args[0], dict) and 'or' in str(args[0]):
                 warning = f"ERROR BUT CONTINUE: Fallback 'or' used in arguments: {args}"
                 logger.warning(warning)
-                send_failure_email(operation_name="Upload To DB - DP process", error=warning, reraise=False)
-
+                # send_failure_email(operation_name="Upload To DB - DP process", error=warning)
             return func(*args, **kwargs)
         except Exception as e:
             log_error = (
