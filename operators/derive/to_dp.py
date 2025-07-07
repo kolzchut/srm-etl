@@ -700,14 +700,14 @@ def card_data_flow():
 
     return DF.Flow(
         DF.checkpoint(CHECKPOINT),
-        DF.add_field('situations', 'array', lambda r: safe_lambda(lambda r: [situations[s] for s in (r.get('situation_ids')) if s in situations], r, default=[]), resources=['card_data']),
-        DF.add_field('responses', 'array', lambda r: safe_lambda(lambda r: [responses[s] for s in (r.get('response_ids')) if s in responses], r, default=[]), resources=['card_data']),
+        DF.add_field('situations', 'array', lambda r: safe_lambda(lambda r: [situations[s] for s in (r.get('situation_ids',[])) if s in situations], r, default=[]), resources=['card_data']),
+        DF.add_field('responses', 'array', lambda r: safe_lambda(lambda r: [responses[s] for s in (r.get('response_ids',[])) if s in responses], r, default=[]), resources=['card_data']),
         rs_score.process('card_data'),
         DF.add_field('situation_ids_parents', 'array', lambda r: safe_lambda(helpers.update_taxonomy_with_parents, r.get('situation_ids', []), default=[]), resources=['card_data']),
         DF.add_field('response_ids_parents', 'array', lambda r: safe_lambda(helpers.update_taxonomy_with_parents, r.get('response_ids', []), default=[]), resources=['card_data']),
         DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses', 'auto_tagged'], resources=['card_data']),
-        DF.add_field('situations_parents', 'array', lambda r: safe_lambda(lambda r: [situations[s] for s in (r.get('situation_ids_parents')) if s in situations], r, default=[]), resources=['card_data']),
-        DF.add_field('responses_parents', 'array', lambda r: safe_lambda(lambda r: [responses[s] for s in (r.get('response_ids_parents')) if s in responses], r, default=[]), resources=['card_data']),
+        DF.add_field('situations_parents', 'array', lambda r: safe_lambda(lambda r: [situations[s] for s in (r.get('situation_ids_parents',[])) if s in situations], r, default=[]), resources=['card_data']),
+        DF.add_field('responses_parents', 'array', lambda r: safe_lambda(lambda r: [responses[s] for s in (r.get('response_ids_parents',[])) if s in responses], r, default=[]), resources=['card_data']),
         DF.set_type('situation_ids', **KEYWORD_STRING, resources=['card_data']),
         DF.set_type('response_ids', **KEYWORD_STRING, resources=['card_data']),
         DF.set_type('situation_ids_parents', **KEYWORD_STRING, resources=['card_data']),
