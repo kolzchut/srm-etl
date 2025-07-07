@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from conf import settings
 from srm_tools.logger import logger
 
-def send_failure_email(operation_name: str, error: str, is_test: bool = False):
+def send_failure_email(operation_name: str, error: str, is_test: bool = False, reraise: bool = True):
     ENV_NAME = settings.ENV_NAME
     SMTP_SERVER = settings.SMTP_SERVER
     SMTP_PORT = settings.SMTP_PORT
@@ -42,7 +42,7 @@ def send_failure_email(operation_name: str, error: str, is_test: bool = False):
         logger.info(f"Failed to send email: {e}, {SENDER_EMAIL},{SENDER_PASSWORD}")
         raise Exception(f"Failed to send email:{e}. \nOperation {operation_name} encountered an error. \nERROR:{error}")
     
-    if not is_test:
+    if not is_test and reraise:
         raise # Re-raise the original exception
 
 
