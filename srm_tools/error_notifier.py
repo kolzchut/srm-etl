@@ -6,6 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from conf import settings
 from srm_tools.logger import logger
 
+
 def send_failure_email(operation_name: str, error: str, is_test: bool = False):
     ENV_NAME = settings.ENV_NAME
     SMTP_SERVER = settings.SMTP_SERVER
