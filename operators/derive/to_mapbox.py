@@ -204,49 +204,52 @@ def geo_data_flow():
 
 
 def points_flow():
-    return DF.Flow(
-        DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
-        DF.update_package(title='Points Data', name='points_data'),
-        DF.update_resource(['card_data'], name='points', path='points.csv'),
-        DF.set_primary_key(['card_id']),
-        DF.filter_rows(lambda r: r['branch_geometry'] is not None),
-        DF.select_fields(
-            [
-                'branch_geometry',
-                'response_categories',
-                'response_category',
-                'card_id',
-                'point_id',
-                'situation_ids',
-                'response_ids',
-                'organization_id',
-            ],
-            resources=['points'],
-        ),
-        DF.add_field('score', 'number', 10, resources=['points']),
-        # Save mapbox data to ES and CKAN
-        dump_to_es_and_delete(
-            indexes=dict(srm__points=[dict(resource_name='points')]),
-        ),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
-            force_format=False
-        ),
+    try:
+        return DF.Flow(
+            DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
+            DF.update_package(title='Points Data', name='points_data'),
+            DF.update_resource(['card_data'], name='points', path='points.csv'),
+            DF.set_primary_key(['card_id']),
+            DF.filter_rows(lambda r: r['branch_geometry'] is not None),
+            DF.select_fields(
+                [
+                    'branch_geometry',
+                    'response_categories',
+                    'response_category',
+                    'card_id',
+                    'point_id',
+                    'situation_ids',
+                    'response_ids',
+                    'organization_id',
+                ],
+                resources=['points'],
+            ),
+            DF.add_field('score', 'number', 10, resources=['points']),
+            # Save mapbox data to ES and CKAN
+            dump_to_es_and_delete(
+                indexes=dict(srm__points=[dict(resource_name='points')]),
+            ),
+            dump_to_ckan(
+                settings.CKAN_HOST,
+                settings.CKAN_API_KEY,
+                settings.CKAN_OWNER_ORG,
+                force_format=False
+            ),
 
-        # Generate Cluster dataset
-        DF.select_fields(['branch_geometry', 'response_categories', 'point_id', 'card_id']),
-        DF.update_package(name='geo_data_clusters', title='Geo Data - For Clusters'),
-        DF.update_resource(['points'], path='geo_data.geojson'),
-        DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data_clusters', force_format=False),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
-            force_format=False
-        ),
-    )
+            # Generate Cluster dataset
+            DF.select_fields(['branch_geometry', 'response_categories', 'point_id', 'card_id']),
+            DF.update_package(name='geo_data_clusters', title='Geo Data - For Clusters'),
+            DF.update_resource(['points'], path='geo_data.geojson'),
+            DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data_clusters', force_format=False),
+            dump_to_ckan(
+                settings.CKAN_HOST,
+                settings.CKAN_API_KEY,
+                settings.CKAN_OWNER_ORG,
+                force_format=False
+            ),
+        )
+    except Exception as e:
+        logger.warning(e)
 
 
 
