@@ -803,8 +803,9 @@ def operator(*_):
     flat_branches_flow(branch_mapping).process()
     flat_services_flow(branch_mapping).process()
     flat_table_flow().process()
-    card_data_flow().process()
-
+    card_flow = card_data_flow()
+    if card_flow is not None:
+        card_flow.process()
     logger.info('Finished Data Package Flow')
 
 
