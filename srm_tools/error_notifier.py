@@ -43,6 +43,7 @@ def send_failure_email(operation_name: str, error: str, is_test: bool = False, r
         raise Exception(f"Failed to send email:{e}. \nOperation {operation_name} encountered an error. \nERROR:{error}")
     
     if not is_test and reraise:
+        logger.info('Re-Raising from send_failure_email')
         raise # Re-raise the original exception
 
 
