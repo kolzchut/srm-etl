@@ -620,6 +620,9 @@ def validate_and_deduplicate_ids():
     def func(rows):
         seen_ids = set()
         for row in rows:
+            if 'id' not in row:
+                logger.warning(f"Row missing 'id': {row}")
+                continue  # Skip rows without 'id'
             if row['id'] in seen_ids:
                 continue  # Skip duplicate rows
             seen_ids.add(row['id'])
