@@ -693,7 +693,7 @@ def card_data_flow():
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            warning = f"Fallback BUT CONTINUE: {e}"
+            warning = f"Fallback BUT CONTINUE: {args}"
             logger.warning(warning)
             send_failure_email(operation_name="Upload To DB - DP process", error=warning, reraise=False)
             return default
