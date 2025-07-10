@@ -695,7 +695,7 @@ def card_data_flow():
         except Exception as e:
             warning = f"ERROR BUT CONTINUE: Fallback 'or' used in arguments: {args}"
             logger.warning(warning)
-            send_failure_email(operation_name="Upload To DB - DP process", error=warning, is_test=False, reraise=False)
+            send_failure_email(operation_name="Upload To DB - DP process", error=warning)
             return default
 
 
