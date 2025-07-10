@@ -80,26 +80,21 @@ def data_api_es_flow():
         dump_to_es_and_delete(indexes=dict(srm__cards=[dict(resource_name='cards')])),
         DF.checkpoint(checkpoint),
     ).process()
-    try:
-        DF.Flow(
-            DF.checkpoint(checkpoint),
-            DF.update_resource(-1, name='full_cards'),
-            DF.delete_fields([
-                'score', 'possible_autocomplete', 'situations', 'responses', 'collapse_key', 'organization_resolved_name',
-                'responses_parents', 'situations_parents', 'situation_ids_parents', 'response_ids_parents',
-                'data_sources', 'rs_score', 'situation_scores', 'point_id', 'coords']),
-            dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
-        ).process()
-    except Exception as e:
-        logger.warning(e)
-    try:
-        DF.Flow(
-            DF.checkpoint(checkpoint),
-            DF.filter_rows(lambda r: False),
-            dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
-        ).process()
-    except Exception as e:
-        logger.warning(e)
+    DF.Flow(
+        DF.checkpoint(checkpoint),
+        DF.update_resource(-1, name='full_cards'),
+        DF.delete_fields([
+            'score', 'possible_autocomplete', 'situations', 'responses', 'collapse_key', 'organization_resolved_name',
+            'responses_parents', 'situations_parents', 'situation_ids_parents', 'response_ids_parents',
+            'data_sources', 'rs_score', 'situation_scores', 'point_id', 'coords']),
+        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
+    ).process()
+
+    DF.Flow(
+        DF.checkpoint(checkpoint),
+        DF.filter_rows(lambda r: False),
+        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
+    ).process()
 
         # # TESTING FLOW
         # DF.add_field('text', 'array', **{'es:itemType': 'string', 'es:keyword': True}, default=select_text_fields),
@@ -151,26 +146,23 @@ def load_locations_to_es_flow():
         src = requests.get(url, stream=True).raw
         shutil.copyfileobj(src, tmpfile)
         tmpfile.close()
-        try:
-            return DF.Flow(
-                DF.load(tmpfile.name, format='datapackage'),
-                PREDEFINED,
-                DF.concatenate(
-                    fields=dict(key=[], name=[], bounds=[], place=[]),
-                    target=dict(name='places')
-                ),
-                DF.update_package(title='Bounds for Locations in Israel', name='bounds-for-locations'),
-                # DF.set_type('name', **{'es:autocomplete': True}),
-                DF.add_field('query', 'string', lambda r: sorted(r['name'], key=lambda v: len(v), reverse=True)[0]),
-                DF.add_field('score', 'number', calc_score),
-                DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/place_data'),
-                dump_to_es_and_delete(
-                    indexes=dict(srm__places=[dict(resource_name='places')]),
-                ),
-                dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
-            )
-        except Exception as e:
-            logger.warning(e)
+        return DF.Flow(
+            DF.load(tmpfile.name, format='datapackage'),
+            PREDEFINED,
+            DF.concatenate(
+                fields=dict(key=[], name=[], bounds=[], place=[]),
+                target=dict(name='places')
+            ),
+            DF.update_package(title='Bounds for Locations in Israel', name='bounds-for-locations'),
+            # DF.set_type('name', **{'es:autocomplete': True}),
+            DF.add_field('query', 'string', lambda r: sorted(r['name'], key=lambda v: len(v), reverse=True)[0]),
+            DF.add_field('score', 'number', calc_score),
+            DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/place_data'),
+            dump_to_es_and_delete(
+                indexes=dict(srm__places=[dict(resource_name='places')]),
+            ),
+            dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
+        )
 
 def load_responses_to_es_flow():
     
@@ -178,42 +170,40 @@ def load_responses_to_es_flow():
         parts = row['id'].split(':')
         if len(parts) == 2:
             print('STATS', parts[1], row['count'])
-    try:
-        return DF.Flow(
-            DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
-            DF.add_field('response_ids', 'array', lambda r: [r['id'] for r in r['responses']]),
-            DF.set_type('response_ids', transform=lambda v: helpers.update_taxonomy_with_parents(v)),
-            DF.select_fields(['response_ids']),
-            unwind('response_ids', 'id', 'object'),
-            DF.join_with_self('card_data', ['id'], dict(
-                id=None,
-                count=dict(aggregate='count')
-            )),
-            load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_RESPONSE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-            DF.update_package(title='Taxonomy Responses', name='responses'),
-            DF.update_resource(-1, name='responses'),
-            DF.join('card_data', ['id'], 'responses', ['id'], dict(
-                count=None
-            )),
-            DF.filter_rows(lambda r: r.get('status') == 'ACTIVE'),
-            DF.filter_rows(lambda r: r['count'] is not None),
-            DF.select_fields(['id', 'name', 'synonyms', 'breadcrumbs', 'count']),
-            DF.set_type('id', **KEYWORD_ONLY),
-            # DF.set_type('name', **{'es:autocomplete': True}),
-            DF.set_type('synonyms', **ITEM_TYPE_STRING),
-            DF.add_field('score', 'number', lambda r: r['count']),
-            DF.set_primary_key(['id']),
-            print_top,
-            DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/response_data'),
-            dump_to_es_and_delete(
-                indexes=dict(srm__responses=[dict(resource_name='responses')]),
-            ),
-            DF.update_resource(-1, name='responses', path='responses.json'),
-            dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, format='json'),
-            # DF.printer()
-            )
-    except Exception as e:
-        logger.warning(e)
+
+    return DF.Flow(
+        DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
+        DF.add_field('response_ids', 'array', lambda r: [r['id'] for r in r['responses']]),
+        DF.set_type('response_ids', transform=lambda v: helpers.update_taxonomy_with_parents(v)),
+        DF.select_fields(['response_ids']),
+        unwind('response_ids', 'id', 'object'),
+        DF.join_with_self('card_data', ['id'], dict(
+            id=None,
+            count=dict(aggregate='count')
+        )),
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_RESPONSE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.update_package(title='Taxonomy Responses', name='responses'),
+        DF.update_resource(-1, name='responses'),
+        DF.join('card_data', ['id'], 'responses', ['id'], dict(
+            count=None
+        )),
+        DF.filter_rows(lambda r: r.get('status') == 'ACTIVE'),
+        DF.filter_rows(lambda r: r['count'] is not None),
+        DF.select_fields(['id', 'name', 'synonyms', 'breadcrumbs', 'count']),
+        DF.set_type('id', **KEYWORD_ONLY),
+        # DF.set_type('name', **{'es:autocomplete': True}),
+        DF.set_type('synonyms', **ITEM_TYPE_STRING),
+        DF.add_field('score', 'number', lambda r: r['count']),
+        DF.set_primary_key(['id']),
+        print_top,
+        DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/response_data'),
+        dump_to_es_and_delete(
+            indexes=dict(srm__responses=[dict(resource_name='responses')]),
+        ),
+        DF.update_resource(-1, name='responses', path='responses.json'),
+        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, format='json'),
+        # DF.printer()
+    )
 
 def load_situations_to_es_flow():
     
@@ -221,74 +211,69 @@ def load_situations_to_es_flow():
         parts = row['id'].split(':')
         if len(parts) == 2:
             print('STATS', parts[1], row['count'])
-    try:
-        return DF.Flow(
-            DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
-            DF.add_field('situation_ids', 'array', lambda r: [r['id'] for r in r['situations']]),
-            DF.set_type('situation_ids', transform=lambda v: helpers.update_taxonomy_with_parents(v)),
-            DF.select_fields(['situation_ids']),
-            unwind('situation_ids', 'id', 'object'),
-            DF.join_with_self('card_data', ['id'], dict(
-                id=None,
-                count=dict(aggregate='count')
-            )),
-            load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_SITUATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-            DF.update_package(title='Taxonomy Situations', name='situations'),
-            DF.update_resource(-1, name='situations'),
-            DF.join('card_data', ['id'], 'situations', ['id'], dict(
-                count=None
-            )),
-            DF.filter_rows(lambda r: r.get('status') == 'ACTIVE'),
-            DF.filter_rows(lambda r: r['count'] is not None),
-            DF.select_fields(['id', 'name', 'synonyms', 'breadcrumbs', 'count']),
-            DF.set_type('id', **KEYWORD_ONLY),
-            DF.set_type('synonyms', **ITEM_TYPE_STRING),
-            DF.add_field('score', 'number', lambda r: r['count']),
-            DF.set_primary_key(['id']),
-            print_top,
-            DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/situation_data'),
-            dump_to_es_and_delete(
-                indexes=dict(srm__situations=[dict(resource_name='situations')]),
-            ),
-            DF.update_resource(-1, name='situations', path='situations.json'),
-            dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, format='json'),
-            # DF.printer()
-        )
-    except Exception as e:
-        logger.warning(e)
+
+    return DF.Flow(
+        DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
+        DF.add_field('situation_ids', 'array', lambda r: [r['id'] for r in r['situations']]),
+        DF.set_type('situation_ids', transform=lambda v: helpers.update_taxonomy_with_parents(v)),
+        DF.select_fields(['situation_ids']),
+        unwind('situation_ids', 'id', 'object'),
+        DF.join_with_self('card_data', ['id'], dict(
+            id=None,
+            count=dict(aggregate='count')
+        )),
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_SITUATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        DF.update_package(title='Taxonomy Situations', name='situations'),
+        DF.update_resource(-1, name='situations'),
+        DF.join('card_data', ['id'], 'situations', ['id'], dict(
+            count=None
+        )),
+        DF.filter_rows(lambda r: r.get('status') == 'ACTIVE'),
+        DF.filter_rows(lambda r: r['count'] is not None),
+        DF.select_fields(['id', 'name', 'synonyms', 'breadcrumbs', 'count']),
+        DF.set_type('id', **KEYWORD_ONLY),
+        DF.set_type('synonyms', **ITEM_TYPE_STRING),
+        DF.add_field('score', 'number', lambda r: r['count']),
+        DF.set_primary_key(['id']),
+        print_top,
+        DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/situation_data'),
+        dump_to_es_and_delete(
+            indexes=dict(srm__situations=[dict(resource_name='situations')]),
+        ),
+        DF.update_resource(-1, name='situations', path='situations.json'),
+        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, format='json'),
+        # DF.printer()
+    )
 
 def load_organizations_to_es_flow():
-    try:
-        return DF.Flow(
-            DF.load(
-                f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json', resources=['organizations'],
-            ),
-            DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
-            DF.join_with_self('card_data', ['organization_id'], dict(
-                id=dict(name='organization_id'),
-                count=dict(aggregate='count')
-            )),
-            DF.join(
-                'organizations', ['id'], 'card_data', ['id'],
-                dict(name=None, description=None, kind=None)
-            ),
-            DF.sort_rows('{count}'),
-            DF.update_package(title='Active Organizations', name='organizations'),
-            DF.update_resource(-1, name='orgs'),
-            # DF.select_fields(['id', 'name', 'description', 'kind']),
-            DF.set_type('id', **KEYWORD_ONLY),
-            # DF.set_type('name', **{'es:autocomplete': True}),
-            DF.set_type('description', **NO_SCHEMA),
-            DF.set_type('kind', **KEYWORD_ONLY),
-            DF.add_field('score', 'number', lambda r: 10*r['count']),
-            DF.set_primary_key(['id']),
-            dump_to_es_and_delete(
-                indexes=dict(srm__orgs=[dict(resource_name='orgs')]),
-            ),
-            dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
-        )
-    except Exception as e:
-        logger.warning(e)
+    return DF.Flow(
+        DF.load(
+            f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json', resources=['organizations'],
+        ),
+        DF.load(f'{settings.DATA_DUMP_DIR}/card_data/datapackage.json'),
+        DF.join_with_self('card_data', ['organization_id'], dict(
+            id=dict(name='organization_id'),
+            count=dict(aggregate='count')
+        )),
+        DF.join(
+            'organizations', ['id'], 'card_data', ['id'],
+            dict(name=None, description=None, kind=None)
+        ),
+        DF.sort_rows('{count}'),
+        DF.update_package(title='Active Organizations', name='organizations'),
+        DF.update_resource(-1, name='orgs'),
+        # DF.select_fields(['id', 'name', 'description', 'kind']),
+        DF.set_type('id', **KEYWORD_ONLY),
+        # DF.set_type('name', **{'es:autocomplete': True}),
+        DF.set_type('description', **NO_SCHEMA),
+        DF.set_type('kind', **KEYWORD_ONLY),
+        DF.add_field('score', 'number', lambda r: 10*r['count']),
+        DF.set_primary_key(['id']),
+        dump_to_es_and_delete(
+            indexes=dict(srm__orgs=[dict(resource_name='orgs')]),
+        ),
+        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
+    )
 
 def load_autocomplete_to_es_flow():
     DF.Flow(
@@ -299,15 +284,12 @@ def load_autocomplete_to_es_flow():
             indexes=dict(srm__autocomplete=[dict(resource_name='autocomplete')]),
         ),
     ).process()
-    try:
-        DF.Flow(
-            DF.load(f'{settings.DATA_DUMP_DIR}/autocomplete/datapackage.json', limit_rows=10000),
-            DF.update_package(title='AutoComplete Queries', name='autocomplete'),
-            DF.set_primary_key(['id']),
-            dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
-        ).process()
-    except Exception as e:
-        logger.warning(e)
+    DF.Flow(
+        DF.load(f'{settings.DATA_DUMP_DIR}/autocomplete/datapackage.json', limit_rows=10000),
+        DF.update_package(title='AutoComplete Queries', name='autocomplete'),
+        DF.set_primary_key(['id']),
+        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
+    ).process()
 
 def operator(*_):
     shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
