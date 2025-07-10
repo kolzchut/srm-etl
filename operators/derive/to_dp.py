@@ -616,185 +616,167 @@ class RSScoreCalc():
             func
         )
 
-def validate_and_deduplicate_ids():
-    def func(rows):
-        seen_ids = set()
-        for row in rows:
-            if 'id' not in row:
-                logger.warning(f"Row missing 'id': {row}")
-                continue  # Skip rows without 'id'
-            if row['id'] in seen_ids:
-                continue  # Skip duplicate rows
-            seen_ids.add(row['id'])
-            yield row
-
-    return DF.Flow(func)
 
 def card_data_flow():
-    try:
-        situations = DF.Flow(
-            DF.load(
-                f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json',
-                resources=['situations'],
-            ),
-            DF.select_fields(['key', 'id', 'name', 'synonyms']),
-        ).results(on_error=None)[0][0]
-        situations = dict(
-            (s.pop('key'), s) for s in situations
-        ) | dict(
-            (s['id'], s) for s in situations
-        )
-        responses = DF.Flow(
-            DF.load(
-                f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json',
-                resources=['responses'],
-            ),
-            DF.select_fields(['key', 'id', 'name', 'synonyms']),
-        ).results(on_error=None)[0][0]
-        responses = dict(
-            (r.pop('key'), r) for r in responses
-        ) | dict(
-            (r['id'], r) for r in responses
-        )
-        def map_taxonomy(taxonomy):
-            def func(ids):
-                return list(set(map(lambda x: taxonomy[x]['id'], filter(lambda y: y in taxonomy, ids))))
-            return func
 
-        no_responses_report = Report(
-            'Processing: Cards: No Responses Report',
-            'cards-no-responses',
-            ['service_id', 'service_name', 'branch_id', 'branch_name', 'organization_id', 'organization_name'],
-            ['service_id', 'branch_id', 'organization_id']
-        )
+    situations = DF.Flow(
+        DF.load(
+            f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json',
+            resources=['situations'],
+        ),
+        DF.select_fields(['key', 'id', 'name', 'synonyms']),
+    ).results(on_error=None)[0][0]
+    situations = dict(
+        (s.pop('key'), s) for s in situations
+    ) | dict(
+        (s['id'], s) for s in situations
+    )
+    responses = DF.Flow(
+        DF.load(
+            f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json',
+            resources=['responses'],
+        ),
+        DF.select_fields(['key', 'id', 'name', 'synonyms']),
+    ).results(on_error=None)[0][0]
+    responses = dict(
+        (r.pop('key'), r) for r in responses
+    ) | dict(
+        (r['id'], r) for r in responses
+    )
+    def map_taxonomy(taxonomy):
+        def func(ids):
+            return list(set(map(lambda x: taxonomy[x]['id'], filter(lambda y: y in taxonomy, ids))))
+        return func
 
-        DF.Flow(
-            DF.load(f'{settings.DATA_DUMP_DIR}/flat_table/datapackage.json'),
-            validate_and_deduplicate_ids(),
-            DF.update_package(name='Card Data'),
-            DF.update_resource(['flat_table'], name='card_data', path='card_data.csv'),
-            DF.add_field(
-                'card_id',
-                'string',
-                lambda r: hasher(r['branch_id'], r['service_id']),
-                resources=['card_data'],
-            ),
-            merge_duplicate_services(),
-            DF.add_field('situation_ids', 'array', merge_array_fields(['service_situations', 'branch_situations', 'organization_situations']), resources=['card_data']),
-            DF.set_type('situation_ids', transform=map_taxonomy(situations), resources=['card_data']),
-            DF.set_type('situation_ids', transform=fix_situations, resources=['card_data']),
-            DF.add_field('response_ids', 'array', merge_array_fields(['service_responses']), resources=['card_data']),
-            DF.set_type('response_ids', transform=map_taxonomy(responses), resources=['card_data']),
-            apply_auto_tagging(),
-            helpers.get_stats().filter_with_stat(
-                'Processing: Cards: No Responses',
-                lambda r: bool(r['response_ids']),
-                resources=['card_data'],
-                report=no_responses_report
-            ),
-            DF.checkpoint(CHECKPOINT),
-        ).process()
+    no_responses_report = Report(
+        'Processing: Cards: No Responses Report',
+        'cards-no-responses',
+        ['service_id', 'service_name', 'branch_id', 'branch_name', 'organization_id', 'organization_name'],
+        ['service_id', 'branch_id', 'organization_id']
+    )
 
-        rs_score = RSScoreCalc()
+    DF.Flow(
+        DF.load(f'{settings.DATA_DUMP_DIR}/flat_table/datapackage.json'),
+        DF.update_package(name='Card Data'),
+        DF.update_resource(['flat_table'], name='card_data', path='card_data.csv'),
+        DF.add_field(
+            'card_id',
+            'string',
+            lambda r: hasher(r['branch_id'], r['service_id']),
+            resources=['card_data'],
+        ),
+        merge_duplicate_services(),
+        DF.add_field('situation_ids', 'array', merge_array_fields(['service_situations', 'branch_situations', 'organization_situations']), resources=['card_data']),
+        DF.set_type('situation_ids', transform=map_taxonomy(situations), resources=['card_data']),
+        DF.set_type('situation_ids', transform=fix_situations, resources=['card_data']),
+        DF.add_field('response_ids', 'array', merge_array_fields(['service_responses']), resources=['card_data']),
+        DF.set_type('response_ids', transform=map_taxonomy(responses), resources=['card_data']),
+        apply_auto_tagging(),
+        helpers.get_stats().filter_with_stat(
+            'Processing: Cards: No Responses',
+            lambda r: bool(r['response_ids']),
+            resources=['card_data'],
+            report=no_responses_report
+        ),
+        DF.checkpoint(CHECKPOINT),
+    ).process()
 
-        invalid_location_report = Report(
-            'Processing: Cards: Invalid Location Report',
-            'cards-invalid-location',
-            ['organization_id', 'organization_name', 'branch_address', 'branch_id'],
-            ['branch_id']
-        )
-        def safe_lambda(func, *args, default=None, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                warning = f"ERROR BUT CONTINUE: Fallback 'or' used in arguments: {args}"
-                logger.warning(warning)
-                send_failure_email(operation_name="Upload To DB - DP process", error=warning, is_test=False, reraise=False)
-                return default
+    rs_score = RSScoreCalc()
 
+    invalid_location_report = Report(
+        'Processing: Cards: Invalid Location Report',
+        'cards-invalid-location',
+        ['organization_id', 'organization_name', 'branch_address', 'branch_id'],
+        ['branch_id']
+    )
+    def safe_lambda(func, *args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            log_error= f"Error but continue on lambda: {e}"
+            logger.error(log_error)
+            # send_failure_email( operation_name="Upload To DB - DP process",error=log_error)
+            return None
 
-        return DF.Flow(
-            DF.checkpoint(CHECKPOINT),
-            DF.add_field('situations', 'array', lambda r: safe_lambda(lambda r: [situations[s] for s in (r.get('situation_ids') or []) if s in situations], r, default=[]), resources=['card_data']),
-            DF.add_field('responses', 'array', lambda r: safe_lambda(lambda r: [responses[s] for s in (r.get('response_ids') or []) if s in responses], r, default=[]), resources=['card_data']),
-            rs_score.process('card_data'),
-            DF.add_field('situation_ids_parents', 'array', lambda r: safe_lambda(helpers.update_taxonomy_with_parents, r.get('situation_ids', []), default=[]), resources=['card_data']),
-            DF.add_field('response_ids_parents', 'array', lambda r: safe_lambda(helpers.update_taxonomy_with_parents, r.get('response_ids', []), default=[]), resources=['card_data']),
-            DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses', 'auto_tagged'], resources=['card_data']),
-            DF.add_field('situations_parents', 'array', lambda r: safe_lambda(lambda r: [situations[s] for s in (r.get('situation_ids_parents') or []) if s in situations], r, default=[]), resources=['card_data']),
-            DF.add_field('responses_parents', 'array', lambda r: safe_lambda(lambda r: [responses[s] for s in (r.get('response_ids_parents') or []) if s in responses], r, default=[]), resources=['card_data']),
-            DF.set_type('situation_ids', **KEYWORD_STRING, resources=['card_data']),
-            DF.set_type('response_ids', **KEYWORD_STRING, resources=['card_data']),
-            DF.set_type('situation_ids_parents', **KEYWORD_STRING, resources=['card_data']),
-            DF.set_type('response_ids_parents', **KEYWORD_STRING, resources=['card_data']),
+    return DF.Flow(
+        DF.checkpoint(CHECKPOINT),
+        DF.add_field('situations', 'array', lambda r: safe_lambda(lambda r: [situations[s] for s in r['situation_ids']], r), resources=['card_data']),
+        DF.add_field('responses', 'array', lambda r: safe_lambda(lambda r: [responses[s] for s in r['response_ids']], r), resources=['card_data']),
+        rs_score.process('card_data'),
+        DF.add_field('situation_ids_parents', 'array', lambda r: safe_lambda(helpers.update_taxonomy_with_parents, r['situation_ids']), resources=['card_data']),
+        DF.add_field('response_ids_parents', 'array', lambda r: safe_lambda(helpers.update_taxonomy_with_parents, r['response_ids']), resources=['card_data']),
+        DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses', 'auto_tagged'], resources=['card_data']),
+        DF.add_field('situations_parents', 'array', lambda r: safe_lambda(lambda r: [situations[s] for s in r['situation_ids_parents']], r), resources=['card_data']),
+        DF.add_field('responses_parents', 'array', lambda r: safe_lambda(lambda r: [responses[s] for s in r['response_ids_parents']], r), resources=['card_data']),
+        DF.set_type('situation_ids', **KEYWORD_STRING, resources=['card_data']),
+        DF.set_type('response_ids', **KEYWORD_STRING, resources=['card_data']),
+        DF.set_type('situation_ids_parents', **KEYWORD_STRING, resources=['card_data']),
+        DF.set_type('response_ids_parents', **KEYWORD_STRING, resources=['card_data']),
 
-            DF.add_field(
-                'response_categories',
-                'array',
-                lambda r: [rr['id'].split(':')[1] for rr in r['responses']],
-                **KEYWORD_STRING,
-                resources=['card_data'],
-            ),
-            DF.add_field('response_category','string',helpers.most_common_category,resources=['card_data'],**KEYWORD_ONLY),
-            helpers.get_stats().filter_with_stat('Processing: Cards: No Response Category', lambda r: r['response_category'], resources=['card_data']),
-            DF.set_type('responses', transform=lambda v, row: helpers.reorder_responses_by_category(v, row['response_category'])),
-            helpers.get_stats().filter_with_stat(
-                'Processing: Cards: Invalid Location',
-                lambda r: helpers.validate_geometry(r['branch_geometry']) or r['national_service'],
-                resources=['card_data'],
-                report=invalid_location_report
-            ),
-            DF.add_field('possible_autocomplete', 'array', default=possible_autocomplete, resources=['card_data'], **KEYWORD_STRING),
-            DF.add_field(
-                'point_id', 'string',
-                lambda r: helpers.calc_point_id(r['branch_geometry']) if not r['national_service'] else 'national_service',
-                **KEYWORD_ONLY,
-                resources=['card_data']
-            ),
-            DF.add_field(
-                'national_service_details', 'string',
-                lambda r: 'ארצי' if r['national_service'] else None,
-            ),
-            DF.add_field(
-                'coords', 'string',
-                lambda r: '[{},{}]'.format(*r['branch_geometry']) if r['branch_geometry'] else None,
-                **KEYWORD_ONLY,
-                resources=['card_data']
-            ),
-            DF.add_field(
-                'collapse_key', 'string',
-                lambda r: f"{r['service_name']} {r['service_description'] or ''}".strip(),
-                **KEYWORD_ONLY,
-                resources=['card_data']
-            ),
-            DF.add_field('address_parts', 'object', helpers.address_parts,**ADDRESS_PARTS_SCHEMA
-            ),
-            DF.add_field('organization_original_name', 'string', lambda r: r['organization_name']),
-            DF.set_type('organization_name', transform=clean_org_name),
-            DF.set_type('organization_short_name', transform=clean_org_name),
-            DF.add_field('organization_name_parts', 'object', helpers.org_name_parts,**NON_INDEXED_ADDRESS_PARTS_SCHEMA),
-            DF.add_field(
-                'organization_resolved_name',
-                'array',
-                lambda row: list(filter(None,
-                        [row.get('branch_operating_unit')]
-                        if row.get('branch_operating_unit') else
-                        [row.get('organization_short_name'), row.get('organization_name')]
-                )), **ITEM_TYPE_STRING),
-            DF.set_type('card_id', **KEYWORD_ONLY),
-            DF.set_type('branch_id', **KEYWORD_ONLY),
-            DF.set_type('service_id', **KEYWORD_ONLY),
-            DF.set_type('organization_id', **KEYWORD_ONLY),
-            DF.set_type('organization_resolved_name', **KEYWORD_ONLY),
-            DF.set_type('response_categories', **KEYWORD_STRING),
-            DF.set_primary_key(['card_id'], resources=['card_data']),
-            DF.update_resource(['card_data'], path='card_data.csv'),
-            DF.validate(),
-            DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/card_data'),
-        )
-    except Exception as e:
-        logger.warning(f"Error in card_data_flow: {e}")
-        send_failure_email(operation_name="Card Data Flow", error=str(e), is_test=False, reraise=False)
+        DF.add_field(
+            'response_categories',
+            'array',
+            lambda r: [rr['id'].split(':')[1] for rr in r['responses']],
+            **KEYWORD_STRING,
+            resources=['card_data'],
+        ),
+        DF.add_field('response_category','string',helpers.most_common_category,resources=['card_data'],**KEYWORD_ONLY),
+        helpers.get_stats().filter_with_stat('Processing: Cards: No Response Category', lambda r: r['response_category'], resources=['card_data']),
+        DF.set_type('responses', transform=lambda v, row: helpers.reorder_responses_by_category(v, row['response_category'])),
+        helpers.get_stats().filter_with_stat(
+            'Processing: Cards: Invalid Location',
+            lambda r: helpers.validate_geometry(r['branch_geometry']) or r['national_service'],
+            resources=['card_data'],
+            report=invalid_location_report
+        ),
+        DF.add_field('possible_autocomplete', 'array', default=possible_autocomplete, resources=['card_data'], **KEYWORD_STRING),
+        DF.add_field(
+            'point_id', 'string',
+            lambda r: helpers.calc_point_id(r['branch_geometry']) if not r['national_service'] else 'national_service',
+            **KEYWORD_ONLY,
+            resources=['card_data']
+        ),
+        DF.add_field(
+            'national_service_details', 'string',
+            lambda r: 'ארצי' if r['national_service'] else None,
+        ),
+        DF.add_field(
+            'coords', 'string',
+            lambda r: '[{},{}]'.format(*r['branch_geometry']) if r['branch_geometry'] else None,
+            **KEYWORD_ONLY,
+            resources=['card_data']
+        ),
+        DF.add_field(
+            'collapse_key', 'string',
+            lambda r: f"{r['service_name']} {r['service_description'] or ''}".strip(),
+            **KEYWORD_ONLY,
+            resources=['card_data']
+        ),
+        DF.add_field('address_parts', 'object', helpers.address_parts,**ADDRESS_PARTS_SCHEMA
+        ),
+        DF.add_field('organization_original_name', 'string', lambda r: r['organization_name']),
+        DF.set_type('organization_name', transform=clean_org_name),
+        DF.set_type('organization_short_name', transform=clean_org_name),
+        DF.add_field('organization_name_parts', 'object', helpers.org_name_parts,**NON_INDEXED_ADDRESS_PARTS_SCHEMA),
+        DF.add_field(
+            'organization_resolved_name',
+            'array',
+            lambda row: list(filter(None, 
+                    [row.get('branch_operating_unit')]
+                    if row.get('branch_operating_unit') else 
+                    [row.get('organization_short_name'), row.get('organization_name')]
+            )), **ITEM_TYPE_STRING),
+        DF.set_type('card_id', **KEYWORD_ONLY),
+        DF.set_type('branch_id', **KEYWORD_ONLY),
+        DF.set_type('service_id', **KEYWORD_ONLY),
+        DF.set_type('organization_id', **KEYWORD_ONLY),
+        DF.set_type('organization_resolved_name', **KEYWORD_ONLY),
+        DF.set_type('response_categories', **KEYWORD_STRING),
+        DF.set_primary_key(['card_id'], resources=['card_data']),
+        DF.update_resource(['card_data'], path='card_data.csv'),
+        DF.validate(),
+        DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/card_data'),
+    )
 
 def operator(*_):
     logger.info('Starting Data Package Flow')
@@ -806,9 +788,8 @@ def operator(*_):
     flat_branches_flow(branch_mapping).process()
     flat_services_flow(branch_mapping).process()
     flat_table_flow().process()
-    card_flow = card_data_flow()
-    if card_flow is not None:
-        card_flow.process()
+    card_data_flow().process()
+
     logger.info('Finished Data Package Flow')
 
 
