@@ -618,6 +618,7 @@ class RSScoreCalc():
 
 
 def card_data_flow():
+
     situations = DF.Flow(
         DF.load(
             f'{settings.DATA_DUMP_DIR}/srm_data/datapackage.json',
@@ -690,11 +691,20 @@ def card_data_flow():
     )
     def safe_lambda(func, *args, default=None, **kwargs):
         try:
+            if isinstance(args[0], dict) and 'or' in str(args[0]):
+                warning = f"ERROR BUT CONTINUE: Fallback 'or' used in arguments: {args}"
+                logger.warning(warning)
+                # send_failure_email(operation_name="Upload To DB - DP process", error=warning)
+
             return func(*args, **kwargs)
         except Exception as e:
-            warning = f"ERROR BUT CONTINUE: {e}"
-            logger.warning(warning)
-            send_failure_email(operation_name="Upload To DB - DP process", error=warning, is_test=False, reraise=False)
+            log_error = (
+                f"\n🛑 Error"
+                f"\n🔑 Exception: {repr(e)}"
+                f"\n📦 Args: {args}"
+                f"\n⚙️ Kwargs: {kwargs}"
+            )
+            logger.error(log_error)
             return default
 
 
@@ -761,9 +771,9 @@ def card_data_flow():
         DF.add_field(
             'organization_resolved_name',
             'array',
-            lambda row: list(filter(None,
+            lambda row: list(filter(None, 
                     [row.get('branch_operating_unit')]
-                    if row.get('branch_operating_unit') else
+                    if row.get('branch_operating_unit') else 
                     [row.get('organization_short_name'), row.get('organization_name')]
             )), **ITEM_TYPE_STRING),
         DF.set_type('card_id', **KEYWORD_ONLY),
@@ -788,9 +798,8 @@ def operator(*_):
     flat_branches_flow(branch_mapping).process()
     flat_services_flow(branch_mapping).process()
     flat_table_flow().process()
-    card_flow = card_data_flow()
-    if card_flow is not None:
-        card_flow.process()
+    card_data_flow().process()
+
     logger.info('Finished Data Package Flow')
 
 
