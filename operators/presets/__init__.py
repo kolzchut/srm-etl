@@ -6,7 +6,7 @@ from conf import settings
 
 from ..derive.es_utils import dump_to_es_and_delete
 from srm_tools.error_notifier import invoke_on
-from srm_tools.logger import logger
+
 
 def enumerate_rows():
     def func(rows):
