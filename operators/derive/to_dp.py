@@ -616,19 +616,6 @@ class RSScoreCalc():
             func
         )
 
-def validate_and_deduplicate_ids():
-    def func(rows):
-        seen_ids = set()
-        for row in rows:
-            if 'id' not in row:
-                logger.warning(f"Row missing 'id': {row}")
-                continue  # Skip rows without 'id'
-            if row['id'] in seen_ids:
-                continue  # Skip duplicate rows
-            seen_ids.add(row['id'])
-            yield row
-
-    return DF.Flow(func)
 
 def card_data_flow():
     situations = DF.Flow(
@@ -669,7 +656,6 @@ def card_data_flow():
 
     DF.Flow(
         DF.load(f'{settings.DATA_DUMP_DIR}/flat_table/datapackage.json'),
-        validate_and_deduplicate_ids(),
         DF.update_package(name='Card Data'),
         DF.update_resource(['flat_table'], name='card_data', path='card_data.csv'),
         DF.add_field(
