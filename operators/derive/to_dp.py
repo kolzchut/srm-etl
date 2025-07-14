@@ -704,7 +704,7 @@ def card_data_flow():
             return default
 
 
-    logger.warning(f'Starting to load data, with these situations {situations} and these responses {responses}')
+    logger.warning(f'Starting to load data, with these situations {situations} and these responses {responses} in this file {settings.DATA_DUMP_DIR}/srm_data/datapackage.json')
     return DF.Flow(
         DF.checkpoint(CHECKPOINT),
         DF.add_field('situations', 'array', lambda r: safe_lambda(lambda r: [situations[s] for s in (r.get('situation_ids')) if s in situations], r, default=[]), resources=['card_data']),
