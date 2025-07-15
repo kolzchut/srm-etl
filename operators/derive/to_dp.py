@@ -645,7 +645,9 @@ def card_data_flow():
     )
     def map_taxonomy(taxonomy):
         def func(ids):
-            return list(set(map(lambda x: taxonomy[x]['id'], filter(lambda y: y in taxonomy, ids))))
+            mapTaxonomy = list(set(map(lambda x: taxonomy[x]['id'], filter(lambda y: y in taxonomy, ids))))
+            logger.warning(f'map taxonomy => {mapTaxonomy}')
+            return mapTaxonomy
         return func
 
     no_responses_report = Report(
