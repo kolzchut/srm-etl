@@ -32,7 +32,9 @@ class ManualFixes():
 
     def normalize_ids(self, slugs):
         slugs = slugs or ''
-        return ','.join(sorted(filter(None, set(s.strip() for s in slugs.split(',')))))
+        normalizeIds = ','.join(sorted(filter(None, set(s.strip() for s in slugs.split(',')))))
+        logger.log(f'Normalizing IDs: {slugs} -> {normalizeIds}')
+        return
 
     def apply_manual_fixes(self):
         def func(row):
