@@ -41,6 +41,7 @@ def merge_array_fields(fieldnames):
 
 def fix_situations(ids):
     if ids:
+        logger.warning(f'||| Fixing situations START with => {ids} |||')
         both_genders = ['human_situations:gender:women', 'human_situations:gender:men']
         if all(s in ids for s in both_genders):
             ids = [s for s in ids if s not in both_genders]
@@ -53,6 +54,7 @@ def fix_situations(ids):
         if arab_society in ids or bedouin in ids:
             if arabic not in ids:
                 ids.append(arabic)
+    logger.warning(f'Fixing situations END with => {ids} |||')
     return ids
 
 
