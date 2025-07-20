@@ -15,7 +15,7 @@ from srm_tools.hash import hasher
 from srm_tools.data_cleaning import clean_org_name
 
 from operators.derive import manual_fixes
-from srm_tools.error_notifier import send_failure_email
+
 from . import helpers
 from .autotagging import apply_auto_tagging
 from .es_schemas import (ADDRESS_PARTS_SCHEMA, NON_INDEXED_ADDRESS_PARTS_SCHEMA, KEYWORD_STRING, KEYWORD_ONLY, ITEM_TYPE_NUMBER, ITEM_TYPE_STRING)
@@ -41,7 +41,6 @@ def merge_array_fields(fieldnames):
 
 def fix_situations(ids):
     if ids:
-        logger.warning(f'||| Fixing situations START with => {ids} |||')
         both_genders = ['human_situations:gender:women', 'human_situations:gender:men']
         if all(s in ids for s in both_genders):
             ids = [s for s in ids if s not in both_genders]
@@ -54,7 +53,6 @@ def fix_situations(ids):
         if arab_society in ids or bedouin in ids:
             if arabic not in ids:
                 ids.append(arabic)
-    logger.warning(f'Fixing situations END with => {ids} |||')
     return ids
 
 
@@ -344,7 +342,7 @@ def flat_services_flow(branch_mapping):
                 is_national = row.get('national_service')
                 if not is_national:
                     non_national_branches[row['branch_key']] = branch_id
-                
+
             yield row
 
     def filter_soproc_branches(v, row):
@@ -356,13 +354,13 @@ def flat_services_flow(branch_mapping):
         if is_soproc_by_id and total_branches > 5:
             national_id_branches = []
             for branch in v:
-                id = branch_map.get(branch, '')                    
+                id = branch_map.get(branch, '')
                 if isinstance(id, str) and id.lower().startswith('national'):
                     national_id_branches.append(branch)
 
             if national_id_branches:
                 return national_id_branches
-        
+
         without_national_branches = []
         for branch in v:
             if branch in non_national_branches:
@@ -579,10 +577,10 @@ class RSScoreCalc():
             DF.select_fields(['response_id', 'situations']),
             # DF.printer()
         ).results()[0][0]
-    
+
         self.scores = dict()
         for r in per_response:
-            total = sum(s['freq'] for s in r['situations']) 
+            total = sum(s['freq'] for s in r['situations'])
             for s in r['situations']:
                 self.scores[(s['situation_id'], r['response_id'])] = math.log(total / s['freq'])
 
@@ -647,9 +645,7 @@ def card_data_flow():
     )
     def map_taxonomy(taxonomy):
         def func(ids):
-            mapTaxonomy = list(set(map(lambda x: taxonomy[x]['id'], filter(lambda y: y in taxonomy, ids))))
-            logger.warning(f'map taxonomy => {mapTaxonomy}')
-            return mapTaxonomy
+            return list(set(map(lambda x: taxonomy[x]['id'], filter(lambda y: y in taxonomy, ids))))
         return func
 
     no_responses_report = Report(
@@ -693,32 +689,17 @@ def card_data_flow():
         ['organization_id', 'organization_name', 'branch_address', 'branch_id'],
         ['branch_id']
     )
-    def safe_lambda(func, *args, default=None, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            log_error = (
-                f"\n🛑 Error"
-                f"\n🔑 Exception: {repr(e)}"
-                f"\n📦 Args: {args}"
-                f"\n⚙️ Kwargs: {kwargs}"
-            )
-            send_failure_email(operation_name="Upload To DB - DP process", error=warning,reraise=False)
-            logger.error(log_error)
-            return default
 
-
-    logger.warning(f'Starting to load data, with these situations {situations} and these responses {responses} in this file {settings.DATA_DUMP_DIR}/srm_data/datapackage.json')
     return DF.Flow(
         DF.checkpoint(CHECKPOINT),
-        DF.add_field('situations', 'array', lambda r: safe_lambda(lambda r: [situations[s] for s in (r.get('situation_ids')) if s in situations], r, default=[]), resources=['card_data']),
-        DF.add_field('responses', 'array', lambda r: safe_lambda(lambda r: [responses[s] for s in (r.get('response_ids')) if s in responses], r, default=[]), resources=['card_data']),
+        DF.add_field('situations', 'array', lambda r: [situations[s] for s in r['situation_ids']], resources=['card_data']),
+        DF.add_field('responses', 'array', lambda r: [responses[s] for s in r['response_ids']], resources=['card_data']),
         rs_score.process('card_data'),
-        DF.add_field('situation_ids_parents', 'array', lambda r: safe_lambda(helpers.update_taxonomy_with_parents, r.get('situation_ids'), default=[]), resources=['card_data']),
-        DF.add_field('response_ids_parents', 'array', lambda r: safe_lambda(helpers.update_taxonomy_with_parents, r.get('response_ids'), default=[]), resources=['card_data']),
+        DF.add_field('situation_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['situation_ids']), resources=['card_data']),
+        DF.add_field('response_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_ids']), resources=['card_data']),
         DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses', 'auto_tagged'], resources=['card_data']),
-        DF.add_field('situations_parents', 'array', lambda r: safe_lambda(lambda r: [situations[s] for s in (r.get('situation_ids_parents')) if s in situations], r, default=[]), resources=['card_data']),
-        DF.add_field('responses_parents', 'array', lambda r: safe_lambda(lambda r: [responses[s] for s in (r.get('response_ids_parents')) if s in responses], r, default=[]), resources=['card_data']),
+        DF.add_field('situations_parents', 'array', lambda r: [situations[s] for s in r['situation_ids_parents']], resources=['card_data']),
+        DF.add_field('responses_parents', 'array', lambda r: [responses[s] for s in r['response_ids_parents']], resources=['card_data']),
         DF.set_type('situation_ids', **KEYWORD_STRING, resources=['card_data']),
         DF.set_type('response_ids', **KEYWORD_STRING, resources=['card_data']),
         DF.set_type('situation_ids_parents', **KEYWORD_STRING, resources=['card_data']),
