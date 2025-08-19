@@ -8,7 +8,35 @@ from datapackage import Package
 from conf import settings
 from srm_tools.logger import logger
 
+from urllib.request import urlopen
+from urllib.error import URLError, HTTPError
+
 NUM_SITEMAPS = (2, 3)
+
+def ping_sitemap_for_google():
+    """
+    New sitemap updater that pings Google with the sitemap URL.
+    """
+    sitemap_url = "https://www.kolsherut.org.il/sitemap.txt"
+    ping_url = f"http://www.google.com/ping?sitemap={sitemap_url}"
+    logger.info(f"Pinging Google with sitemap: {sitemap_url}")
+
+    try:
+        # Using a 'with' statement ensures the connection is closed properly
+        with urlopen(ping_url) as response:
+            # A status code of 200 means the request was received successfully.
+            if response.getcode() == 200:
+                logger.info("Successfully notified Google. Response status code:", response.getcode())
+                return True
+            else:
+                logger.warning(f"Google responded with an unexpected status code: {response.getcode()}")
+                return False
+
+    except (URLError, HTTPError) as e:
+        # This catches network errors or HTTP error codes (like 404, 503, etc.)
+        logger.warning(f"Failed to ping Google. An error occurred: {e}")
+        return False
+
 
 def data_api_sitemap_flow():
     urls = DF.Flow(
@@ -71,7 +99,7 @@ def operator(*_):
 
     # relational_sql_flow().process()
     data_api_sitemap_flow()
-
+    ping_sitemap_for_google()
     logger.info('Finished Sitemap Flow')
 
 
