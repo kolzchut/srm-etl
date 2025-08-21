@@ -99,7 +99,6 @@ def run(*_):
 
             # Combining same services
             DF.add_field('service_id', 'string', lambda r: 'meser-' + hasher(r['service_name'], r['phone_numbers'], r['address'], r['organization_id'], r['branch_id'])),
-            DF.add_field('misgeret_id', 'string', lambda r: r['Misgeret_Id']),
             DF.join_with_self('meser', ['service_id'], fields=dict(
                 service_id=None,
                 service_name=None,
@@ -111,7 +110,6 @@ def run(*_):
                 location=None,
                 tagging=dict(aggregate='array'),
                 phone_numbers=None,
-                misgeret_id=None,
             )),
             DF.set_type('tagging', type='array', transform=lambda v: list(set(vvv for vv in v for vvv in vv))),
 
@@ -165,7 +163,7 @@ def run(*_):
 
         airtable_updater(
             settings.AIRTABLE_SERVICE_TABLE,
-            'meser', ['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches', 'misgeret_id'],
+            'meser', ['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
                 DF.rename_fields({
@@ -175,7 +173,7 @@ def run(*_):
                 }, resources='meser'),
                 DF.add_field('data_sources', 'string', 'מידע על מסגרות רווחה התקבל ממשרד הרווחה והשירותים החברתיים', resources='meser'),
                 DF.add_field('branches', 'array', lambda r: [r['branch_id']], resources='meser'),
-                DF.select_fields(['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches', 'misgeret_id'], resources='meser'),
+                DF.select_fields(['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'], resources='meser'),
                 DF.add_field('data', 'object', lambda r: dict((k,v) for k,v in r.items() if k!='id'), resources='meser'),
                 DF.printer()
             ),
