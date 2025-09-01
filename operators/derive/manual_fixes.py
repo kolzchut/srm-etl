@@ -39,7 +39,18 @@ class ManualFixes():
             manual_fixes = row.get('fixes')
             if manual_fixes is not None:
                 for fix_id in manual_fixes:
-                    assert fix_id in self.manual_fixes, f'Manual fix {fix_id} not found'
+                    if fix_id not in self.manual_fixes:
+                        logger.error(
+                            'Manual fix %s not found; referenced by record id=%s airtable_id=%s name=%s source=%s',
+                            fix_id,
+                            row.get('id'),
+                            row.get(AIRTABLE_ID_FIELD),
+                            row.get('name'),
+                            row.get('source'),
+                        )
+                        raise AssertionError(
+                            f"Manual fix {fix_id} not found (record id={row.get('id')} airtable_id={row.get(AIRTABLE_ID_FIELD)} name={row.get('name')})"
+                        )
                     fix = self.manual_fixes[fix_id]
                     field = fix['field']
                     current_value = fix['current_value']
