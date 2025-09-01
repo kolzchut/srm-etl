@@ -8,17 +8,45 @@ from srm_tools.logger import logger
 class ManualFixes():
 
     def __init__(self) -> None:
-        self.manual_fixes = DF.Flow(
-            load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, settings.AIRTABLE_MANUAL_FIXES_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-        ).results()[0][0]
-        logger.info(f'Got {len(self.manual_fixes)} manual fix records')
-        self.manual_fixes = dict(
-            (r[AIRTABLE_ID_FIELD], r) for r in self.manual_fixes
-        )
+        # Load manual fixes using the configured view first
+        self._reloaded_manual_fixes = False
+        self._load_manual_fixes(view=settings.AIRTABLE_VIEW)
         self.status = dict()
         self.used = set()
         self.responses = None
         self.situations = None
+
+    def _load_manual_fixes(self, view=None):
+        """Load manual fixes from Airtable. If view is None, load without applying a view filter."""
+        try:
+            self.manual_fixes = DF.Flow(
+                load_from_airtable(
+                    settings.AIRTABLE_DATA_IMPORT_BASE,
+                    settings.AIRTABLE_MANUAL_FIXES_TABLE,
+                    view,
+                    settings.AIRTABLE_API_KEY,
+                ),
+            ).results()[0][0]
+        except Exception as e:
+            logger.error(
+                'Failed loading Manual Fixes from base=%s table=%s view=%s: %s',
+                settings.AIRTABLE_DATA_IMPORT_BASE,
+                settings.AIRTABLE_MANUAL_FIXES_TABLE,
+                view,
+                e,
+            )
+            raise
+        logger.info(
+            'Got %d manual fix records from base=%s table=%s view=%s',
+            len(self.manual_fixes),
+            settings.AIRTABLE_DATA_IMPORT_BASE,
+            settings.AIRTABLE_MANUAL_FIXES_TABLE,
+            view,
+        )
+        # Key by Airtable record id
+        self.manual_fixes = dict(
+            (r[AIRTABLE_ID_FIELD], r) for r in self.manual_fixes
+        )
 
     def fetch_aux_table(self, var, table):
         if var is None:
@@ -40,17 +68,31 @@ class ManualFixes():
             if manual_fixes is not None:
                 for fix_id in manual_fixes:
                     if fix_id not in self.manual_fixes:
-                        logger.error(
-                            'Manual fix %s not found; referenced by record id=%s airtable_id=%s name=%s source=%s',
-                            fix_id,
-                            row.get('id'),
-                            row.get(AIRTABLE_ID_FIELD),
-                            row.get('name'),
-                            row.get('source'),
-                        )
-                        raise AssertionError(
-                            f"Manual fix {fix_id} not found (record id={row.get('id')} airtable_id={row.get(AIRTABLE_ID_FIELD)} name={row.get('name')})"
-                        )
+                        # One-time fallback: reload without view filter in case the view hides the record
+                        if not getattr(self, '_reloaded_manual_fixes', False):
+                            logger.warning(
+                                'Manual fix %s not found in current cache (count=%d). Reloading Manual Fixes without view filter...',
+                                fix_id,
+                                len(self.manual_fixes),
+                            )
+                            self._load_manual_fixes(view=None)
+                            self._reloaded_manual_fixes = True
+                        # Check again after reload
+                        if fix_id not in self.manual_fixes:
+                            logger.error(
+                                'Manual fix %s not found; referenced by record id=%s airtable_id=%s name=%s source=%s (base=%s table=%s). Loaded fixes=%d',
+                                fix_id,
+                                row.get('id'),
+                                row.get(AIRTABLE_ID_FIELD),
+                                row.get('name'),
+                                row.get('source'),
+                                settings.AIRTABLE_DATA_IMPORT_BASE,
+                                settings.AIRTABLE_MANUAL_FIXES_TABLE,
+                                len(self.manual_fixes),
+                            )
+                            raise AssertionError(
+                                f"Manual fix {fix_id} not found (record id={row.get('id')} airtable_id={row.get(AIRTABLE_ID_FIELD)} name={row.get('name')})"
+                            )
                     fix = self.manual_fixes[fix_id]
                     field = fix['field']
                     current_value = fix['current_value']
