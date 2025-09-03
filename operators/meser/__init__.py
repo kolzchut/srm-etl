@@ -53,11 +53,15 @@ def good_company(r):
 
     return is_org_id and is_length_good
 
-def split_ids(value: str):
-    parts = list(dict.fromkeys(part.strip() for part in value.split(',') if part.strip()))
-    if len(parts) > 1:
-        logger.warning(f'Splitting multiple ids from a single field: {value} -> {parts}')
-    return parts
+def flatten_and_deduplicate(list_of_strings):
+    flat = []
+    for item in list_of_strings:
+        if isinstance(item, str):
+            flat.extend(part.strip() for part in item.split(',') if part.strip())
+        elif isinstance(item, list):
+            flat.extend(flatten_and_deduplicate(item))
+    return list(set(flat))
+
 
 def run(*_):
     logger.info('Starting Meser Data Flow')
@@ -121,22 +125,20 @@ def run(*_):
             # Adding tags
             DF.add_field(
                 'responses', 'array',
-                lambda r: list(set(
-                    part
+                lambda r: flatten_and_deduplicate(
+                    resp
                     for t in r['tagging']
                     for resp in (tags.get(t, {}).get('response_ids') or [])
-                    for part in split_ids(resp)
-                ))
+                )
             ),
 
             DF.add_field(
                 'situations', 'array',
-                lambda r: list(set(
-                    part
+                lambda r: flatten_and_deduplicate(
+                    sit
                     for t in r['tagging']
                     for sit in (tags.get(t, {}).get('situation_ids') or [])
-                    for part in split_ids(sit)
-                ))
+                )
             ),
 
             stats.filter_with_stat('MESER: No Org Id', good_company),
