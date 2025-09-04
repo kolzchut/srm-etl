@@ -56,8 +56,8 @@ def good_company(r):
 def flatten_and_deduplicate(list_of_strings):
     flat = []
     for item in list_of_strings:
-        if len(item) > 35:
-            logger.warning(f'Unexpected long item in tags: {item}')
+        if ',' in item:
+            logger.warning(f'there is a "," in this tag: {item}')
         if isinstance(item, str):
             flat.extend(part.strip() for part in item.split(',') if part.strip())
         elif isinstance(item, list):
