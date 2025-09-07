@@ -1,6 +1,7 @@
 import math
 from itertools import chain
 import shutil
+import re
 
 import dataflows as DF
 from dataflows_airtable import load_from_airtable
@@ -57,35 +58,67 @@ def fix_situations(ids):
 
 
 def normalize_taxonomy_ids(ids):
-    """Split and clean taxonomy id lists that mistakenly contain comma-concatenated values.
+    """Normalize taxonomy id lists.
 
-    Example problematic value observed: 'human_situations:age_group:infants,human_situations'
-    We split on commas, trim, drop empty parts, and ignore blatantly invalid root tokens
-    (like 'human_situations' without full path). Logs a warning when cleaning occurs.
+    Handles:
+    - Comma concatenated values
+    - Space concatenated values where multiple full ids appear without commas
+    - Canonicalizes singular root 'human_situation:' -> 'human_situations:'
+    - Removes only bare root tokens (e.g. 'human_situations') but keeps two-level & deeper category ids
+    - Deduplicates while preserving order of first appearance
     """
     if not ids:
         return ids
     out = []
     changed = False
-    for raw in ids:
-        if isinstance(raw, str) and ',' in raw:
-            parts = [p.strip() for p in raw.split(',') if p.strip()]
-            if len(parts) > 1:
+    seen = set()
+
+    def canonicalize(token: str):
+        if token.startswith('human_situation:') and not token.startswith('human_situations:'):
+            return 'human_situations:' + token.split(':', 1)[1]
+        return token
+
+    def emit(token):
+        nonlocal changed
+        if not token:
+            return
+        if isinstance(token, str):
+            token = canonicalize(token)
+            # Remove trailing punctuation
+            token = token.strip().strip(',;')
+            if not token:
+                return
+            if token == 'human_situations':  # bare root only
+                logger.warning(f'Ignoring invalid taxonomy id (root only): {token}')
                 changed = True
-            out.extend(parts)
-        else:
-            out.append(raw)
-    cleaned = []
-    for val in out:
-        # Skip clearly invalid partial taxonomy ids (e.g. just 'human_situations')
-        if isinstance(val, str) and val.startswith('human_situations') and val.count(':') < 2:
-            logger.warning(f'Ignoring invalid taxonomy id (partial root): {val}')
-            changed = True
+                return
+        if token not in seen:
+            seen.add(token)
+            out.append(token)
+
+    for raw in ids:
+        if not isinstance(raw, str):
+            emit(raw)
             continue
-        cleaned.append(val)
+        # First split by commas
+        comma_parts = [p for p in raw.split(',') if p.strip()] if ',' in raw else [raw]
+        if len(comma_parts) > 1:
+            changed = True
+        for part in comma_parts:
+            part = part.strip()
+            # If part contains multiple full ids (plural or singular root) smashed together with spaces
+            if part.count('human_situations:') + part.count('human_situation:') > 1:
+                tokens = re.findall(r'human_situations:[A-Za-z0-9_:-]+|human_situation:[A-Za-z0-9_:-]+', part)
+                if tokens:
+                    changed = True
+                    for t in tokens:
+                        emit(t)
+                    continue
+            emit(part)
+
     if changed:
-        logger.debug(f'Normalized taxonomy ids from {ids} -> {cleaned}')
-    return cleaned
+        logger.debug(f'Normalized taxonomy ids from {ids} -> {out}')
+    return out
 
 
 def possible_autocomplete(row):
@@ -820,4 +853,3 @@ def operator(*_):
 
 if __name__ == '__main__':
     operator(None, None, None)
-
