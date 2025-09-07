@@ -1,9 +1,28 @@
 import dataflows as DF
+import re
 
 from dataflows_airtable import load_from_airtable
 from dataflows_airtable.consts import AIRTABLE_ID_FIELD
 
 from conf import settings
+
+
+# Helper to normalize a possibly concatenated taxonomy string into individual tags
+def _split_human_situations(value):
+    if not value:
+        return []
+    # If multiple occurrences of the prefix exist, reliably extract all
+    if value.count('human_situations:') > 1:
+        parts = re.findall(r'human_situations:[A-Za-z0-9_:-]+', value)
+        return parts
+    # Otherwise split on common delimiters (comma / whitespace)
+    tokens = re.split(r'[\s,]+', value.strip())
+    tokens = [t for t in tokens if t]
+    # If splitting produced multiple human_situations:* keep only those, else keep original
+    hs_tokens = [t for t in tokens if t.startswith('human_situations:')]
+    if hs_tokens:
+        return hs_tokens
+    return [value]
 
 
 class Situations():
@@ -33,10 +52,19 @@ class Situations():
         ret = []
         for s in situations:
             if s in self.rid_map:
-                ret.append(self.rid_map[s])
+                raw_value = self.rid_map[s]
+                tags = _split_human_situations(raw_value)
+                ret.extend(tags)
             else:
                 print('UNKOWN SITUATION', s)
-        return ret
+        # Deduplicate while preserving order
+        seen = set()
+        deduped = []
+        for t in ret:
+            if t not in seen:
+                seen.add(t)
+                deduped.append(t)
+        return deduped
 
 
     def situations_for_age_range(self, min_age, max_age):
