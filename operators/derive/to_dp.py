@@ -56,6 +56,38 @@ def fix_situations(ids):
     return ids
 
 
+def normalize_taxonomy_ids(ids):
+    """Split and clean taxonomy id lists that mistakenly contain comma-concatenated values.
+
+    Example problematic value observed: 'human_situations:age_group:infants,human_situations'
+    We split on commas, trim, drop empty parts, and ignore blatantly invalid root tokens
+    (like 'human_situations' without full path). Logs a warning when cleaning occurs.
+    """
+    if not ids:
+        return ids
+    out = []
+    changed = False
+    for raw in ids:
+        if isinstance(raw, str) and ',' in raw:
+            parts = [p.strip() for p in raw.split(',') if p.strip()]
+            if len(parts) > 1:
+                changed = True
+            out.extend(parts)
+        else:
+            out.append(raw)
+    cleaned = []
+    for val in out:
+        # Skip clearly invalid partial taxonomy ids (e.g. just 'human_situations')
+        if isinstance(val, str) and val.startswith('human_situations') and val.count(':') < 2:
+            logger.warning(f'Ignoring invalid taxonomy id (partial root): {val}')
+            changed = True
+            continue
+        cleaned.append(val)
+    if changed:
+        logger.debug(f'Normalized taxonomy ids from {ids} -> {cleaned}')
+    return cleaned
+
+
 def possible_autocomplete(row):
     autocompletes = set()
     for r in row['responses']:
@@ -667,6 +699,7 @@ def card_data_flow():
         ),
         merge_duplicate_services(),
         DF.add_field('situation_ids', 'array', merge_array_fields(['service_situations', 'branch_situations', 'organization_situations']), resources=['card_data']),
+        DF.set_type('situation_ids', transform=normalize_taxonomy_ids, resources=['card_data']),
         DF.set_type('situation_ids', transform=map_taxonomy(situations), resources=['card_data']),
         DF.set_type('situation_ids', transform=fix_situations, resources=['card_data']),
         DF.add_field('response_ids', 'array', merge_array_fields(['service_responses']), resources=['card_data']),
@@ -787,3 +820,4 @@ def operator(*_):
 
 if __name__ == '__main__':
     operator(None, None, None)
+
