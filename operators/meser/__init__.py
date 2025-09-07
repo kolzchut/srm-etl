@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import tempfile
+import re
 
 from openlocationcode import openlocationcode as olc
 from pyproj import Transformer
@@ -53,16 +54,36 @@ def good_company(r):
 
     return is_org_id and is_length_good
 
-def flatten_and_deduplicate(list_of_strings):
+def flatten_and_deduplicate(values):
+    """Flatten nested (lists/tuples/generators) of tag strings.
+    Splits on commas and whitespace, preserves order and uniqueness.
+    Warns if a single string contains multiple human_situations: prefixes.
+    """
     flat = []
-    for item in list_of_strings:
-        if ',' in item:
-            logger.warning(f'there is a "," in this tag: {item}')
-        if isinstance(item, str):
-            flat.extend(part.strip() for part in item.split(',') if part.strip())
-        elif isinstance(item, list):
+    if values is None:
+        return flat
+    for item in values:
+        if item is None:
+            continue
+        if isinstance(item, (list, tuple)):
             flat.extend(flatten_and_deduplicate(item))
-    return list(set(flat))
+            continue
+        if not isinstance(item, str):
+            # Coerce other scalars to string just in case
+            item = str(item)
+        if item.count('human_situations:') > 1:
+            logger.warning(f'composite human_situations string encountered: {item}')
+        # Split by any run of whitespace or commas
+        parts = [p for p in re.split(r'[\s,]+', item.strip()) if p]
+        flat.extend(parts)
+    # Deduplicate preserving order
+    seen = set()
+    ordered = []
+    for t in flat:
+        if t not in seen:
+            seen.add(t)
+            ordered.append(t)
+    return ordered
 
 
 def run(*_):
