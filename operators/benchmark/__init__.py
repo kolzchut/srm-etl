@@ -44,7 +44,12 @@ def run_benchmark():
 
     try:
         results = DF.Flow(
-            load_from_airtable('appkZFe6v5H63jLuC', 'Results', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+            load_from_airtable(
+                'appkZFe6v5H63jLuC',
+                'Results',
+                settings.AIRTABLE_VIEW,
+                settings.AIRTABLE_API_KEY
+            ),
         ).results()[0][0]
     except Exception as e:
         logger.error('Failed to load results: %s', e)
@@ -52,16 +57,32 @@ def run_benchmark():
 
     result_mapping = {}
     for x in results:
-        # Use get() with default value for safety
-        key = x.get(AIRTABLE_ID_FIELD, 'N/A')
-        rid = x.get('id', 'N/A')
-        decision = x.get('Decision', 'N/A')
-        result_mapping[rid] = dict(__key=key, id=rid, Decision=decision)
+        result_mapping[x.get('id', 'N/A')] = dict(
+            __key=x.get(AIRTABLE_ID_FIELD, 'N/A'),
+            id=x.get('id', 'N/A'),
+            Decision=x.get('Decision', 'N/A'),
+            Query=x.get('Query', 'N/A'),
+            Response=x.get('Response', 'N/A'),
+            Name=x.get('Name', 'N/A'),
+            Organization=x.get('Organization', 'N/A'),
+            Situation=x.get('Situation', 'N/A')
+        )
 
     logger.info('Loaded %d results', len(result_mapping))
 
     for x in result_mapping.values():
-        logger.info('%s, %s, %s', str(x['__key']), str(x['id']), str(x['Decision']))
+        logger.info(
+            '__key=%s | id=%s | Decision=%s | Query=%s | Response=%s | Name=%s | Organization=%s | Situation=%s',
+            str(x['__key']),
+            str(x['id']),
+            str(x['Decision']),
+            str(x['Query']),
+            str(x['Response']),
+            str(x['Name']),
+            str(x['Organization']),
+            str(x['Situation'])
+        )
+
 
 
 def operator(*_):
