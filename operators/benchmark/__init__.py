@@ -39,14 +39,29 @@ def check_api_health(timeout=5):
 def run_benchmark():
     if not check_api_health():
         raise RuntimeError('API is not reachable')
-    logger.info('API is reachable, starting benchmarks')
-    results = DF.Flow(
-        load_from_airtable('appkZFe6v5H63jLuC', 'Results', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-    ).results()[0][0]
-    result_mapping = {x['id']: dict(__key=x[AIRTABLE_ID_FIELD], id=x['id'], Decision=x['Decision']) for x in results}
-    logger.info('Loaded', len(result_mapping), 'results')
-    logger.info(result_mapping)
 
+    logger.info('API is reachable, starting benchmarks')
+
+    try:
+        results = DF.Flow(
+            load_from_airtable('appkZFe6v5H63jLuC', 'Results', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        ).results()[0][0]
+    except Exception as e:
+        logger.error('Failed to load results: %s', e)
+        return
+
+    result_mapping = {}
+    for x in results:
+        # Use get() with default value for safety
+        key = x.get(AIRTABLE_ID_FIELD, 'N/A')
+        rid = x.get('id', 'N/A')
+        decision = x.get('Decision', 'N/A')
+        result_mapping[rid] = dict(__key=key, id=rid, Decision=decision)
+
+    logger.info('Loaded %d results', len(result_mapping))
+
+    for x in result_mapping.values():
+        logger.info('%s, %s, %s', str(x['__key']), str(x['id']), str(x['Decision']))
 
 
 def operator(*_):
