@@ -24,6 +24,27 @@ from srm_tools.error_notifier import invoke_on, send_failure_email
 isDebug = False
 
 
+def derive_short_name(name):
+    if not name:
+        return None
+    try:
+        n = clean_org_name(name) or name
+        for sep in ['/', ' - ', ' – ']:
+            if sep in n:
+                n = n.split(sep)[0].strip()
+        if '(' in n:
+            n = n.split('(')[0].strip()
+        for suffix in ['חל"צ', 'ע"ר', 'בע"מ']:
+            n = n.replace(suffix, '').strip()
+        while '  ' in n:
+            n = n.replace('  ', ' ')
+        if len(n) > 30:
+            n = n[:27].rstrip() + '...'
+        return n or name
+    except Exception:
+        return name
+
+
 ## ORGANIZATIONS
 def fetchEntityFromBudgetKey(regNum):
     entity = list(fetch_from_budgetkey(f"select * from entities where id='{regNum}'"))
@@ -66,7 +87,7 @@ def updateOrgFromSourceData(ga: GuidestarAPI, stats: Stats):
                         try:
                             data = data['data']
                             row['name'] = data['name']
-                            row['short_name'] = data.get('abbreviatedOrgName')
+                            row['short_name'] = derive_short_name(data.get('name'))
                             row['kind'] = data['malkarType']
                             row['description'] = None
                             row['purpose'] = data.get('orgGoal')
@@ -105,6 +126,8 @@ def updateOrgFromSourceData(ga: GuidestarAPI, stats: Stats):
                             data = fetchEntityFromBudgetKey(row['id'])
                             if data is not None:
                                 row.update(data['data'])
+                                if not row.get('short_name') and row.get('name'):
+                                    row['short_name'] = derive_short_name(row.get('name'))
                             else:
                                 stats.increase('Entities: Unknown ID')
                                 unknown_entity_ids.add(row)
