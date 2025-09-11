@@ -235,7 +235,6 @@ def run(*_):
             DF.join_with_self('tagging', ['tag'], fields=dict(tag=None)),
             DF.filter_rows(lambda r: r['tag'] not in tags),
             DF.filter_rows(lambda r: bool(r['tag'])),
-
             dump_to_airtable({
                 (settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging'): {
                     'resource-name': 'tagging',
