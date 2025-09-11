@@ -241,26 +241,16 @@ def run(*_):
             update_mapper(),
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
-
+        ## TODO: Fix the meser_id, its not recieving Misgeret_id
         DF.Flow(
             DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
             DF.update_resource(-1, name='tagging'),
-
-            # DEBUG STEP: log the first 20 rows with logger
-            DF.add_field('debug_log', 'string', lambda r, i=None: (
-                    logger.info(f"Row {i}: {r}") or ''
-            ) if i is not None and i < 20 else ''
-                         ),
-
             DF.select_fields(['tagging', 'Misgeret_Id']),
             unwind('tagging', 'tag'),
             DF.join_with_self('tagging', ['tag'], fields=dict(tag=None)),
             DF.filter_rows(lambda r: r['tag'] not in tags),
             DF.filter_rows(lambda r: bool(r['tag'])),
-
-            # Safe add meser_id
-            DF.add_field('meser_id', 'string', lambda r: r.get('Misgeret_Id', 'MISSING')),
-
+            DF.add_field('meser_id', 'string', lambda r: r['Misgeret_Id']),
             dump_to_airtable({
                 (settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging'): {
                     'resource-name': 'tagging',
