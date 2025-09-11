@@ -227,11 +227,12 @@ def run(*_):
         DF.Flow(
             DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
             DF.update_resource(-1, name='tagging'),
-            DF.select_fields(['tagging']),
+            DF.select_fields(['tagging', 'Misgeret_Id']),
             unwind('tagging', 'tag'),
             DF.join_with_self('tagging', ['tag'], fields=dict(tag=None)),
             DF.filter_rows(lambda r: r['tag'] not in tags),
             DF.filter_rows(lambda r: bool(r['tag'])),
+            DF.add_field('meser_id', 'string', lambda r: r['Misgeret_Id']),
             dump_to_airtable({
                 (settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging'): {
                     'resource-name': 'tagging',
