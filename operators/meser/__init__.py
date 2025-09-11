@@ -41,10 +41,10 @@ def alternate_address(row):
 def good_company(r):
     global noOrgIdCount, badOrgIdLengthCount
 
-    is_org_id = r.get('organization_id') is not None
+    is_org_id = r['organization_id'] is not None
     if not is_org_id:
         noOrgIdCount += 1
-    print(orgId := r.get('organization_id'))
+    print(orgId := r['organization_id'])
     is_length_good = is_org_id and len(r['organization_id']) == 9
     if is_org_id and not is_length_good:
         orgLength = len(r['organization_id'])
@@ -56,6 +56,10 @@ def good_company(r):
 
 
 def flatten_and_deduplicate(values):
+    """Flatten nested (lists/tuples/generators) of tag strings.
+    Splits on commas and whitespace, preserves order and uniqueness.
+    Warns if a single string contains multiple human_situations: prefixes.
+    """
     flat = []
     if values is None:
         return flat
@@ -66,11 +70,14 @@ def flatten_and_deduplicate(values):
             flat.extend(flatten_and_deduplicate(item))
             continue
         if not isinstance(item, str):
+            # Coerce other scalars to string just in case
             item = str(item)
         if item.count('human_situations:') > 1:
             logger.warning(f'composite human_situations string encountered: {item}')
+        # Split by any run of whitespace or commas
         parts = [p for p in re.split(r'[\s,]+', item.strip()) if p]
         flat.extend(parts)
+    # Deduplicate preserving order
     seen = set()
     ordered = []
     for t in flat:
@@ -101,27 +108,17 @@ def run(*_):
         fetch_datagovil('welfare-frames', 'מסגרות רווחה', source_data)
 
         DF.Flow(
+            # Loading data
             DF.load(str(source_data), infer_strategy=DF.load.INFER_STRINGS, headers=1),
             DF.update_resource(-1, name='meser'),
-            DF.select_fields([
-                'Name',
-                'Misgeret_Id',
-                'Type_Descr',
-                'Target_Population_Descr',
-                'Head_Department',
-                'Second_Classific',
-                'ORGANIZATIONS_BUSINES_NUM',
-                'Registered_Business_Id',
-                'Gender_Descr',
-                'City_Name',
-                'Adrees',
-                'Telephone',
-                'GisX',
-                'GisY'
-            ]),
+            DF.select_fields(['Name',
+                              'Misgeret_Id', 'Type_Descr', 'Target_Population_Descr', 'Head_Department',
+                              'Second_Classific',
+                              'ORGANIZATIONS_BUSINES_NUM', 'Registered_Business_Id',
+                              'Gender_Descr', 'City_Name', 'Adrees', 'Telephone', 'GisX', 'GisY']),
+            # Cleanup
             DF.update_schema(-1, missingValues=['NULL', '-1', 'לא ידוע', 'לא משויך', 'רב תכליתי', '0', '999', '9999']),
             DF.validate(),
-
             # Adding fields
             DF.add_field('service_name', 'string', lambda r: r['Name'].strip()),
             DF.add_field('branch_name', 'string', lambda r: r['Type_Descr'].strip()),
@@ -143,9 +140,6 @@ def run(*_):
                          lambda r: '0' + r['Telephone'] if r['Telephone'] and r['Telephone'][0] != '0' else r[
                                                                                                                 'Telephone'] or None),
 
-            # Save Misgeret_Id for tagging flow
-            DF.add_field('Misgeret_Id_copy', 'string', lambda r: r.get('Misgeret_Id')),
-
             # Combining same services
             DF.add_field('service_id', 'string',
                          lambda r: 'meser-' + hasher(r['service_name'], r['phone_numbers'], r['address'],
@@ -165,20 +159,29 @@ def run(*_):
             DF.set_type('tagging', type='array', transform=lambda v: list(set(vvv for vv in v for vvv in vv))),
 
             # Adding tags
-            DF.add_field('responses', 'array', lambda r: flatten_and_deduplicate(
-                resp for t in r['tagging'] for resp in (tags.get(t, {}).get('response_ids') or [])
-            )),
-            DF.add_field('situations', 'array', lambda r: flatten_and_deduplicate(
-                sit for t in r['tagging'] for sit in (tags.get(t, {}).get('situation_ids') or [])
-            )),
+            DF.add_field(
+                'responses', 'array',
+                lambda r: flatten_and_deduplicate(
+                    resp
+                    for t in r['tagging']
+                    for resp in (tags.get(t, {}).get('response_ids') or [])
+                )
+            ),
+
+            DF.add_field(
+                'situations', 'array',
+                lambda r: flatten_and_deduplicate(
+                    sit
+                    for t in r['tagging']
+                    for sit in (tags.get(t, {}).get('situation_ids') or [])
+                )
+            ),
 
             stats.filter_with_stat('MESER: No Org Id', good_company),
 
             DF.dump_to_path(os.path.join(dirname, 'meser', 'denormalized')),
         ).process()
 
-        # Airtable updates (לפי הקודם) ...
-        # --- Organizations
         airtable_updater(
             settings.AIRTABLE_ORGANIZATION_TABLE,
             'entities', ['id'],
@@ -194,7 +197,6 @@ def run(*_):
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
 
-        # --- Branches
         airtable_updater(
             settings.AIRTABLE_BRANCH_TABLE,
             'meser', ['id', 'name', 'organization', 'location', 'address', 'phone_numbers'],
@@ -204,7 +206,9 @@ def run(*_):
                     branch_id=None, branch_name=None, organization_id=None, address=None, location=None,
                     phone_numbers=None)
                                   ),
-                DF.rename_fields({'branch_id': 'id'}, resources='meser'),
+                DF.rename_fields({
+                    'branch_id': 'id',
+                }, resources='meser'),
                 DF.add_field('name', 'string', lambda r: '', resources='meser'),
                 DF.add_field('organization', 'array', lambda r: [r['organization_id']], resources='meser'),
                 DF.add_field('data', 'object', lambda r: dict((k, v) for k, v in r.items() if k != 'id'),
@@ -215,7 +219,6 @@ def run(*_):
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
 
-        # --- Services
         airtable_updater(
             settings.AIRTABLE_SERVICE_TABLE,
             'meser', ['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],
@@ -239,16 +242,25 @@ def run(*_):
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
 
-        # --- Tagging
         DF.Flow(
             DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
             DF.update_resource(-1, name='tagging'),
-            DF.select_fields(['tagging', 'Misgeret_Id_copy']),
-            DF.add_field('meser_id', 'string', lambda r: r.get('Misgeret_Id_copy')),
+
+            # DEBUG STEP: log the first 20 rows with logger
+            DF.add_field('debug_log', 'string', lambda r, i=None: (
+                    logger.info(f"Row {i}: {r}") or ''
+            ) if i is not None and i < 20 else ''
+                         ),
+
+            DF.select_fields(['tagging', 'Misgeret_Id']),
             unwind('tagging', 'tag'),
             DF.join_with_self('tagging', ['tag'], fields=dict(tag=None)),
             DF.filter_rows(lambda r: r['tag'] not in tags),
             DF.filter_rows(lambda r: bool(r['tag'])),
+
+            # Safe add meser_id
+            DF.add_field('meser_id', 'string', lambda r: r.get('Misgeret_Id', 'MISSING')),
+
             dump_to_airtable({
                 (settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging'): {
                     'resource-name': 'tagging',
@@ -256,8 +268,9 @@ def run(*_):
             }, settings.AIRTABLE_API_KEY)
         ).process()
 
-        logger.info('No org id Count: %s', noOrgIdCount)
-        logger.info('Bad org id length Count: %s', badOrgIdLengthCount)
+        logger.info('No org id Count:', noOrgIdCount)
+        logger.info('bad org id length Count:', badOrgIdLengthCount)
+
         logger.info('Finished Meser Data Flow')
 
 
