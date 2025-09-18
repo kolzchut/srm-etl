@@ -6,7 +6,7 @@ from conf import settings
 
 from ..derive.es_utils import dump_to_es_and_delete
 from srm_tools.error_notifier import invoke_on
-
+from srm_tools.logger import logger
 
 def enumerate_rows():
     def func(rows):
@@ -33,6 +33,8 @@ def homepage_query(row):
     return q
 
 def run(*args):
+    logger.log("Deprecated operator called: Presets")
+    return
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_PRESETS_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_package(name='presets', title='Presets for Website'),
