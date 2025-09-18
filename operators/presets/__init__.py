@@ -35,6 +35,7 @@ def homepage_query(row):
 def run(*args):
     logger.log("Deprecated operator called: Presets")
     return
+
     DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_PRESETS_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.update_package(name='presets', title='Presets for Website'),
