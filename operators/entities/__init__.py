@@ -815,12 +815,11 @@ def getGuidestarOrgs(ga: GuidestarAPI):
 def scrapeGuidestarEntities(*_):
     logger.info('STARTING Entity + Guidestar Scraping')
 
-    taxonomy = dict()
+    taxonomy = {}
     print('FETCHING TAXONOMY MAPPING')
     taxonomy = DF.Flow(
         load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_GUIDESTAR_TABLE,
                            settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-        # DF.printer(),
         DF.select_fields(['name', 'Status', 'situation_ids', 'response_ids']),
     ).results()[0][0]
     rejected_taxonomies = [x['name'] for x in taxonomy if 'REJECTED' == x.get('Status')]
@@ -836,9 +835,7 @@ def scrapeGuidestarEntities(*_):
                            settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.select_fields(['id', 'situation_ids', 'response_ids']),
     ).results()[0][0]
-    taxonomy.update(dict(
-        (r.pop('id'), r) for r in soproc_mappings
-    ))
+    taxonomy.update({r['id']: r for r in soproc_mappings if r.get('id') is not None})
 
     stats = Stats()
     ga = GuidestarAPI()
