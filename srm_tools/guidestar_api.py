@@ -120,6 +120,7 @@ class GuidestarAPI():
             resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizationBranches', params=params))
             # Test logging of response - START
             try:
+                logger.warning(f'url called: {self.BASE}/organizationBranches. Params: {params}')
                 logger.warning('organizationBranches response: %s', json.dumps(resp, ensure_ascii=False))
             except Exception:
                 logger.warning('organizationBranches response (unserializable): %r', resp)
