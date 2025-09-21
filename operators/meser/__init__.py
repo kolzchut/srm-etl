@@ -242,6 +242,23 @@ def run(*_):
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
         ## TODO: Fix the meser_id, its not recieving Misgeret_id
+        ### Print file START
+        dp_path = os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')
+        try:
+            size = os.path.getsize(dp_path)
+            max_preview = 10000  # chars
+            with open(dp_path, encoding='utf-8') as f:
+                if size <= max_preview:
+                    logger.info('datapackage.json (%d bytes) content:\n%s', size, f.read())
+                else:
+                    preview = f.read(max_preview)
+                    logger.info('datapackage.json (%d bytes) first %d chars (truncated):\n%s', size, max_preview, preview)
+        except FileNotFoundError:
+            logger.warning('datapackage.json not found at %s', dp_path)
+        except Exception as e:
+            logger.error('Failed reading datapackage.json at %s: %s', dp_path, e)
+
+    ### Print file END
         DF.Flow(
             DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
             DF.update_resource(-1, name='tagging'),
