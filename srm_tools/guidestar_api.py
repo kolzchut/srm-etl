@@ -46,7 +46,7 @@ class GuidestarAPI():
         headers = dict(
             Authorization=f'Bearer {sessionId}'
         )
-        logger.log(f'Logging To GUIDESTAR API with username: {username} password: {password} received sessionId: {sessionId}')
+        logger.warning(f'Logging To GUIDESTAR API with username: {username} password: {password} received sessionId: {sessionId}')
         return headers
 
     def headers(self):
