@@ -118,6 +118,12 @@ class GuidestarAPI():
             if minBranchId is not None:
                 params['filter'] = f'branchId>{minBranchId}'
             resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizationBranches', params=params))
+            # Test logging of response - START
+            try:
+                logger.warning('organizationBranches response: %s', json.dumps(resp, ensure_ascii=False))
+            except Exception:
+                logger.warning('organizationBranches response (unserializable): %r', resp)
+            # Test logging of response - END
             for row in resp:
                 regNum = row.pop('regNum')
                 rec = self.branch_cache.get(regNum, default=None) or list()
