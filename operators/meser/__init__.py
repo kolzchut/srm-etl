@@ -108,6 +108,17 @@ def run(*_):
 
         fetch_datagovil('welfare-frames', 'מסגרות רווחה', source_data)
 
+        ### TODO: Remove after testing
+        logger.log('Source data sample:')
+        try:
+            with open(source_data, encoding='utf-8') as f:
+                for _ in range(5):
+                    logger.log(f.readline().strip())
+        except Exception as e:
+            logger.error('Failed reading source data sample: %s', e)
+
+        ### TODO: END
+
         DF.Flow(
             # Loading data
             DF.load(str(source_data), infer_strategy=DF.load.INFER_STRINGS, headers=1),
