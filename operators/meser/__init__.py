@@ -248,9 +248,12 @@ def run(*_):
 
         try:
             with open(csv_path, encoding='utf-8') as f:
-                reader = csv.DictReader(f)
-                first_row = next(reader, None)
-                if first_row:
+                reader = list(csv.DictReader(f))  # read all rows
+                row_count = len(reader)
+
+                if row_count > 0:
+                    first_row = reader[0]
+                    logger.info("meser.csv has %d rows", row_count)
                     logger.info("First row of meser.csv:\n%s", first_row)
                 else:
                     logger.warning("meser.csv is empty")
@@ -258,7 +261,6 @@ def run(*_):
             logger.warning('meser.csv not found at %s', csv_path)
         except Exception as e:
             logger.error('Failed reading meser.csv at %s: %s', csv_path, e)
-
     ### Print file END
         DF.Flow(
             DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
