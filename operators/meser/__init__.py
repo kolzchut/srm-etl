@@ -152,6 +152,8 @@ def run(*_):
                          lambda r: '0' + r['Telephone'] if r['Telephone'] and r['Telephone'][0] != '0' else r[
                                                                                                                 'Telephone'] or None),
 
+            DF.add_field('meser_id', 'string', lambda r: r['Misgeret_Id']),
+
             # Combining same services
             DF.add_field('service_id', 'string',
                          lambda r: 'meser-' + hasher(r['service_name'], r['phone_numbers'], r['address'],
