@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import tempfile
 import re
+import csv
 
 from openlocationcode import openlocationcode as olc
 from pyproj import Transformer
@@ -243,20 +244,20 @@ def run(*_):
         )
         ## TODO: Fix the meser_id, its not recieving Misgeret_id
         ### Print file START
-        dp_path = os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')
+        csv_path = os.path.join(dirname, 'meser', 'denormalized', 'meser.csv')  # file referenced by datapackage.json
+
         try:
-            size = os.path.getsize(dp_path)
-            max_preview = 10000  # chars
-            with open(dp_path, encoding='utf-8') as f:
-                if size <= max_preview:
-                    logger.info('datapackage.json (%d bytes) content:\n%s', size, f.read())
+            with open(csv_path, encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                first_row = next(reader, None)
+                if first_row:
+                    logger.info("First row of meser.csv:\n%s", first_row)
                 else:
-                    preview = f.read(max_preview)
-                    logger.info('datapackage.json (%d bytes) first %d chars (truncated):\n%s', size, max_preview, preview)
+                    logger.warning("meser.csv is empty")
         except FileNotFoundError:
-            logger.warning('datapackage.json not found at %s', dp_path)
+            logger.warning('meser.csv not found at %s', csv_path)
         except Exception as e:
-            logger.error('Failed reading datapackage.json at %s: %s', dp_path, e)
+            logger.error('Failed reading meser.csv at %s: %s', csv_path, e)
 
     ### Print file END
         DF.Flow(
@@ -275,8 +276,8 @@ def run(*_):
             }, settings.AIRTABLE_API_KEY)
         ).process()
 
-        logger.info('No org id Count:', noOrgIdCount)
-        logger.info('bad org id length Count:', badOrgIdLengthCount)
+        logger.info("No org id Count: %s", noOrgIdCount)
+        logger.info("bad org id length Count: %s", badOrgIdLengthCount)
 
         logger.info('Finished Meser Data Flow')
 
