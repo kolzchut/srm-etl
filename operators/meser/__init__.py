@@ -111,7 +111,7 @@ def run(*_):
         ### TODO: Remove after testing
         logger.info('Source data sample:')
         try:
-            with open(source_data, encoding='utf-8') as f:
+            with open(source_data, encoding='cp1255') as f:
                 for _ in range(5):
                     logger.info(f.readline().strip())
         except Exception as e:
