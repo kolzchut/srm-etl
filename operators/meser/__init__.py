@@ -169,6 +169,7 @@ def run(*_):
                 location=None,
                 tagging=dict(aggregate='array'),
                 phone_numbers=None,
+                meser_id=None,
             )),
             DF.set_type('tagging', type='array', transform=lambda v: list(set(vvv for vv in v for vvv in vv))),
 
