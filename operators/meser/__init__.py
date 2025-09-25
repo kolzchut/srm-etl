@@ -205,19 +205,20 @@ def run(*_):
                 # מיזוג הרשומות לפי organization_id ושמירת כל meser_id במערך
                 DF.join_with_self('meser', ['organization_id'], fields=dict(
                     organization_id=None,
-                    meser_id=dict(aggregate='array')
+                    meser_id=dict(aggregate='array')  # כל ה-meser_id נשמרים במערך
                 )),
 
                 # שינוי שם organization_id ל-id
                 DF.rename_fields({'organization_id': 'id'}, resources='meser'),
 
-                # אם רוצים, אפשר גם "לפשט" את meser_id למחרוזת אחת (אופציונלי)
-                DF.add_field('meser_id_flat', 'string', lambda r: ','.join(r['meser_id']) if r['meser_id'] else None),
+                # אם רוצים, אפשר גם ליצור שדה מחרוזת של כל המזהים
+                DF.add_field('meser_id_flat', 'string',
+                             lambda r: ','.join(r['meser_id']) if r.get('meser_id') else None),
 
-                # יצירת שדה data עם id (ל־AirTable)
+                # יצירת שדה data עם id (ל-AirTable)
                 DF.add_field('data', 'object', lambda r: dict(id=r['id'])),
 
-                # בדיקה/הדפסה
+                # הדפסה לבדיקה
                 DF.printer()
             ),
             update_mapper(),
