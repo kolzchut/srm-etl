@@ -79,25 +79,7 @@ def run(*_):
             }, settings.AIRTABLE_API_KEY)
         ).process()
 
-    airtable_updater(
-        settings.AIRTABLE_HOMEPAGE_TABLE, 'homepage',
-        ['group', 'title', 'group_link', 'situation', 'response'],
-        DF.Flow(
-            load_from_airtable(settings.AIRTABLE_ALTERNATE_BASE, settings.AIRTABLE_HOMEPAGE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-            DF.rename_fields({'situation_id': 'situation', 'response_id': 'response'}),
-            DF.add_field('data', 'object', default=lambda row: dict(
-                group=row.get('group'),
-                title=row.get('title'),
-                group_link=row.get('group_link'),
-                situation=row.get('situation'),
-                response=row.get('response'),
-            ), resources=-1),
-            DF.select_fields(['id', 'data'], resources=-1),
-        ),
-        update_mapper()
-    )
-    logger.info('Deploy done')
-
+    logger.info('Deploy finished')
 
 def operator(*_):
     invoke_on(run, 'Deploy')

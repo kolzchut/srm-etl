@@ -33,7 +33,7 @@ def homepage_query(row):
     return q
 
 def run(*args):
-    logger.log("Deprecated operator called: Presets")
+    logger.info("Deprecated operator called: Presets")
     return
 
     DF.Flow(
