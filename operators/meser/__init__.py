@@ -75,7 +75,7 @@ def flatten_and_deduplicate(values):
             item = str(item)
         if item.count('human_situations:') > 1:
             logger.warning(f'composite human_situations string encountered: {item}')
-        # Split by any run of whitespace or commas
+        # Split on any run of whitespace or commas
         parts = [p for p in re.split(r'[\s,]+', item.strip()) if p]
         flat.extend(parts)
     # Deduplicate preserving order
@@ -237,6 +237,12 @@ def run(*_):
             'meser', ['id', 'name', 'organization', 'location', 'address', 'phone_numbers'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
+                # NEW: Explicit logger output per organization BEFORE filtering so we can diagnose missing IDs
+                DF.add_field('_debug_log', 'string', lambda r: (logger.info(
+                    'ORG_MESER_ID_DEBUG org=%s meser_ids_nested=%s meser_id_list=%s meser_id_flat=%s unknown=%s',
+                    r.get('organization_id'), r.get('meser_ids'), r.get('meser_id_list'), r.get('meser_id_flat'), r.get('_debug_flat_unknown')
+                ) or '')),
+
                 DF.join_with_self('meser', ['branch_id'], fields=dict(
                     branch_id=None, branch_name=None, organization_id=None, address=None, location=None,
                     phone_numbers=None)
