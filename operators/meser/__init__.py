@@ -216,12 +216,20 @@ def run(*_):
 
                 # Flatten meser_id array into a string safely
                 DF.add_field('meser_id_flat', 'string',
-                             lambda r: ','.join(r['meser_id']) if r.get('meser_id') else ''),
+                             lambda r: ','.join(r['meser_id']) if r.get('meser_id') else 'unknown'),
+
+                # Log the meser_id_flat for each row
+                DF.add_processor(
+                    lambda rows: [logger.info(f"meser_id_flat for id={r['id']}: {r['meser_id_flat']}") or r for r in
+                                  rows]),
+
+                # Filter out rows with unknown meser_id_flat
+                DF.filter_rows(lambda r: r['meser_id_flat'] != 'unknown'),
 
                 # Prepare data object for Airtable
                 DF.add_field('data', 'object', lambda r: dict(id=r['id'])),
 
-                # Print for verification
+                # Optionally print the full rows for verification
                 DF.printer()
             ),
             update_mapper(),
