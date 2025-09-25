@@ -203,6 +203,11 @@ def run(*_):
             'entities', ['id'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
+                # DEBUG: inspect fields before any manipulation
+                DF.add_field('_org_raw_keys', 'string', lambda r: '|'.join(sorted(r.keys()))),
+                DF.add_field('_org_raw_meser_id_type', 'string', lambda r: type(r.get('meser_id')).__name__),
+                DF.add_field('_org_raw_Misgeret_Id_type', 'string', lambda r: type(r.get('Misgeret_Id')).__name__),
+                DF.printer(num_rows=5, fields=['organization_id','meser_id','Misgeret_Id','_org_raw_keys','_org_raw_meser_id_type','_org_raw_Misgeret_Id_type']),
                 # Fallback: if organization_id missing, keep a default so join key not None
                 DF.add_field('_org_has_orgid_before', 'string', lambda r: 'Y' if r.get('organization_id') else 'N'),
                 DF.add_field('organization_id', 'string', lambda r: r.get('organization_id') or '500106406'),
