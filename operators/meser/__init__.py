@@ -201,7 +201,7 @@ def run(*_):
             'entities', ['id'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
-                DF.join_with_self('meser', ['organization_id'], fields=dict( organization_id=None)),
+                DF.join_with_self('meser', ['organization_id'], fields=dict( organization_id=None, meser_id=None)), # TODO: Test added Meser_id=None
                 DF.rename_fields({'organization_id': 'id'}, resources='meser'),
                 DF.add_field('data', 'object', lambda r: dict(id=r['id'])),
                 DF.printer()
@@ -218,7 +218,7 @@ def run(*_):
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
                 DF.join_with_self('meser', ['branch_id'], fields=dict(
                     branch_id=None, branch_name=None, organization_id=None, address=None, location=None,
-                    phone_numbers=None)
+                    phone_numbers=None, meser_id=None) # TODO: Test added Meser_id=None
                                   ),
                 DF.rename_fields({
                     'branch_id': 'id',
