@@ -219,15 +219,15 @@ def run(*_):
                              lambda r: ','.join(r['meser_id']) if r.get('meser_id') else 'unknown'),
 
                 # Map over rows to log meser_id_flat
-                DF.update_rows(lambda r: logger.info(f"meser_id_flat for id={r['id']}: {r['meser_id_flat']}") or r),
+                DF.map_rows(lambda r: (logger.info(f"meser_id_flat for id={r['id']}: {r['meser_id_flat']}") or r)),
 
-                # Filter out rows with unknown meser_id_flat
+                # Optionally filter out rows with unknown meser_id_flat
                 DF.filter_rows(lambda r: r['meser_id_flat'] != 'unknown'),
 
                 # Prepare data object for Airtable
                 DF.add_field('data', 'object', lambda r: dict(id=r['id'])),
 
-                # Optionally print the full rows for verification
+                # Print for verification
                 DF.printer()
             ),
             update_mapper(),
