@@ -201,12 +201,23 @@ def run(*_):
             'entities', ['id'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
-                DF.add_field('meser_id', 'string', lambda r: r['Misgeret_Id'], resources='meser'), ## TODO: Test added
+
+                # מיזוג הרשומות לפי organization_id ושמירת כל meser_id במערך
                 DF.join_with_self('meser', ['organization_id'], fields=dict(
-                    organization_id=None, meser_id=None ## TODO: Test added Meser_id=None
+                    organization_id=None,
+                    meser_id=dict(aggregate='array')
                 )),
+
+                # שינוי שם organization_id ל-id
                 DF.rename_fields({'organization_id': 'id'}, resources='meser'),
+
+                # אם רוצים, אפשר גם "לפשט" את meser_id למחרוזת אחת (אופציונלי)
+                DF.add_field('meser_id_flat', 'string', lambda r: ','.join(r['meser_id']) if r['meser_id'] else None),
+
+                # יצירת שדה data עם id (ל־AirTable)
                 DF.add_field('data', 'object', lambda r: dict(id=r['id'])),
+
+                # בדיקה/הדפסה
                 DF.printer()
             ),
             update_mapper(),
@@ -219,11 +230,10 @@ def run(*_):
             'meser', ['id', 'name', 'organization', 'location', 'address', 'phone_numbers'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
-                DF.add_field('meser_id', 'string', lambda r: r['Misgeret_Id'], resources='meser'),## TODO: Test added
                 DF.join_with_self('meser', ['branch_id'], fields=dict(
                     branch_id=None, branch_name=None, organization_id=None, address=None, location=None,
-                    phone_numbers=None, meser_id=None
-                )), # TODO: Test added Meser_id=None
+                    phone_numbers=None)
+                                  ),
                 DF.rename_fields({
                     'branch_id': 'id',
                 }, resources='meser'),
