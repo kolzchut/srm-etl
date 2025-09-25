@@ -202,7 +202,7 @@ def run(*_):
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
 
-                # Ensure every row has a meser_id (even if Misgeret_Id is missing)
+                # Ensure every row has a meser_id (even if Misgeret_Id is missing).
                 DF.add_field('meser_id', 'string', lambda r: r.get('Misgeret_Id') or 'unknown'),
 
                 # Merge records by organization_id, collecting all meser_ids in an array
