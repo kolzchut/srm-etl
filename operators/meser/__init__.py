@@ -212,7 +212,7 @@ def run(*_):
                 DF.rename_fields({'organization_id': 'id'}, resources='meser'),
 
                 # אם רוצים, אפשר גם ליצור שדה מחרוזת של כל המזהים
-                DF.add_field('meser_id', 'string',
+                DF.add_field('meser_id_flat', 'string',
                              lambda r: ','.join(r['meser_id']) if r.get('meser_id') else None),
 
                 # יצירת שדה data עם id (ל-AirTable)
