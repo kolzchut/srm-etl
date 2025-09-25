@@ -203,35 +203,35 @@ def run(*_):
             'entities', ['id'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
-                # Collect both meser_id (already aggregated per service) and Misgeret_Id (original) without overwriting
-                DF.add_field('meser_ids_combined', 'array', lambda r: [
-                    *([x for x in r.get('meser_id', []) if isinstance(r.get('meser_id'), list)] or ([r['meser_id']] if r.get('meser_id') and not isinstance(r.get('meser_id'), list) else [])),
-                    *([x for x in r.get('Misgeret_Id', []) if isinstance(r.get('Misgeret_Id'), list)] or ([r['Misgeret_Id']] if r.get('Misgeret_Id') and not isinstance(r.get('Misgeret_Id'), list) else []))
-                ]),
-                # Merge by organization, aggregate lists
+                # Fallback: if organization_id missing, keep a default so join key not None
+                DF.add_field('_org_has_orgid_before', 'string', lambda r: 'Y' if r.get('organization_id') else 'N'),
+                DF.add_field('organization_id', 'string', lambda r: r.get('organization_id') or '500106406'),
+                # Collect meser ids (already arrays after service join) + original Misgeret_Id
+                DF.add_field('meser_ids_combined', 'array', lambda r: (
+                    (r.get('meser_id') if isinstance(r.get('meser_id'), list) else ([r['meser_id']] if r.get('meser_id') else [])) +
+                    (r.get('Misgeret_Id') if isinstance(r.get('Misgeret_Id'), list) else ([r['Misgeret_Id']] if r.get('Misgeret_Id') else []))
+                )),
+                DF.add_field('_org_debug_fields', 'string', lambda r: ','.join(sorted(r.keys()))),
+                # Aggregate by organization
                 DF.join_with_self('meser', ['organization_id'], fields=dict(
                     organization_id=None,
-                    meser_ids_combined=dict(aggregate='array')
+                    meser_ids_combined=dict(aggregate='array'),
                 )),
-                # Flatten + dedupe
-                DF.add_field('meser_id_flat', 'string', lambda r: (lambda flat: ','.join(flat) if flat else 'unknown')([
+                # Flatten & dedupe
+                DF.add_field('meser_id_flat', 'string', lambda r: ','.join([
                     x for x in dict.fromkeys(
                         y for group in r.get('meser_ids_combined', [])
                         for y in (group if isinstance(group, list) else [group])
-                        if y and y != 'unknown'
+                        if y
                     )
-                ])),
+                ]) if any(r.get('meser_ids_combined', [])) else 'unknown'),
                 DF.add_field('_meser_debug', 'string', lambda r: (logger.info(
-                    'ORG_MESER_DEBUG org=%s groups=%d flat_len=%d flat=%s',
-                    r.get('organization_id'), len(r.get('meser_ids_combined', [])),
-                    0 if r.get('meser_id_flat') in (None, 'unknown') else len(r.get('meser_id_flat').split(',')),
-                    r.get('meser_id_flat')
+                    'ORG_MESER_DEBUG org=%s had_orgid_before=%s groups=%d flat=%s',
+                    r.get('organization_id'), r.get('_org_has_orgid_before'), len(r.get('meser_ids_combined', [])), r.get('meser_id_flat')
                 ) or '')),
-                # Keep even unknown for now (if you prefer to drop, uncomment next line)
-                # DF.filter_rows(lambda r: r['meser_id_flat'] != 'unknown'),
                 DF.rename_fields({'organization_id': 'id'}, resources='meser'),
                 DF.add_field('data', 'object', lambda r: dict(id=r['id'], meser_id_flat=r['meser_id_flat'])),
-                DF.printer(num_rows=30)
+                DF.printer(num_rows=25)
             ),
             update_mapper(),
             manage_status=False,
