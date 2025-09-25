@@ -169,6 +169,8 @@ def run(*_):
                 location=None,
                 tagging=dict(aggregate='array'),
                 phone_numbers=None,
+                meser_id=dict(aggregate='array'),
+                Misgeret_Id=dict(aggregate='array'),
             )),
             DF.set_type('tagging', type='array', transform=lambda v: list(set(vvv for vv in v for vvv in vv))),
 
@@ -201,31 +203,35 @@ def run(*_):
             'entities', ['id'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
-
-                # Ensure every row has a meser_id (even if Misgeret_Id is missing).
-                DF.add_field('meser_id', 'string', lambda r: r.get('Misgeret_Id') or 'unknown'),
-
-                # Merge records by organization_id, collecting all meser_ids in an array
+                # Collect both meser_id (already aggregated per service) and Misgeret_Id (original) without overwriting
+                DF.add_field('meser_ids_combined', 'array', lambda r: [
+                    *([x for x in r.get('meser_id', []) if isinstance(r.get('meser_id'), list)] or ([r['meser_id']] if r.get('meser_id') and not isinstance(r.get('meser_id'), list) else [])),
+                    *([x for x in r.get('Misgeret_Id', []) if isinstance(r.get('Misgeret_Id'), list)] or ([r['Misgeret_Id']] if r.get('Misgeret_Id') and not isinstance(r.get('Misgeret_Id'), list) else []))
+                ]),
+                # Merge by organization, aggregate lists
                 DF.join_with_self('meser', ['organization_id'], fields=dict(
                     organization_id=None,
-                    meser_id=dict(aggregate='array')
+                    meser_ids_combined=dict(aggregate='array')
                 )),
-
-                # Rename organization_id to id
+                # Flatten + dedupe
+                DF.add_field('meser_id_flat', 'string', lambda r: (lambda flat: ','.join(flat) if flat else 'unknown')([
+                    x for x in dict.fromkeys(
+                        y for group in r.get('meser_ids_combined', [])
+                        for y in (group if isinstance(group, list) else [group])
+                        if y and y != 'unknown'
+                    )
+                ])),
+                DF.add_field('_meser_debug', 'string', lambda r: (logger.info(
+                    'ORG_MESER_DEBUG org=%s groups=%d flat_len=%d flat=%s',
+                    r.get('organization_id'), len(r.get('meser_ids_combined', [])),
+                    0 if r.get('meser_id_flat') in (None, 'unknown') else len(r.get('meser_id_flat').split(',')),
+                    r.get('meser_id_flat')
+                ) or '')),
+                # Keep even unknown for now (if you prefer to drop, uncomment next line)
+                # DF.filter_rows(lambda r: r['meser_id_flat'] != 'unknown'),
                 DF.rename_fields({'organization_id': 'id'}, resources='meser'),
-
-                # Flatten meser_id array into a string safely
-                DF.add_field('meser_id_flat', 'string',
-                             lambda r: ','.join(r['meser_id']) if r.get('meser_id') else 'unknown'),
-
-                # Optionally filter out rows with unknown meser_id_flat
-                DF.filter_rows(lambda r: r['meser_id_flat'] != 'unknown'),
-
-                # Prepare data object for Airtable
-                DF.add_field('data', 'object', lambda r: dict(id=r['id'])),
-
-                # Print for verification
-                DF.printer()
+                DF.add_field('data', 'object', lambda r: dict(id=r['id'], meser_id_flat=r['meser_id_flat'])),
+                DF.printer(num_rows=30)
             ),
             update_mapper(),
             manage_status=False,
