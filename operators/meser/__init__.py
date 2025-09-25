@@ -218,10 +218,8 @@ def run(*_):
                 DF.add_field('meser_id_flat', 'string',
                              lambda r: ','.join(r['meser_id']) if r.get('meser_id') else 'unknown'),
 
-                # Log the meser_id_flat for each row
-                DF.add_processor(
-                    lambda rows: [logger.info(f"meser_id_flat for id={r['id']}: {r['meser_id_flat']}") or r for r in
-                                  rows]),
+                # Map over rows to log meser_id_flat
+                DF.update_rows(lambda r: logger.info(f"meser_id_flat for id={r['id']}: {r['meser_id_flat']}") or r),
 
                 # Filter out rows with unknown meser_id_flat
                 DF.filter_rows(lambda r: r['meser_id_flat'] != 'unknown'),
