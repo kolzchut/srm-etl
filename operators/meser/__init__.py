@@ -202,23 +202,26 @@ def run(*_):
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
 
-                # מיזוג הרשומות לפי organization_id ושמירת כל meser_id במערך
+                # Ensure every row has a meser_id (even if Misgeret_Id is missing)
+                DF.add_field('meser_id', 'string', lambda r: r.get('Misgeret_Id') or 'unknown'),
+
+                # Merge records by organization_id, collecting all meser_ids in an array
                 DF.join_with_self('meser', ['organization_id'], fields=dict(
                     organization_id=None,
-                    meser_id=dict(aggregate='array')  # כל ה-meser_id נשמרים במערך
+                    meser_id=dict(aggregate='array')
                 )),
 
-                # שינוי שם organization_id ל-id
+                # Rename organization_id to id
                 DF.rename_fields({'organization_id': 'id'}, resources='meser'),
 
-                # אם רוצים, אפשר גם ליצור שדה מחרוזת של כל המזהים
+                # Flatten meser_id array into a string safely
                 DF.add_field('meser_id_flat', 'string',
-                             lambda r: ','.join(r['meser_id']) if r.get('meser_id') else None),
+                             lambda r: ','.join(r['meser_id']) if r.get('meser_id') else ''),
 
-                # יצירת שדה data עם id (ל-AirTable)
+                # Prepare data object for Airtable
                 DF.add_field('data', 'object', lambda r: dict(id=r['id'])),
 
-                # הדפסה לבדיקה
+                # Print for verification
                 DF.printer()
             ),
             update_mapper(),
