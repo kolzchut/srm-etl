@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 import tempfile
 import re
-import csv
 
 from openlocationcode import openlocationcode as olc
 from pyproj import Transformer
@@ -75,7 +74,7 @@ def flatten_and_deduplicate(values):
             item = str(item)
         if item.count('human_situations:') > 1:
             logger.warning(f'composite human_situations string encountered: {item}')
-        # Split on any run of whitespace or commas
+        # Split by any run of whitespace or commas
         parts = [p for p in re.split(r'[\s,]+', item.strip()) if p]
         flat.extend(parts)
     # Deduplicate preserving order
@@ -169,8 +168,8 @@ def run(*_):
                 location=None,
                 tagging=dict(aggregate='array'),
                 phone_numbers=None,
-                meser_id=dict(aggregate='array'),
-                Misgeret_Id=dict(aggregate='array'),
+                meser_id=None,
+                Misgeret_Id=None,
             )),
             DF.set_type('tagging', type='array', transform=lambda v: list(set(vvv for vv in v for vvv in vv))),
 
@@ -198,52 +197,15 @@ def run(*_):
             DF.dump_to_path(os.path.join(dirname, 'meser', 'denormalized')),
         ).process()
 
-        # Helper to compute flattened meser ids per organization
-        def _calc_meser_flat(r):
-            groups = r.get('meser_ids_combined') or []
-            items = []
-            for group in groups:
-                if isinstance(group, list):
-                    for x in group:
-                        if x:
-                            items.append(str(x))
-                else:
-                    if group:
-                        items.append(str(group))
-            seen = set()
-            ordered = []
-            for x in items:
-                if x not in seen:
-                    seen.add(x)
-                    ordered.append(x)
-            return ','.join(ordered) if ordered else 'unknown'
-
         airtable_updater(
             settings.AIRTABLE_ORGANIZATION_TABLE,
-            'entities', ['id', 'meser_id_flat'],
+            'entities', ['id'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
-                DF.add_field('_org_raw_keys', 'string', lambda r: '|'.join(sorted(r.keys()))),
-                DF.add_field('_org_raw_meser_id_type', 'string', lambda r: type(r.get('meser_id')).__name__),
-                DF.add_field('_org_raw_Misgeret_Id_type', 'string', lambda r: type(r.get('Misgeret_Id')).__name__),
-                DF.printer(num_rows=5, fields=['organization_id','meser_id','Misgeret_Id','_org_raw_keys','_org_raw_meser_id_type','_org_raw_Misgeret_Id_type']),
-                DF.add_field('_org_has_orgid_before', 'string', lambda r: 'Y' if r.get('organization_id') else 'N'),
-                DF.add_field('organization_id', 'string', lambda r: r.get('organization_id') or '500106406'),
-                DF.add_field('meser_ids_combined', 'array', lambda r: (
-                    (r.get('meser_id') if isinstance(r.get('meser_id'), list) else ([r['meser_id']] if r.get('meser_id') else [])) +
-                    (r.get('Misgeret_Id') if isinstance(r.get('Misgeret_Id'), list) else ([r['Misgeret_Id']] if r.get('Misgeret_Id') else []))
-                )),
-                DF.add_field('_org_debug_fields', 'string', lambda r: ','.join(sorted(r.keys()))),
-                DF.join_with_self('meser', ['organization_id'], fields=dict(
-                    organization_id=None,
-                    meser_ids_combined=dict(aggregate='array'),
-                )),
-                DF.add_field('meser_id_flat', 'string', _calc_meser_flat),
-                # Ensure id field exists for airtable updater join
-                DF.add_field('id', 'string', lambda r: r.get('organization_id')),
-                # Removed rename_fields to avoid losing id in some rows
-                DF.add_field('data', 'object', lambda r: dict(id=r['id'], meser_id_flat=r['meser_id_flat'])),
-                DF.printer(num_rows=25)
+                DF.join_with_self('meser', ['organization_id'], fields=dict(organization_id=None)),
+                DF.rename_fields({'organization_id': 'id'}, resources='meser'),
+                DF.add_field('data', 'object', lambda r: dict(id=r['id'])),
+                DF.printer()
             ),
             update_mapper(),
             manage_status=False,
@@ -255,11 +217,6 @@ def run(*_):
             'meser', ['id', 'name', 'organization', 'location', 'address', 'phone_numbers'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
-                DF.add_field('_debug_log', 'string', lambda r: (logger.info(
-                    'ORG_MESER_ID_DEBUG org=%s meser_ids_nested=%s meser_id_list=%s meser_id_flat=%s unknown=%s',
-                    r.get('organization_id'), r.get('meser_ids'), r.get('meser_id_list'), r.get('meser_id_flat'), r.get('_debug_flat_unknown')
-                ) or '')),
-
                 DF.join_with_self('meser', ['branch_id'], fields=dict(
                     branch_id=None, branch_name=None, organization_id=None, address=None, location=None,
                     phone_numbers=None)
@@ -301,23 +258,21 @@ def run(*_):
         )
         ## TODO: Fix the meser_id, its not recieving Misgeret_id
         ### Print file START
-        csv_path = os.path.join(dirname, 'meser', 'denormalized', 'meser.csv')  # file referenced by datapackage.json
-
+        dp_path = os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')
         try:
-            with open(csv_path, encoding='utf-8') as f:
-                reader = list(csv.DictReader(f))  # read all rows
-                row_count = len(reader)
-
-                if row_count > 0:
-                    first_row = reader[0]
-                    logger.info("meser.csv has %d rows", row_count)
-                    logger.info("First row of meser.csv:\n%s", first_row)
+            size = os.path.getsize(dp_path)
+            max_preview = 10000  # chars
+            with open(dp_path, encoding='utf-8') as f:
+                if size <= max_preview:
+                    logger.info('datapackage.json (%d bytes) content:\n%s', size, f.read())
                 else:
-                    logger.warning("meser.csv is empty")
+                    preview = f.read(max_preview)
+                    logger.info('datapackage.json (%d bytes) first %d chars (truncated):\n%s', size, max_preview, preview)
         except FileNotFoundError:
-            logger.warning('meser.csv not found at %s', csv_path)
+            logger.warning('datapackage.json not found at %s', dp_path)
         except Exception as e:
-            logger.error('Failed reading meser.csv at %s: %s', csv_path, e)
+            logger.error('Failed reading datapackage.json at %s: %s', dp_path, e)
+
     ### Print file END
         DF.Flow(
             DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
