@@ -1,8 +1,8 @@
-import os
-from pathlib import Path
 import tempfile
 import re
-
+import os
+import shutil
+import time
 from openlocationcode import openlocationcode as olc
 from pyproj import Transformer
 
@@ -24,6 +24,15 @@ transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
 noOrgIdCount = 0
 badOrgIdLengthCount = {}
 
+def rmtree_with_retry(path, retries=5, delay=1):
+    for i in range(retries):
+        try:
+            shutil.rmtree(path)
+            return
+        except PermissionError:
+            logger.warning(f"PermissionError, retrying {i+1}/{retries}...")
+            time.sleep(delay)
+    shutil.rmtree(path)
 
 def alternate_address(row):
     assert '999' not in row['address'], str(row)
@@ -88,212 +97,192 @@ def flatten_and_deduplicate(values):
 
 
 def run(*_):
-    logger.info('Starting Meser Data Flow')
+    try:
+        logger.info('Starting Meser Data Flow')
 
-    stats = Stats()
+        stats = Stats()
 
-    tags = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging', settings.AIRTABLE_VIEW,
-                           settings.AIRTABLE_API_KEY),
-        DF.filter_rows(lambda r: r.get('tag') not in (None, 'dummy')),
-        DF.select_fields(['tag', 'response_ids', 'situation_ids']),
-    ).results()[0][0]
-    tags = {r.pop('tag'): r for r in tags}
+        tags = DF.Flow(
+            load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging', settings.AIRTABLE_VIEW,
+                               settings.AIRTABLE_API_KEY),
+            DF.filter_rows(lambda r: r.get('tag') not in (None, 'dummy')),
+            DF.select_fields(['tag', 'response_ids', 'situation_ids']),
+        ).results()[0][0]
+        tags = {r.pop('tag'): r for r in tags}
+        dirname=None
+        with tempfile.TemporaryDirectory(prefix='meser_') as td:
+            os.chmod(td, 0o755)
+            dirname = td
+            source_data = os.path.join(td, 'data.csv')
 
-    with tempfile.TemporaryDirectory(prefix='meser_') as td:
-        os.chmod(td, 0o755)
-        dirname = td
-        source_data = os.path.join(td, 'data.csv')
+            fetch_datagovil('welfare-frames', 'מסגרות רווחה', source_data)
 
-        fetch_datagovil('welfare-frames', 'מסגרות רווחה', source_data)
 
-        ### TODO: Remove after testing
-        logger.info('Source data sample:')
-        try:
-            with open(source_data, encoding='cp1255') as f:
-                for _ in range(5):
-                    logger.info(f.readline().strip())
-        except Exception as e:
-            logger.error('Failed reading source data sample: %s', e)
-
-        ### TODO: END
-
-        DF.Flow(
-            # Loading data
-            DF.load(str(source_data), infer_strategy=DF.load.INFER_STRINGS, headers=1),
-            DF.update_resource(-1, name='meser'),
-            DF.select_fields(['Name',
-                              'Misgeret_Id', 'Type_Descr', 'Target_Population_Descr', 'Head_Department',
-                              'Second_Classific',
-                              'ORGANIZATIONS_BUSINES_NUM', 'Registered_Business_Id',
-                              'Gender_Descr', 'City_Name', 'Adrees', 'Telephone', 'GisX', 'GisY']),
-            # Cleanup
-            DF.update_schema(-1, missingValues=['NULL', '-1', 'לא ידוע', 'לא משויך', 'רב תכליתי', '0', '999', '9999']),
-            DF.validate(),
-            # Adding fields
-            DF.add_field('service_name', 'string', lambda r: r['Name'].strip()),
-            DF.add_field('branch_name', 'string', lambda r: r['Type_Descr'].strip()),
-            DF.add_field('service_description', 'string',
-                         lambda r: r['Type_Descr'].strip() + (' עבור ' + r['Target_Population_Descr'].strip()) if r[
-                             'Target_Population_Descr'] else ''),
-            DF.add_field('organization_id', 'string',
-                         lambda r: r['ORGANIZATIONS_BUSINES_NUM'] or r['Registered_Business_Id'] or '500106406'),
-            DF.set_type('Adrees', type='string', transform=lambda v: v.replace('999', '').strip()),
-            DF.set_type('Adrees', type='string', transform=lambda v, row: v if v != row['City_Name'] else None),
-            DF.add_field('address', 'string',
-                         lambda r: ' '.join(filter(None, [r['Adrees'], r['City_Name']])).replace(' - ', '-')),
-            DF.add_field('branch_id', 'string', lambda r: 'meser-' + hasher(r['address'], r['organization_id'])),
-            DF.add_field('location', 'string', alternate_address),
-            DF.add_field('tagging', 'array', lambda r: list(filter(None, [r['Type_Descr'], r['Target_Population_Descr'],
-                                                                          r['Second_Classific'], r['Gender_Descr'],
-                                                                          r['Head_Department']]))),
-            DF.add_field('phone_numbers', 'string',
-                         lambda r: '0' + r['Telephone'] if r['Telephone'] and r['Telephone'][0] != '0' else r[
-                                                                                                                'Telephone'] or None),
-
-            DF.add_field('meser_id', 'string', lambda r: r['Misgeret_Id']),
-
-            # Combining same services
-            DF.add_field('service_id', 'string',
-                         lambda r: 'meser-' + hasher(r['service_name'], r['phone_numbers'], r['address'],
-                                                     r['organization_id'], r['branch_id'])),
-            DF.join_with_self('meser', ['service_id'], fields=dict(
-                service_id=None,
-                service_name=None,
-                service_description=None,
-                branch_id=None,
-                branch_name=None,
-                organization_id=None,
-                address=None,
-                location=None,
-                tagging=dict(aggregate='array'),
-                phone_numbers=None,
-                meser_id=None,
-                Misgeret_Id=None,
-            )),
-            DF.set_type('tagging', type='array', transform=lambda v: list(set(vvv for vv in v for vvv in vv))),
-
-            # Adding tags
-            DF.add_field(
-                'responses', 'array',
-                lambda r: flatten_and_deduplicate(
-                    resp
-                    for t in r['tagging']
-                    for resp in (tags.get(t, {}).get('response_ids') or [])
-                )
-            ),
-
-            DF.add_field(
-                'situations', 'array',
-                lambda r: flatten_and_deduplicate(
-                    sit
-                    for t in r['tagging']
-                    for sit in (tags.get(t, {}).get('situation_ids') or [])
-                )
-            ),
-
-            stats.filter_with_stat('MESER: No Org Id', good_company),
-
-            DF.dump_to_path(os.path.join(dirname, 'meser', 'denormalized')),
-        ).process()
-
-        airtable_updater(
-            settings.AIRTABLE_ORGANIZATION_TABLE,
-            'entities', ['id'],
             DF.Flow(
-                DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
-                DF.join_with_self('meser', ['organization_id'], fields=dict(organization_id=None)),
-                DF.rename_fields({'organization_id': 'id'}, resources='meser'),
-                DF.add_field('data', 'object', lambda r: dict(id=r['id'])),
-                DF.printer()
-            ),
-            update_mapper(),
-            manage_status=False,
-            airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
-        )
+                # Loading data
+                DF.load(str(source_data), infer_strategy=DF.load.INFER_STRINGS, headers=1),
+                DF.update_resource(-1, name='meser'),
+                DF.select_fields(['Name',
+                                  'Misgeret_Id', 'Type_Descr', 'Target_Population_Descr', 'Head_Department',
+                                  'Second_Classific',
+                                  'ORGANIZATIONS_BUSINES_NUM', 'Registered_Business_Id',
+                                  'Gender_Descr', 'City_Name', 'Adrees', 'Telephone', 'GisX', 'GisY']),
+                # Cleanup
+                DF.update_schema(-1, missingValues=['NULL', '-1', 'לא ידוע', 'לא משויך', 'רב תכליתי', '0', '999', '9999']),
+                DF.validate(),
+                # Adding fields
+                DF.add_field('service_name', 'string', lambda r: r['Name'].strip()),
+                DF.add_field('branch_name', 'string', lambda r: r['Type_Descr'].strip()),
+                DF.add_field('service_description', 'string',
+                             lambda r: r['Type_Descr'].strip() + (' עבור ' + r['Target_Population_Descr'].strip()) if r[
+                                 'Target_Population_Descr'] else ''),
+                DF.add_field('organization_id', 'string',
+                             lambda r: r['ORGANIZATIONS_BUSINES_NUM'] or r['Registered_Business_Id'] or '500106406'),
+                DF.set_type('Adrees', type='string', transform=lambda v: v.replace('999', '').strip()),
+                DF.set_type('Adrees', type='string', transform=lambda v, row: v if v != row['City_Name'] else None),
+                DF.add_field('address', 'string',
+                             lambda r: ' '.join(filter(None, [r['Adrees'], r['City_Name']])).replace(' - ', '-')),
+                DF.add_field('branch_id', 'string', lambda r: 'meser-' + hasher(r['address'], r['organization_id'])),
+                DF.add_field('location', 'string', alternate_address),
+                DF.add_field('tagging', 'array', lambda r: list(filter(None, [r['Type_Descr'], r['Target_Population_Descr'],
+                                                                              r['Second_Classific'], r['Gender_Descr'],
+                                                                              r['Head_Department']]))),
+                DF.add_field('phone_numbers', 'string',
+                             lambda r: '0' + r['Telephone'] if r['Telephone'] and r['Telephone'][0] != '0' else r[
+                                                                                                                    'Telephone'] or None),
 
-        airtable_updater(
-            settings.AIRTABLE_BRANCH_TABLE,
-            'meser', ['id', 'name', 'organization', 'location', 'address', 'phone_numbers'],
-            DF.Flow(
-                DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
-                DF.join_with_self('meser', ['branch_id'], fields=dict(
-                    branch_id=None, branch_name=None, organization_id=None, address=None, location=None,
-                    phone_numbers=None)
-                                  ),
-                DF.rename_fields({
-                    'branch_id': 'id',
-                }, resources='meser'),
-                DF.add_field('name', 'string', lambda r: '', resources='meser'),
-                DF.add_field('organization', 'array', lambda r: [r['organization_id']], resources='meser'),
-                DF.add_field('data', 'object', lambda r: dict((k, v) for k, v in r.items() if k != 'id'),
-                             resources='meser'),
-                DF.printer()
-            ),
-            update_mapper(),
-            airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
-        )
+                DF.add_field('meser_id', 'string', lambda r: r['Misgeret_Id']),
 
-        airtable_updater(
-            settings.AIRTABLE_SERVICE_TABLE,
-            'meser', ['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],
-            DF.Flow(
-                DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
-                DF.rename_fields({
-                    'service_id': 'id',
-                    'service_name': 'name',
-                    'service_description': 'description',
-                }, resources='meser'),
-                DF.add_field('data_sources', 'string', 'מידע על מסגרות רווחה התקבל ממשרד הרווחה והשירותים החברתיים',
-                             resources='meser'),
-                DF.add_field('branches', 'array', lambda r: [r['branch_id']], resources='meser'),
-                DF.select_fields(['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],
+                # Combining same services
+                DF.add_field('service_id', 'string',
+                             lambda r: 'meser-' + hasher(r['service_name'], r['phone_numbers'], r['address'],
+                                                         r['organization_id'], r['branch_id'])),
+                DF.join_with_self('meser', ['service_id'], fields=dict(
+                    service_id=None,
+                    service_name=None,
+                    service_description=None,
+                    branch_id=None,
+                    branch_name=None,
+                    organization_id=None,
+                    address=None,
+                    location=None,
+                    tagging=dict(aggregate='array'),
+                    phone_numbers=None
+                )),
+                DF.set_type('tagging', type='array', transform=lambda v: list(set(vvv for vv in v for vvv in vv))),
+
+                # Adding tags
+                DF.add_field(
+                    'responses', 'array',
+                    lambda r: flatten_and_deduplicate(
+                        resp
+                        for t in r['tagging']
+                        for resp in (tags.get(t, {}).get('response_ids') or [])
+                    )
+                ),
+
+                DF.add_field(
+                    'situations', 'array',
+                    lambda r: flatten_and_deduplicate(
+                        sit
+                        for t in r['tagging']
+                        for sit in (tags.get(t, {}).get('situation_ids') or [])
+                    )
+                ),
+
+                stats.filter_with_stat('MESER: No Org Id', good_company),
+
+                DF.dump_to_path(os.path.join(dirname, 'meser', 'denormalized')),
+            ).process()
+
+            airtable_updater(
+                settings.AIRTABLE_ORGANIZATION_TABLE,
+                'entities', ['id','meser_id'],
+                DF.Flow(
+                    DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
+                    DF.join_with_self('meser', ['organization_id'], fields=dict(organization_id=None)),
+                    DF.rename_fields({'organization_id': 'id'}, resources='meser'),
+                    DF.update_resource(
+                        'meser',
+                        processor=lambda row: row.update({'meser_id': row['Misgeret_Id']}) or row
+                    ),
+                    DF.add_field('data', 'object', lambda r: dict(id=r['id'])),
+                    DF.printer()
+                ),
+                update_mapper(),
+                manage_status=False,
+                airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
+            )
+            airtable_updater(
+                settings.AIRTABLE_BRANCH_TABLE,
+                'meser', ['id', 'name', 'organization', 'location', 'address', 'phone_numbers'],
+                DF.Flow(
+                    DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
+                    DF.join_with_self('meser', ['branch_id'], fields=dict(
+                        branch_id=None, branch_name=None, organization_id=None, address=None, location=None,
+                        phone_numbers=None)
+                                      ),
+                    DF.rename_fields({
+                        'branch_id': 'id',
+                    }, resources='meser'),
+                    DF.add_field('name', 'string', lambda r: '', resources='meser'),
+                    DF.add_field('organization', 'array', lambda r: [r['organization_id']], resources='meser'),
+                    DF.add_field('data', 'object', lambda r: dict((k, v) for k, v in r.items() if k != 'id'),
                                  resources='meser'),
-                DF.add_field('data', 'object', lambda r: dict((k, v) for k, v in r.items() if k != 'id'),
-                             resources='meser'),
-                DF.printer()
-            ),
-            update_mapper(),
-            airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
-        )
-        ## TODO: Fix the meser_id, its not recieving Misgeret_id
-        ### Print file START
-        dp_path = os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')
-        try:
-            size = os.path.getsize(dp_path)
-            max_preview = 10000  # chars
-            with open(dp_path, encoding='utf-8') as f:
-                if size <= max_preview:
-                    logger.info('datapackage.json (%d bytes) content:\n%s', size, f.read())
-                else:
-                    preview = f.read(max_preview)
-                    logger.info('datapackage.json (%d bytes) first %d chars (truncated):\n%s', size, max_preview, preview)
-        except FileNotFoundError:
-            logger.warning('datapackage.json not found at %s', dp_path)
-        except Exception as e:
-            logger.error('Failed reading datapackage.json at %s: %s', dp_path, e)
+                    DF.printer()
+                ),
+                update_mapper(),
+                airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
+            )
 
-    ### Print file END
-        DF.Flow(
-            DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
-            DF.update_resource(-1, name='tagging'),
-            DF.select_fields(['tagging', 'Misgeret_Id']),
-            unwind('tagging', 'tag'),
-            DF.join_with_self('tagging', ['tag'], fields=dict(tag=None)),
-            DF.filter_rows(lambda r: r['tag'] not in tags),
-            DF.filter_rows(lambda r: bool(r['tag'])),
-            DF.add_field('meser_id', 'string', lambda r: r['Misgeret_Id']),
-            dump_to_airtable({
-                (settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging'): {
-                    'resource-name': 'tagging',
-                }
-            }, settings.AIRTABLE_API_KEY)
-        ).process()
+            airtable_updater(
+                settings.AIRTABLE_SERVICE_TABLE,
+                'meser', ['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],
+                DF.Flow(
+                    DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
+                    DF.rename_fields({
+                        'service_id': 'id',
+                        'service_name': 'name',
+                        'service_description': 'description',
+                    }, resources='meser'),
+                    DF.add_field('data_sources', 'string', 'מידע על מסגרות רווחה התקבל ממשרד הרווחה והשירותים החברתיים',
+                                 resources='meser'),
+                    DF.add_field('branches', 'array', lambda r: [r['branch_id']], resources='meser'),
+                    DF.select_fields(['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],
+                                     resources='meser'),
+                    DF.add_field('data', 'object', lambda r: dict((k, v) for k, v in r.items() if k != 'id'),
+                                 resources='meser'),
+                    DF.printer()
+                ),
+                update_mapper(),
+                airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
+            )
+            DF.Flow(
+                DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
+                DF.update_resource(-1, name='tagging'),
+                DF.select_fields(['tagging', 'Misgeret_Id']),
+                unwind('tagging', 'tag'),
+                DF.join_with_self('tagging', ['tag'], fields=dict(tag=None)),
+                DF.filter_rows(lambda r: r['tag'] not in tags),
+                DF.filter_rows(lambda r: bool(r['tag'])),
+                DF.add_field('meser_id', 'string', lambda r: r['Misgeret_Id']),
+                dump_to_airtable({
+                    (settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging'): {
+                        'resource-name': 'tagging',
+                    }
+                }, settings.AIRTABLE_API_KEY)
+            ).process()
 
-        logger.info("No org id Count: %s", noOrgIdCount)
-        logger.info("bad org id length Count: %s", badOrgIdLengthCount)
+            logger.info("No org id Count: %s", noOrgIdCount)
+            logger.info("bad org id length Count: %s", badOrgIdLengthCount)
 
-        logger.info('Finished Meser Data Flow')
+            logger.info('Finished Meser Data Flow')
+    except Exception as e:
+        if  isinstance(e, PermissionError) and dirname:
+            rmtree_with_retry(dirname)
+        else:
+            raise e
+
 
 
 def operator(*_):
