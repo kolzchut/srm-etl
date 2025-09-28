@@ -54,6 +54,7 @@ def good_company(r):
 
     return is_org_id and is_length_good
 
+
 def flatten_and_deduplicate(values):
     """Flatten nested (lists/tuples/generators) of tag strings.
     Splits on commas and whitespace, preserves order and uniqueness.
@@ -221,7 +222,6 @@ def run(*_):
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
 
-
         airtable_updater(
             settings.AIRTABLE_SERVICE_TABLE,
             'meser', ['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],
@@ -269,8 +269,10 @@ def run(*_):
 
         logger.info('Finished Meser Data Flow')
 
+
 def operator(*_):
     invoke_on(run, 'Meser')
+
 
 if __name__ == '__main__':
     run(None, None, None)
