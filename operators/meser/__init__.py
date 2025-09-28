@@ -198,44 +198,47 @@ def run(*_):
             DF.dump_to_path(os.path.join(dirname, 'meser', 'denormalized')),
         ).process()
 
+        # Helper to compute flattened meser ids per organization
+        def _calc_meser_flat(r):
+            groups = r.get('meser_ids_combined') or []
+            items = []
+            for group in groups:
+                if isinstance(group, list):
+                    for x in group:
+                        if x:
+                            items.append(str(x))
+                else:
+                    if group:
+                        items.append(str(group))
+            seen = set()
+            ordered = []
+            for x in items:
+                if x not in seen:
+                    seen.add(x)
+                    ordered.append(x)
+            return ','.join(ordered) if ordered else 'unknown'
+
         airtable_updater(
             settings.AIRTABLE_ORGANIZATION_TABLE,
             'entities', ['id'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
-                # DEBUG: inspect fields before any manipulation
                 DF.add_field('_org_raw_keys', 'string', lambda r: '|'.join(sorted(r.keys()))),
                 DF.add_field('_org_raw_meser_id_type', 'string', lambda r: type(r.get('meser_id')).__name__),
                 DF.add_field('_org_raw_Misgeret_Id_type', 'string', lambda r: type(r.get('Misgeret_Id')).__name__),
                 DF.printer(num_rows=5, fields=['organization_id','meser_id','Misgeret_Id','_org_raw_keys','_org_raw_meser_id_type','_org_raw_Misgeret_Id_type']),
-                # Fallback: if organization_id missing, keep a default so join key not None
                 DF.add_field('_org_has_orgid_before', 'string', lambda r: 'Y' if r.get('organization_id') else 'N'),
                 DF.add_field('organization_id', 'string', lambda r: r.get('organization_id') or '500106406'),
-                # Collect meser ids (already arrays after service join) + original Misgeret_Id
                 DF.add_field('meser_ids_combined', 'array', lambda r: (
                     (r.get('meser_id') if isinstance(r.get('meser_id'), list) else ([r['meser_id']] if r.get('meser_id') else [])) +
                     (r.get('Misgeret_Id') if isinstance(r.get('Misgeret_Id'), list) else ([r['Misgeret_Id']] if r.get('Misgeret_Id') else []))
                 )),
                 DF.add_field('_org_debug_fields', 'string', lambda r: ','.join(sorted(r.keys()))),
-                # Aggregate by organization
                 DF.join_with_self('meser', ['organization_id'], fields=dict(
                     organization_id=None,
                     meser_ids_combined=dict(aggregate='array'),
                 )),
-                # Flatten & dedupe
-                DF.add_field('meser_id_flat', 'string', lambda r: ','.join([
-                    x for x in dict.fromkeys(
-                        y for group in r.get('meser_ids_combined', [])
-                        for y in (group if isinstance(group, list) else [group])
-                        if y
-                    )
-                ]) if any(r.get('meser_ids_combined', [])) else 'unknown'),
-                DF.add_field('_meser_debug', 'string', lambda r: (logger.info(
-                    'ORG_MESER_DEBUG org=%s had_orgid_before=%s groups=%d flat=%s',
-                    r.get('organization_id'), r.get('_org_has_orgid_before'), len(r.get('meser_ids_combined', [])), r.get('meser_id_flat')
-                ) or '')),
-                DF.rename_fields({'organization_id': 'id'}, resources='meser'),
-                DF.add_field('data', 'object', lambda r: dict(id=r['id'], meser_id_flat=r['meser_id_flat'])),
+                DF.add_field('meser_id_flat', 'string', _calc_meser_flat),
                 DF.printer(num_rows=25)
             ),
             update_mapper(),
