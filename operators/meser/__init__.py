@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 import tempfile
 import re
 
@@ -17,6 +16,7 @@ from srm_tools.unwind import unwind
 from srm_tools.hash import hasher
 from srm_tools.datagovil import fetch_datagovil
 from srm_tools.error_notifier import invoke_on
+from update_organization_meser import update_organization_meser_id, load_csv
 
 from conf import settings
 
@@ -53,7 +53,6 @@ def good_company(r):
         badOrgIdLengthCount[orgLength] += 1
 
     return is_org_id and is_length_good
-
 
 def flatten_and_deduplicate(values):
     """Flatten nested (lists/tuples/generators) of tag strings.
@@ -93,8 +92,7 @@ def run(*_):
     stats = Stats()
 
     tags = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging', settings.AIRTABLE_VIEW,
-                           settings.AIRTABLE_API_KEY),
+        load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
         DF.filter_rows(lambda r: r.get('tag') not in (None, 'dummy')),
         DF.select_fields(['tag', 'response_ids', 'situation_ids']),
     ).results()[0][0]
@@ -107,16 +105,6 @@ def run(*_):
 
         fetch_datagovil('welfare-frames', 'מסגרות רווחה', source_data)
 
-        ### TODO: Remove after testing
-        logger.info('Source data sample:')
-        try:
-            with open(source_data, encoding='cp1255') as f:
-                for _ in range(5):
-                    logger.info(f.readline().strip())
-        except Exception as e:
-            logger.error('Failed reading source data sample: %s', e)
-
-        ### TODO: END
 
         DF.Flow(
             # Loading data
@@ -167,9 +155,7 @@ def run(*_):
                 address=None,
                 location=None,
                 tagging=dict(aggregate='array'),
-                phone_numbers=None,
-                meser_id=None,
-                Misgeret_Id=None,
+                phone_numbers=None
             )),
             DF.set_type('tagging', type='array', transform=lambda v: list(set(vvv for vv in v for vvv in vv))),
 
@@ -197,6 +183,9 @@ def run(*_):
             DF.dump_to_path(os.path.join(dirname, 'meser', 'denormalized')),
         ).process()
 
+        meser_folder = os.path.join(dirname)
+        update_organization_meser_id(meser_folder)
+
         airtable_updater(
             settings.AIRTABLE_ORGANIZATION_TABLE,
             'entities', ['id'],
@@ -218,21 +207,20 @@ def run(*_):
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
                 DF.join_with_self('meser', ['branch_id'], fields=dict(
-                    branch_id=None, branch_name=None, organization_id=None, address=None, location=None,
-                    phone_numbers=None)
-                                  ),
+                    branch_id=None, branch_name=None, organization_id=None, address=None, location=None, phone_numbers=None)
+                ),
                 DF.rename_fields({
                     'branch_id': 'id',
                 }, resources='meser'),
                 DF.add_field('name', 'string', lambda r: '', resources='meser'),
                 DF.add_field('organization', 'array', lambda r: [r['organization_id']], resources='meser'),
-                DF.add_field('data', 'object', lambda r: dict((k, v) for k, v in r.items() if k != 'id'),
-                             resources='meser'),
+                DF.add_field('data', 'object', lambda r: dict((k,v) for k,v in r.items() if k!='id'), resources='meser'),
                 DF.printer()
             ),
             update_mapper(),
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
+
 
         airtable_updater(
             settings.AIRTABLE_SERVICE_TABLE,
@@ -244,36 +232,22 @@ def run(*_):
                     'service_name': 'name',
                     'service_description': 'description',
                 }, resources='meser'),
-                DF.add_field('data_sources', 'string', 'מידע על מסגרות רווחה התקבל ממשרד הרווחה והשירותים החברתיים',
-                             resources='meser'),
+                DF.add_field('data_sources', 'string', 'מידע על מסגרות רווחה התקבל ממשרד הרווחה והשירותים החברתיים', resources='meser'),
                 DF.add_field('branches', 'array', lambda r: [r['branch_id']], resources='meser'),
-                DF.select_fields(['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],
-                                 resources='meser'),
-                DF.add_field('data', 'object', lambda r: dict((k, v) for k, v in r.items() if k != 'id'),
-                             resources='meser'),
+                DF.select_fields(['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'], resources='meser'),
+                DF.add_field('data', 'object', lambda r: dict((k,v) for k,v in r.items() if k!='id'), resources='meser'),
                 DF.printer()
             ),
             update_mapper(),
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
-        ## TODO: Fix the meser_id, its not recieving Misgeret_id
-        ### Print file START
-        dp_path = os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')
-        try:
-            size = os.path.getsize(dp_path)
-            max_preview = 10000  # chars
-            with open(dp_path, encoding='utf-8') as f:
-                if size <= max_preview:
-                    logger.info('datapackage.json (%d bytes) content:\n%s', size, f.read())
-                else:
-                    preview = f.read(max_preview)
-                    logger.info('datapackage.json (%d bytes) first %d chars (truncated):\n%s', size, max_preview, preview)
-        except FileNotFoundError:
-            logger.warning('datapackage.json not found at %s', dp_path)
-        except Exception as e:
-            logger.error('Failed reading datapackage.json at %s: %s', dp_path, e)
 
-    ### Print file END
+        ### TODO: Test start
+
+        logger.info(load_csv(meser_folder))
+
+        ############### Test END
+
         DF.Flow(
             DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
             DF.update_resource(-1, name='tagging'),
@@ -295,10 +269,8 @@ def run(*_):
 
         logger.info('Finished Meser Data Flow')
 
-
 def operator(*_):
     invoke_on(run, 'Meser')
-
 
 if __name__ == '__main__':
     run(None, None, None)
