@@ -16,7 +16,7 @@ from srm_tools.unwind import unwind
 from srm_tools.hash import hasher
 from srm_tools.datagovil import fetch_datagovil
 from srm_tools.error_notifier import invoke_on
-from srm_tools.update_organization_meser import update_organization_meser_id
+from srm_tools.update_organization_meser import update_organization_meser_id, load_csv
 from conf import settings
 
 transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
@@ -246,6 +246,9 @@ def run(*_):
             update_mapper(),
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
+
+        logger.info(load_csv(os.path.join(meser_folder, 'data.csv')))
+
         DF.Flow(
             DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
             DF.update_resource(-1, name='tagging'),
