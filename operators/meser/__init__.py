@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import tempfile
 import re
 
@@ -16,8 +17,7 @@ from srm_tools.unwind import unwind
 from srm_tools.hash import hasher
 from srm_tools.datagovil import fetch_datagovil
 from srm_tools.error_notifier import invoke_on
-from update_organization_meser import update_organization_meser_id, load_csv
-
+from update_organization_meser import update_organization_meser_id
 from conf import settings
 
 transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
@@ -93,7 +93,8 @@ def run(*_):
     stats = Stats()
 
     tags = DF.Flow(
-        load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging', settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        load_from_airtable(settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging', settings.AIRTABLE_VIEW,
+                           settings.AIRTABLE_API_KEY),
         DF.filter_rows(lambda r: r.get('tag') not in (None, 'dummy')),
         DF.select_fields(['tag', 'response_ids', 'situation_ids']),
     ).results()[0][0]
@@ -208,14 +209,16 @@ def run(*_):
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
                 DF.join_with_self('meser', ['branch_id'], fields=dict(
-                    branch_id=None, branch_name=None, organization_id=None, address=None, location=None, phone_numbers=None)
-                ),
+                    branch_id=None, branch_name=None, organization_id=None, address=None, location=None,
+                    phone_numbers=None)
+                                  ),
                 DF.rename_fields({
                     'branch_id': 'id',
                 }, resources='meser'),
                 DF.add_field('name', 'string', lambda r: '', resources='meser'),
                 DF.add_field('organization', 'array', lambda r: [r['organization_id']], resources='meser'),
-                DF.add_field('data', 'object', lambda r: dict((k,v) for k,v in r.items() if k!='id'), resources='meser'),
+                DF.add_field('data', 'object', lambda r: dict((k, v) for k, v in r.items() if k != 'id'),
+                             resources='meser'),
                 DF.printer()
             ),
             update_mapper(),
@@ -232,22 +235,18 @@ def run(*_):
                     'service_name': 'name',
                     'service_description': 'description',
                 }, resources='meser'),
-                DF.add_field('data_sources', 'string', 'מידע על מסגרות רווחה התקבל ממשרד הרווחה והשירותים החברתיים', resources='meser'),
+                DF.add_field('data_sources', 'string', 'מידע על מסגרות רווחה התקבל ממשרד הרווחה והשירותים החברתיים',
+                             resources='meser'),
                 DF.add_field('branches', 'array', lambda r: [r['branch_id']], resources='meser'),
-                DF.select_fields(['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'], resources='meser'),
-                DF.add_field('data', 'object', lambda r: dict((k,v) for k,v in r.items() if k!='id'), resources='meser'),
+                DF.select_fields(['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],
+                                 resources='meser'),
+                DF.add_field('data', 'object', lambda r: dict((k, v) for k, v in r.items() if k != 'id'),
+                             resources='meser'),
                 DF.printer()
             ),
             update_mapper(),
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
-
-        ### TODO: Test start
-
-        logger.info(load_csv(meser_folder))
-
-        ############### Test END
-
         DF.Flow(
             DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
             DF.update_resource(-1, name='tagging'),
