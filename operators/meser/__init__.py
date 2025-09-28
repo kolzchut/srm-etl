@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 import tempfile
 import re
 
@@ -17,7 +16,7 @@ from srm_tools.unwind import unwind
 from srm_tools.hash import hasher
 from srm_tools.datagovil import fetch_datagovil
 from srm_tools.error_notifier import invoke_on
-from update_organization_meser import update_organization_meser_id
+from srm_tools.update_organization_meser import update_organization_meser_id
 from conf import settings
 
 transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
