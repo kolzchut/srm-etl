@@ -220,7 +220,7 @@ def run(*_):
 
         airtable_updater(
             settings.AIRTABLE_ORGANIZATION_TABLE,
-            'entities', ['id'],
+            'entities', ['id', 'meser_id_flat'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
                 DF.add_field('_org_raw_keys', 'string', lambda r: '|'.join(sorted(r.keys()))),
@@ -239,6 +239,10 @@ def run(*_):
                     meser_ids_combined=dict(aggregate='array'),
                 )),
                 DF.add_field('meser_id_flat', 'string', _calc_meser_flat),
+                # Ensure id field exists for airtable updater join
+                DF.add_field('id', 'string', lambda r: r.get('organization_id')),
+                # Removed rename_fields to avoid losing id in some rows
+                DF.add_field('data', 'object', lambda r: dict(id=r['id'], meser_id_flat=r['meser_id_flat'])),
                 DF.printer(num_rows=25)
             ),
             update_mapper(),
@@ -251,7 +255,6 @@ def run(*_):
             'meser', ['id', 'name', 'organization', 'location', 'address', 'phone_numbers'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
-                # NEW: Explicit logger output per organization BEFORE filtering so we can diagnose missing IDs
                 DF.add_field('_debug_log', 'string', lambda r: (logger.info(
                     'ORG_MESER_ID_DEBUG org=%s meser_ids_nested=%s meser_id_list=%s meser_id_flat=%s unknown=%s',
                     r.get('organization_id'), r.get('meser_ids'), r.get('meser_id_list'), r.get('meser_id_flat'), r.get('_debug_flat_unknown')
