@@ -16,7 +16,7 @@ from srm_tools.unwind import unwind
 from srm_tools.hash import hasher
 from srm_tools.datagovil import fetch_datagovil
 from srm_tools.error_notifier import invoke_on
-from srm_tools.update_organization_meser import update_organization_meser_id, load_csv
+from srm_tools.update_services_meser import update_service_meser_id, load_csv
 from conf import settings
 
 transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
@@ -185,7 +185,7 @@ def run(*_):
         ).process()
 
         meser_folder = os.path.join(dirname)
-        update_organization_meser_id(meser_folder)
+        update_service_meser_id(meser_folder)
 
         airtable_updater(
             settings.AIRTABLE_ORGANIZATION_TABLE,

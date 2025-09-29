@@ -1,7 +1,6 @@
 import os
 import csv
 
-from attr.validators import instance_of
 from pyairtable import Api
 from conf import settings
 from srm_tools.logger import logger
@@ -72,8 +71,8 @@ def batch_update_table(table, updates, batch_size=10):
             logger.error(f"Failed batch update: {e}")
     return modified_count
 
-def update_organization_meser_id(meser_folder: str):
-    """Main function to update organizations with meser_id."""
+def update_service_meser_id(meser_folder: str):
+    """Main function to update services with meser_id."""
     logger.info("Loading CSV data...")
     rows = load_csv(meser_folder)
     if not rows:
@@ -91,5 +90,5 @@ def update_organization_meser_id(meser_folder: str):
     logger.info("Performing batch updates...")
     modified_count = batch_update_table(table, updates)
 
-    logger.info(f"Finished updating organizations. Total modified: {modified_count}")
+    logger.info(f"Finished updating services. Total modified: {modified_count}")
 
