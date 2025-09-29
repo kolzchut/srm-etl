@@ -1,5 +1,7 @@
 import os
 import csv
+
+from attr.validators import instance_of
 from pyairtable import Api
 from conf import settings
 from srm_tools.logger import logger
@@ -18,7 +20,7 @@ def get_airtable_table():
     """Return Airtable table object."""
     api = Api(settings.AIRTABLE_API_KEY)
     base_id = "appcmkagy4VbfIIC6"
-    table_id = "tblgkJBrNp1ceLAKX"
+    table_id = "tblo8QtzloP4TIbrn"
     return api.table(base_id, table_id)
 
 def build_record_map(table):
@@ -26,9 +28,14 @@ def build_record_map(table):
     record_map = {}
     for record in table.all():
         fields = record.get('fields', {})
-        business_id = fields.get('id')
-        if business_id:
-            record_map[business_id.strip()] = record['id']
+        business_id = fields.get('x_org_id')
+        if isinstance(business_id, list) and business_id:
+            business_id = business_id[0]
+
+        if isinstance(business_id, str):
+            business_id = business_id.strip()
+            if business_id:
+                record_map[business_id] = record['id']
     return record_map
 
 def prepare_updates(rows, record_map):
