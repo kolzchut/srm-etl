@@ -246,7 +246,7 @@ def run(*_):
             update_mapper(),
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
-
+        logger.info('Meser Data Sample:')
         logger.info(load_csv(os.path.join(meser_folder, 'data.csv')))
 
         DF.Flow(

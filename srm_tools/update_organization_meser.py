@@ -34,6 +34,7 @@ def build_record_map(table):
 def prepare_updates(rows, record_map):
     """Collect meser_ids per record as a set for batching."""
     updates_map = {}
+    not_found = set()
     for row in rows:
         business_id = row.get('Registered_Business_Id')
         misgeret_id = row.get('Misgeret_Id')
@@ -42,8 +43,10 @@ def prepare_updates(rows, record_map):
             if airtable_rec_id:
                 updates_map.setdefault(airtable_rec_id, set()).add(misgeret_id)
             else:
-                logger.warning(f"Business ID '{business_id}' not found in Airtable")
+                not_found.add(business_id)
     # Convert sets to comma-separated strings
+    if not_found:
+        logger.warning(f"Business IDs not found in Airtable: {', '.join(sorted(not_found))}")
     updates = [
         {"id": rid, "fields": {"meser_id": ",".join(sorted(mid_set))}}
         for rid, mid_set in updates_map.items()
