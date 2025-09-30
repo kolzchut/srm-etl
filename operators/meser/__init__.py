@@ -184,8 +184,9 @@ def run(*_):
             DF.dump_to_path(os.path.join(dirname, 'meser', 'denormalized')),
         ).process()
 
-        meser_folder = os.path.join(dirname)
-        update_service_meser_id(meser_folder)
+        # TODO: THEY DON'T LIKE IT SO IT'S COMMENTED BUT MIGHT BE USEFUL LATER
+        # meser_folder = os.path.join(dirname)
+        # update_service_meser_id(meser_folder)
 
         airtable_updater(
             settings.AIRTABLE_ORGANIZATION_TABLE,
@@ -237,6 +238,7 @@ def run(*_):
                 DF.add_field('data_sources', 'string', 'מידע על מסגרות רווחה התקבל ממשרד הרווחה והשירותים החברתיים',
                              resources='meser'),
                 DF.add_field('branches', 'array', lambda r: [r['branch_id']], resources='meser'),
+                DF.add_field('meser_id', 'string', lambda r: r.get('Misgeret_id'), resources='meser'),
                 DF.select_fields(['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],
                                  resources='meser'),
                 DF.add_field('data', 'object', lambda r: dict((k, v) for k, v in r.items() if k != 'id'),
@@ -246,8 +248,6 @@ def run(*_):
             update_mapper(),
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
-        logger.info('Meser Data Sample:')
-        logger.info(load_csv(os.path.join(meser_folder, 'data.csv')))
 
         DF.Flow(
             DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
