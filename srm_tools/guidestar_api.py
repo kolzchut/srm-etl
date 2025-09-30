@@ -118,6 +118,7 @@ class GuidestarAPI():
             if minBranchId is not None:
                 params['filter'] = f'branchId>{minBranchId}'
             resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizationBranches', params=params))
+            logger.info(f'Fetched {len(resp)} branches from Guidestar API, example: {resp[0] if len(resp) else None}')
             for row in resp:
                 regNum = row.pop('regNum')
                 rec = self.branch_cache.get(regNum, default=None) or list()
