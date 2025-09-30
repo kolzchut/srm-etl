@@ -227,7 +227,7 @@ def run(*_):
 
         airtable_updater(
             settings.AIRTABLE_SERVICE_TABLE,
-            'meser', ['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],
+            'meser', ['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches', 'meser_id'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
                 DF.rename_fields({
