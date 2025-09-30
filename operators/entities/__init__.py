@@ -656,7 +656,7 @@ def process_service(row, taxonomies, rejected_taxonomies, stats: Stats):
             data=row
         )
     except Exception as e:
-        log_error=f'Processing service {row.get('name', 'unknown')} in "process_service" function has failed with error:\n {e}'
+        log_error=f'Processing service {row.get("name", "unknown")} in "process_service" function has failed with error:\n {e}'
         logger.error(log_error)
         send_failure_email(operation_name="Enrich Entities", error=log_error)
 
@@ -774,42 +774,40 @@ def fetchServiceData(ga, stats: Stats, taxonomies, rejected_taxonomies):
 
 
 def getGuidestarOrgs(ga: GuidestarAPI):
-    def getGuidestarOrgs(ga: GuidestarAPI):
-        try:
-            today = datetime.date.today().isoformat()
-        except Exception as e:
-            print(f"Error getting today's date: {e}")
-            today = None
+    try:
+        today = datetime.date.today().isoformat()
+    except Exception as e:
+        print(f"Error getting today's date: {e}")
+        today = None
+    regNums = []
+    try:
+        for org in ga.organizations():
+            org_id = org.get('id')
+            if not org_id:
+                print(f"Skipping org without id: {org}")
+                continue
+            regNums.append(dict(id=org_id, data=dict(id=org_id, last_tag_date=today)))
+    except Exception as e:
+        log_error=f"Error fetching organizations: {e}"
+        logger.error(log_error)
+        send_failure_email(operation_name="Enrich Entities", error=log_error)
 
-        regNums = []
-        try:
-            for org in ga.organizations():
-                org_id = org.get('id')
-                if not org_id:
-                    print(f"Skipping org without id: {org}")
-                    continue
-                regNums.append(dict(id=org_id, data=dict(id=org_id, last_tag_date=today)))
-        except Exception as e:
-            log_error=f"Error fetching organizations: {e}"
-            logger.error(log_error)
-            send_failure_email(operation_name="Enrich Entities", error=log_error)
+    print('COLLECTED {} guidestar organizations'.format(len(regNums)))
 
-        print('COLLECTED {} guidestar organizations'.format(len(regNums)))
-
-        try:
-            airtable_updater(
-                settings.AIRTABLE_ORGANIZATION_TABLE,
-                'entities',
-                ['last_tag_date'],
-                regNums,
-                update_mapper(),
-                manage_status=False,
-                airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
-            )
-        except Exception as e:
-            log_error=f"Error updating Airtable: {e}"
-            logger.error(log_error)
-            send_failure_email(operation_name="Enrich Entities", error=log_error)
+    try:
+        airtable_updater(
+            settings.AIRTABLE_ORGANIZATION_TABLE,
+            'entities',
+            ['last_tag_date'],
+            regNums,
+            update_mapper(),
+            manage_status=False,
+            airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
+        )
+    except Exception as e:
+        log_error=f"Error updating Airtable: {e}"
+        logger.error(log_error)
+        send_failure_email(operation_name="Enrich Entities", error=log_error)
 
 
 def scrapeGuidestarEntities(*_):
