@@ -1,5 +1,3 @@
-import csv
-import json
 import os
 import tempfile
 import re
@@ -108,9 +106,6 @@ def run(*_):
 
         fetch_datagovil('welfare-frames', 'מסגרות רווחה', source_data)
 
-        with open(source_data, 'r', encoding='cp1255') as f:
-            reader = csv.DictReader(f)
-            print( list(reader))
 
         DF.Flow(
             # Loading data
@@ -161,8 +156,7 @@ def run(*_):
                 address=None,
                 location=None,
                 tagging=dict(aggregate='array'),
-                phone_numbers=None,
-                meser_id=None
+                phone_numbers=None
             )),
             DF.set_type('tagging', type='array', transform=lambda v: list(set(vvv for vv in v for vvv in vv))),
 
@@ -193,7 +187,7 @@ def run(*_):
         # TODO: THEY DON'T LIKE IT SO IT'S COMMENTED BUT MIGHT BE USEFUL LATER
         # meser_folder = os.path.join(dirname)
         # update_service_meser_id(meser_folder)
-        #
+
         airtable_updater(
             settings.AIRTABLE_ORGANIZATION_TABLE,
             'entities', ['id'],
@@ -231,15 +225,9 @@ def run(*_):
             airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
         )
 
-        json_path = os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')
-
-        with open(json_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            print("Datapackage contents:", json.dumps(data, indent=2, ensure_ascii=False))
-
         airtable_updater(
             settings.AIRTABLE_SERVICE_TABLE,
-            'meser', ['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches', 'meser_id'],
+            'meser', ['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],
             DF.Flow(
                 DF.load(os.path.join(dirname, 'meser', 'denormalized', 'datapackage.json')),
                 DF.rename_fields({
@@ -250,11 +238,10 @@ def run(*_):
                 DF.add_field('data_sources', 'string', 'מידע על מסגרות רווחה התקבל ממשרד הרווחה והשירותים החברתיים',
                              resources='meser'),
                 DF.add_field('branches', 'array', lambda r: [r['branch_id']], resources='meser'),
-                DF.add_field('meser_id', 'string', lambda r: r.get('meser_id'), resources='meser'),
-                DF.select_fields(['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches', 'meser_id'],
+                DF.add_field('meser_id', 'string', lambda r: r.get('Misgeret_id'), resources='meser'),
+                DF.select_fields(['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches'],
                                  resources='meser'),
-                DF.add_field('data', 'object',
-                             lambda r: dict((k, v) for k, v in r.items() if k not in ['id', 'meser_id']),
+                DF.add_field('data', 'object', lambda r: dict((k, v) for k, v in r.items() if k != 'id'),
                              resources='meser'),
                 DF.printer()
             ),
