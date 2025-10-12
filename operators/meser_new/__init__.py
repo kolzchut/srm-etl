@@ -10,8 +10,6 @@ from srm_tools.error_notifier import invoke_on
 import pandas as pd
 from conf import settings
 
-import hashlib
-
 
 # Helper functions
 
@@ -31,10 +29,6 @@ def flatten_and_deduplicate_list_of_lists(lst_of_lsts):
                 seen.add(item)
                 result.append(item)
     return result
-
-def hasher(*args):
-    s = "_".join([str(a) for a in args if a is not None])
-    return hashlib.md5(s.encode()).hexdigest()[:8]
 
 
 def flatten_and_deduplicate(lst):
@@ -101,7 +95,7 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
     )
 
     # 4. Combine duplicates (same service_name + phone + address + organization_id + Owner_Code_Descr)
-    grouped = df.groupby(['service_name', 'phone_numbers', 'address', 'organization_id' ], dropna=False).agg({
+    grouped = df.groupby(['service_name', 'phone_numbers', 'address', 'organization_id','service_id' ], dropna=False).agg({
         'branch_id': 'first',
         'branch_name': 'first',
         'meser_id': 'first',
@@ -109,12 +103,6 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
         'City_Name': 'first',
         'tagging': lambda x: flatten_and_deduplicate_list_of_lists(x)
     }).reset_index()
-
-    # recompute service_id after grouping to match original hash logic
-    grouped['service_id'] = grouped.apply(
-        lambda r: 'meser-' + hasher(r['service_name'], r['phone_numbers'], r['address'], r['organization_id'], r['branch_id']),
-        axis=1
-    )
 
     # 5. pluscode from first available GisX/GisY in the group
     grouped['pluscode'] = df.groupby(['service_name', 'phone_numbers', 'address', 'organization_id'])[['GisY','GisX']].first().apply(
@@ -125,13 +113,13 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
     # 6. responses and situations from tags
     grouped['responses'] = grouped['tagging'].apply(
         lambda tags_list: flatten_and_deduplicate_list_of_lists(
-            safe_list(tags.get(t, {}).get('response_ids')) for t in tags_list
+            safe_list(tags.get(t.strip(), {}).get('response_ids')) for t in tags_list
         )
     )
 
     grouped['situations'] = grouped['tagging'].apply(
         lambda tags_list: flatten_and_deduplicate_list_of_lists(
-            safe_list(tags.get(t, {}).get('situation_ids')) for t in tags_list
+            safe_list(tags.get(t.strip(), {}).get('situation_ids')) for t in tags_list
         )
     )
 
