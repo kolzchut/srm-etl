@@ -9,50 +9,87 @@ from conf import settings
 from srm_tools.logger import logger
 
 
-def map_branches_ids_to_airtable_records(df: pd.DataFrame, branch_table_name: str, base_id: str) -> pd.DataFrame:
+def map_df_values_to_airtable_record_ids(
+    df: pd.DataFrame,
+    table_name: str,
+    base_id: str,
+    target_field_in_df: str,
+    base_field_in_df: str,
+    airtable_key_field: str = "id"
+) -> pd.DataFrame:
     """
-    Replace branch_id values with Airtable record IDs.
-    """
-    branch_table: Table = get_airtable_table(branch_table_name, base_id)
-    branch_map = {rec['fields']['id']: rec['id'] for rec in branch_table.all() if 'id' in rec['fields']}
+    Map values from a DataFrame column to Airtable record IDs based on a key field.
 
-    def replace_ids(branch_ids):
-        if isinstance(branch_ids, list):
-            return [branch_map.get(oid) for oid in branch_ids if oid in branch_map]
-        elif branch_ids in branch_map:
-            return [branch_map[branch_ids]]
+    Args:
+        df (pd.DataFrame): The DataFrame containing the values to map.
+        table_name (str): Airtable table name.
+        base_id (str): Airtable base ID.
+        target_field_in_df (str): Column in DataFrame to store the mapped record IDs.
+        base_field_in_df (str): Column in DataFrame containing the original values to match.
+        airtable_key_field (str): Field in Airtable used as the lookup key (default: 'id').
+
+    Returns:
+        pd.DataFrame: DataFrame with the target column updated to contain Airtable record IDs.
+    """
+    table: Table = get_airtable_table(table_name, base_id)
+    record_map = {
+        rec["fields"][airtable_key_field]: rec["id"]
+        for rec in table.all()
+        if airtable_key_field in rec.get("fields", {})
+    }
+
+    def replace_values(value):
+        if isinstance(value, list):
+            return [record_map.get(v) for v in value if v in record_map]
+        elif value in record_map:
+            return [record_map[value]]
         return []
 
-    df['branches'] = df['branch_id'].apply(replace_ids)
+    df[target_field_in_df] = df[base_field_in_df].apply(replace_values)
     return df
 
 
-def merge_branches(df: pd.DataFrame, existing_map: dict, airtable_key='id') -> pd.DataFrame:
+def merge_foreign_key(df: pd.DataFrame, existing_map: dict, field_name:str, airtable_key='id') -> pd.DataFrame:
     """
-    Merge new branches IDs with existing ones to avoid overwriting.
+    Merge new foreign keys with existing ones to avoid overwriting.
     """
     def merge_row(row):
         service_id = row.get(airtable_key)
-        new_branches = set(row.get('branches', []))
+        new_branches = set(row.get(field_name, []))
         existing_branches = existing_map.get(str(service_id), set())
         merged = list(existing_branches.union(new_branches))  # union avoids duplicates
         return merged
 
-    df['branches'] = df.apply(merge_row, axis=1)
+    df[field_name] = df.apply(merge_row, axis=1)
     return df
 
-def get_existing_service_branches(table_name: str, base_id: str) -> dict:
+def get_existing_field_links(
+    table_name: str,
+    base_id: str,
+    linked_field: str,
+    key_field: str = "id"
+) -> dict:
     """
-    Fetch existing branches links from Airtable for each service.
-    Returns: {service_airtable_id: set of branches record IDs}
+    Fetch links between two Airtable fields in a table..
+
+    Args:
+        linked_field (str): Field name to use as the linked list (e.g., 'branches').
+        table_name (str): Airtable table name.
+        base_id (str): Airtable base ID.
+        key_field (str): Field name to use as the key (default: 'id').
+
+    Returns:
+        dict: {key_field_value: set(linked_field_values)}
     """
     table = get_airtable_table(table_name, base_id)
     existing_map = {}
+
     for rec in table.all():
-        branch_id = rec.get("fields", {}).get("id")
-        orgs = rec.get("fields", {}).get("branches", [])
-        if branch_id:
-            existing_map[str(branch_id)] = set(orgs)
+        key = rec.get("fields", {}).get(key_field)
+        linked_values = rec.get("fields", {}).get(linked_field, [])
+        if key:
+            existing_map[str(key)] = set(linked_values)
+
     return existing_map
 
 
@@ -73,21 +110,22 @@ def update_airtable_services_from_df(df: pd.DataFrame) -> int:
         columns={
             'service_id': 'id',
             'service_name': 'name',
-            'service_description': 'description'
         },
         inplace=True
     )
     df = enrich_service_fields(df)
 
+    branches_id_field_name_in_services_table = 'branches'
+
     # Map branch IDs to Airtable record IDs
-    df = map_branches_ids_to_airtable_records(df, "BranchesTest", settings.AIRTABLE_DATA_IMPORT_BASE)
+    df = map_df_values_to_airtable_record_ids(df=df, table_name="BranchesTest", base_id=settings.AIRTABLE_DATA_IMPORT_BASE, target_field_in_df="branches", base_field_in_df="branch_id", airtable_key_field=airtable_key)
 
     # Merge with existing branches to avoid overwriting
-    existing_branches_map = get_existing_service_branches("ServicesTest", settings.AIRTABLE_DATA_IMPORT_BASE)
-    df = merge_branches(df, existing_branches_map, airtable_key=airtable_key)
+    existing_branches_map = get_existing_field_links(table_name="ServicesTest", base_id=settings.AIRTABLE_DATA_IMPORT_BASE, linked_field=branches_id_field_name_in_services_table, key_field=airtable_key)
+    df = merge_foreign_key(df=df, existing_map=existing_branches_map, airtable_key=airtable_key, field_name=branches_id_field_name_in_services_table)
 
     # Prepare DataFrame for Airtable update
-    fields_to_update = ['id', 'name', 'description', 'data_sources', 'situations', 'responses', 'branches', 'meser_id', 'source','status', 'decision']
+    fields_to_update = ['id', 'name', 'data_sources', 'situations', 'responses', 'branches', 'meser_id', 'source','status', 'decision']
     df = prepare_airtable_dataframe(df, key_field, fields_to_update, airtable_key)
 
     if df.empty:

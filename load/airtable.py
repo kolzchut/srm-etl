@@ -110,3 +110,37 @@ def create_airtable_records(
 
     logger.info(f"Finished creating Airtable records. Total created: {created_count}")
     return created_count
+
+
+def update_if_exists_if_not_create(df:pd.DataFrame, table_name:str, base_id:str, airtable_key:str, batch_size:int=50) -> int:
+    """
+    Update existing Airtable records or create new ones if they don't exist.
+    :param df: DataFrame with data to update or create
+    :param table_name: Airtable table name
+    :param base_id: Airtable base ID
+    :param airtable_key: Airtable field used to match records
+    :param batch_size: Number of records to process per batch
+    :return: Total number of modified or created records
+    """
+    modified_count, not_found = update_airtable_records(
+        df=df,
+        table_name=table_name,
+        base_id=base_id,
+        key_field=airtable_key,
+        batch_size=batch_size,
+        retrieve_not_updated_ids=True
+    )
+    logger.info(f"Updated {modified_count} branch records in Airtable")
+
+    # Create missing records
+    if not_found:
+        df_to_create = df[df[airtable_key].isin(not_found)]
+        created_count = create_airtable_records(
+            df=df_to_create,
+            table_name=table_name,
+            base_id=base_id,
+            batch_size=batch_size
+        )
+        logger.info(f"Created {created_count} new branch records in Airtable")
+        modified_count += created_count
+    return modified_count

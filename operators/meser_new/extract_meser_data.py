@@ -51,7 +51,7 @@ def datagovil_fetch_and_transform_to_dataframe(dataset_name: str = "welfare-fram
 
     if "id" in resource:
         resource_id = resource["id"]
-        datastore_url = f"https://data.gov.il/api/3/action/datastore_search?resource_id={resource_id}&limit=1000"
+        datastore_url = f"https://data.gov.il/api/3/action/datastore_search?resource_id={resource_id}"
         records_data = fetch_json_from_api(datastore_url)
         df = json_to_dataframe(records_data.get("result", {}).get("records", []))
     else:
