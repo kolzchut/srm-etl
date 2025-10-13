@@ -37,7 +37,7 @@ SERVICE_BASE = {
         'human_services:place:health:clinic:well_baby_clinic',
         'human_services:health:prevent_treat:vaccinations',
         'human_services:care:support_group:parenting_education',
-        'human_services:food:nutrition',
+        'human_services:food:nutrition_education',
         'human_services:health:prevent_treat:checkup_test:disease_screening',
     ],
     'situations': [
@@ -46,6 +46,10 @@ SERVICE_BASE = {
         'human_situations:household:families:parents',
         'human_situations:age_group:infants',
     ]
+}
+SERVICE_NATIONAL_EXTRA = {
+    'responses':["human_services:care:help_hotline"],
+    'situations':[]
 }
 
 SERVICE_LOCAL = {
@@ -70,6 +74,8 @@ SERVICE_NATIONAL = {
         'urls': TIPAT_WEBSITE,
         'phone_numbers': '*5400',
         **SERVICE_BASE,
+        'responses': [*SERVICE_BASE['responses'], *SERVICE_NATIONAL_EXTRA['responses']],
+        'situations': [*SERVICE_BASE['situations'], *SERVICE_NATIONAL_EXTRA['situations']],
     }
 }
 
