@@ -126,6 +126,23 @@ def fetchOrgData(ga, stats: Stats):
         }, settings.AIRTABLE_API_KEY)
     ).process()
 
+## EXTERNAL DEDUPLICATION FUNCTION
+def deduplicate_items(items):
+    """
+    Takes a list of dicts with 'id' field, returns only unique items based on 'id'.
+    Keeps the first occurrence of each ID.
+    """
+    seen = set()
+    deduped = []
+    for item in items:
+        item_id = item['id']
+        if item_id not in seen:
+            seen.add(item_id)
+            deduped.append(item)
+        else:
+            print(f"Skipped duplicate: {item_id}")
+    return deduped
+
 
 ## BRANCHES
 def unwind_branches(ga: GuidestarAPI, stats: Stats):
@@ -133,52 +150,46 @@ def unwind_branches(ga: GuidestarAPI, stats: Stats):
         if rows.res.name != 'orgs':
             yield from rows
         else:
-            branchIds = set()
+            all_items = []  # Collect all branches first
+
             for _, row in enumerate(rows):
                 regNum = row['id']
                 branches = ga.branches(regNum)
                 ids = [b['branchId'] for b in branches]
-                assert len(ids) == len(set(ids)), f'DUPDUP2 {row} {ids}'
-                for branch in branches:
-                    ret = dict()
-                    ret.update(row)
+                if len(ids) != len(set(ids)):
+                    print(f"Warning: duplicate branch IDs in fetched data {regNum}: {ids}")
 
+                # Process branches
+                for branch in branches:
+                    ret = dict(row)  # copy row
                     data = dict()
-                    if branch.get('placeNickname'):
-                        data['name'] = branch['placeNickname']
-                    else:
-                        data['name'] = (ret.get('short_name') or ret.get('name')) + ' - ' + branch['cityName']
+                    data['name'] = branch.get('placeNickname') or f"{row.get('short_name') or row.get('name')} - {branch['cityName']}"
                     data['address'] = calc_address(branch)
                     data['location'] = calc_location_key(branch, data)
                     data['address_details'] = branch.get('drivingInstructions')
                     data['description'] = None
                     data['urls'] = None
-                    # if data.get('branchURL'):
-                    #     row['urls'] = data['branchURL'] + '#הסניף בגיידסטאר'
-                    data['phone_numbers'] = None
-                    if branch.get('phone'):
-                        data['phone_numbers'] = branch['phone']
+                    data['phone_numbers'] = branch.get('phone')
                     data['organization'] = [regNum]
+
                     if branch.get('language'):
                         data['situations'] = [
-                            'human_situations:language:{}_speaking'.format(l.lower().strip())
-                            for l in branch['language'].split(';')
-                            if l != 'other'
+                            f"human_situations:language:{l.lower().strip()}_speaking"
+                            for l in branch['language'].split(';') if l != 'other'
                         ]
 
                     ret['data'] = data
                     ret['id'] = 'guidestar:' + branch['branchId']
-                    assert ret['id'] not in branchIds, f'DUPDUP {ret}: {branches}'
-                    branchIds.add(ret['id'])
-                    yield ret
+                    all_items.append(ret)
+
+                # Organizations with no branches
                 if not branches:
-                    # print('FETCHING FROM GUIDESTAR', regNum)
                     stats.increase('Entities: Org with no branches')
-                    ret = list(ga.organizations(regNums=[regNum], cacheOnly=True))
-                    if len(ret) > 0 and ret[0]['data'].get('fullAddress'):
+                    ret_list = list(ga.organizations(regNums=[regNum], cacheOnly=True))
+                    if ret_list and ret_list[0]['data'].get('fullAddress'):
                         stats.increase('Entities: Org with no branches, used Guidestar official address')
-                        data = ret[0]['data']
-                        yield dict(
+                        data = ret_list[0]['data']
+                        all_items.append(dict(
                             id='guidestar:' + regNum,
                             data=dict(
                                 name=row['name'],
@@ -186,44 +197,38 @@ def unwind_branches(ga: GuidestarAPI, stats: Stats):
                                 location=data['fullAddress'],
                                 organization=[regNum]
                             )
-                        )
-                    else:
-                        if ret:
-                            if row['kind'] not in ('עמותה', 'חל"צ', 'הקדש'):
-                                stats.increase('Entities: Org with no branches, using org name as address')
-                                ret = dict()
-                                ret.update(row)
-                                name = row['name']
-                                cleaned_name = clean_org_name(name)
-                                ret.update(dict(
-                                    id='budgetkey:' + regNum,
-                                    data=dict(
-                                        name=name,
-                                        address=cleaned_name,
-                                        location=cleaned_name,
-                                        organization=[regNum]
-                                    )
-                                ))
-                                yield ret
+                        ))
+                    elif ret_list and row['kind'] not in ('עמותה', 'חל"צ', 'הקדש'):
+                        stats.increase('Entities: Org with no branches, using org name as address')
+                        cleaned_name = clean_org_name(row['name'])
+                        all_items.append(dict(
+                            id='budgetkey:' + regNum,
+                            data=dict(
+                                name=row['name'],
+                                address=cleaned_name,
+                                location=cleaned_name,
+                                organization=[regNum]
+                            )
+                        ))
 
-                national = {}
-                national.update(row)
+                # National entry
+                national = dict(row)
                 national['id'] = 'national:' + regNum
-                national_data = {
+                disclaimer_text = ("שימו לב, ייתכן כי המיקום המוצג אינו מדויק וכי קיימים סניפים נוספים "
+                                   "שבהם ניתן לקבל את השירות. מומלץ ליצור קשר ישירות עם הארגון לקבלת מידע מדויק ומעודכן.")
+                existing_description = row.get('description', '')
+                national['data'] = {
                     'organization': [regNum],
                     'name': '',
                     'address': 'שירות ארצי',
                     'location': 'שירות ארצי',
+                    'description': f"{existing_description}\n\n{disclaimer_text}" if existing_description else disclaimer_text
                 }
-                disclaimer_text = "שימו לב, ייתכן כי המיקום המוצג אינו מדויק וכי קיימים סניפים נוספים שבהם ניתן לקבל את השירות. מומלץ ליצור קשר ישירות עם הארגון לקבלת מידע מדויק ומעודכן."
-                existing_description = row.get('description', '')
-                if existing_description:
-                    national_data['description'] = existing_description + "\n\n" + disclaimer_text
-                else:
-                    national_data['description'] = disclaimer_text
+                all_items.append(national)
 
-                national['data'] = national_data
-                yield national
+            # Deduplicate once at the top
+            for item in deduplicate_items(all_items):
+                yield item
 
     return DF.Flow(
         DF.add_field('data', 'object', resources='orgs'),
