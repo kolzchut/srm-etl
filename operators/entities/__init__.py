@@ -140,7 +140,7 @@ def deduplicate_items(items):
             seen.add(item_id)
             deduped.append(item)
         else:
-            print(f"Skipped duplicate: {item_id}")
+            logger.warning(f"Skipped duplicate: {item_id}")
     return deduped
 
 
@@ -157,7 +157,7 @@ def unwind_branches(ga: GuidestarAPI, stats: Stats):
                 branches = ga.branches(regNum)
                 ids = [b['branchId'] for b in branches]
                 if len(ids) != len(set(ids)):
-                    print(f"Warning: duplicate branch IDs in fetched data {regNum}: {ids}")
+                    logger.warning(f"Warning: duplicate branch IDs in fetched data {regNum}: {ids}")
 
                 # Process branches
                 for branch in branches:
