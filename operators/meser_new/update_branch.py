@@ -17,12 +17,13 @@ def update_airtable_branches_from_df(df: pd.DataFrame) -> int:
     airtable_key = 'id'
     fields_to_update = [
         'branch_id', 'name', 'organization', 'address',
-        'phone_numbers', 'source'
+        'phone_numbers', 'source','status'
     ]
 
     # Prepare branch data
     df['name'] = df['branch_name']
     df['organization'] = df['organization_id']
+    df['status'] = 'ACTIVE'
 
     # Map organization IDs to Airtable record IDs and merge with existing ones
     df = get_foreign_key_by_field(

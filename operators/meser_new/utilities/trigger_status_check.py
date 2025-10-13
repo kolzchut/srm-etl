@@ -43,33 +43,17 @@ def fetch_airtable_records(table_name: str, base_id: str, airtable_key_field: st
 def build_status_update_dataframe(df: pd.DataFrame, df_key_field: str, record_map: Dict[str, Dict[str, Any]],
                                   active_value: str, inactive_value: str) -> pd.DataFrame:
     """
-    Create a DataFrame containing Airtable records with updated status.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        DataFrame containing IDs that should be active.
-    df_key_field : str
-        Column in df to match Airtable records.
-    record_map : Dict[str, Dict[str, Any]]
-        Mapping of Airtable records keyed by key_field.
-    active_value : str
-        Status value to assign to active records.
-    inactive_value : str
-        Status value to assign to inactive records.
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with key_field and updated status for records whose status changed.
+    Only create updates for records that are in Airtable but NOT in df (same source).
     """
     existing_ids = set(df[df_key_field].dropna().astype(str))
     update_data = []
 
     for key_val, rec in record_map.items():
-        new_status = active_value if key_val in existing_ids else inactive_value
-        if rec["status"] != new_status:
-            update_data.append({df_key_field: key_val, "status": new_status})
+        # Only consider records NOT in the df
+        if key_val not in existing_ids:
+            new_status = inactive_value
+            if rec["status"] != new_status:
+                update_data.append({df_key_field: key_val, "status": new_status})
 
     return pd.DataFrame(update_data)
 
@@ -129,6 +113,8 @@ def trigger_status_check(
     update_df = build_status_update_dataframe(df, df_key_field, record_map, active_value, inactive_value)
     if update_df.empty:
         return 0
+
+
 
     update_df = prepare_airtable_dataframe(df=update_df, key_field=df_key_field, fields_to_update=["status"],
                                            airtable_key=airtable_key_field)

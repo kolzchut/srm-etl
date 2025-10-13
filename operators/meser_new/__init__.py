@@ -208,7 +208,7 @@ def run(*_):
 
 
 def operator(*_):
-    invoke_on(run, 'Meser')
+    invoke_on(run, 'Meser-New')
 
 
 if __name__ == '__main__':
