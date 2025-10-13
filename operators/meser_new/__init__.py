@@ -67,12 +67,15 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
     df['organization_id'] = df['ORGANIZATIONS_BUSINES_NUM'].combine_first(df['Registered_Business_Id'])
     df['organization_id'] = df['organization_id'].fillna('500106406')  # like original
 
-    # Clean Adrees
-    df['Adrees'] = df['Adrees'].replace('999', '').str.strip()
-    df['Adrees'] = df.apply(lambda r: None if r['Adrees'] == r['City_Name'] else r['Adrees'], axis=1)
+    # Clean 'Adrees' and handle matching with 'City_Name'
+    df['Adrees'] = df['Adrees'].astype(str).str.replace('999', '', regex=False).str.strip()
+    df.loc[df['Adrees'] == df['City_Name'], 'Adrees'] = None
 
-    # Full address
-    df['address'] = (df['Adrees'].fillna('') + ' ' + df['City_Name'].fillna('')).str.replace(' - ', '-').str.strip()
+    # Create full 'address' field like DataFlows
+    df['address'] = df.apply(
+        lambda r: '-'.join(filter(None, [r['Adrees'], r['City_Name']])).replace(' - ', '-'),
+        axis=1
+    )
 
     # phone_numbers
     df['phone_numbers'] = df['Telephone'].apply(
