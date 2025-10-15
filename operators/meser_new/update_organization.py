@@ -1,10 +1,10 @@
 import pandas as pd
 
-from operators.meser_new.update import prepare_airtable_dataframe
+from utilities.update import prepare_airtable_dataframe
 from operators.meser_new.utilities.trigger_status_check import trigger_status_check
 from srm_tools.logger import logger
 from conf import settings
-from load.airtable import update_airtable_records, create_airtable_records, update_if_exists_if_not_create
+from load.airtable import update_if_exists_if_not_create
 
 
 def clean_fields_for_organization_airtable(df: pd.DataFrame) -> pd.DataFrame:

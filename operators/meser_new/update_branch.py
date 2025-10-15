@@ -1,6 +1,6 @@
 import pandas as pd
 from conf import settings
-from operators.meser_new.update import prepare_airtable_dataframe
+from utilities.update import prepare_airtable_dataframe
 from operators.meser_new.utilities.get_foreign_key_by_field import get_foreign_key_by_field
 from operators.meser_new.utilities.trigger_status_check import trigger_status_check
 from srm_tools.logger import logger
@@ -23,7 +23,6 @@ def update_airtable_branches_from_df(df: pd.DataFrame) -> int:
     # Prepare branch data
     df['name'] = df['branch_name']
     df['organization'] = df['organization_id']
-    df['status'] = 'ACTIVE'
 
     # Map organization IDs to Airtable record IDs and merge with existing ones
     df = get_foreign_key_by_field(
@@ -49,6 +48,7 @@ def update_airtable_branches_from_df(df: pd.DataFrame) -> int:
     df['source'] = 'meser'
     trigger_status_check(df=df, table_name='BranchesTest', base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE', only_from_source='meser', df_key_field='branch_id', batch_size=50)
+    df['status'] = 'ACTIVE'
 
     # Prepare DataFrame for Airtable
     df_prepared = prepare_airtable_dataframe(df, key_field, fields_to_update, airtable_key)

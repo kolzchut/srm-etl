@@ -1,6 +1,6 @@
 import pandas as pd
-from load.airtable import update_airtable_records, create_airtable_records, update_if_exists_if_not_create
-from operators.meser_new.update import prepare_airtable_dataframe
+from load.airtable import update_if_exists_if_not_create
+from utilities.update import prepare_airtable_dataframe
 from conf import settings
 from operators.meser_new.utilities.get_foreign_key_by_field import get_foreign_key_by_field
 from operators.meser_new.utilities.trigger_status_check import trigger_status_check

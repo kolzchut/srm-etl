@@ -1,7 +1,7 @@
 from typing import Dict, Any
 import pandas as pd
 from load.airtable import update_airtable_records, get_airtable_table
-from operators.meser_new.update import prepare_airtable_dataframe
+from utilities.update import prepare_airtable_dataframe
 
 
 def fetch_airtable_records(table_name: str, base_id: str, airtable_key_field: str, only_from_source: str = "") -> Dict[str, Dict[str, Any]]:

@@ -3,7 +3,7 @@ import pandas as pd
 
 from conf import settings
 from load.airtable import update_if_exists_if_not_create
-from operators.meser_new.update import prepare_airtable_dataframe
+from utilities.update import prepare_airtable_dataframe
 from srm_tools.logger import logger
 
 def clean_city_name(city_series: pd.Series) -> pd.Series:
