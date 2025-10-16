@@ -6,7 +6,24 @@ from srm_tools.hash import hasher
 from utilities.update import prepare_airtable_dataframe
 import pandas as pd
 
+def ensure_list_fields(df:pd.DataFrame, columns: list):
+    """
+    Ensures that the given columns contain real Python lists, not stringified lists.
+    Converts values like "['recABC']" → ['recABC'] safely.
+    """
+    def str_to_list(s):
+        if not s or s == '[]':
+            return []
+        s = s.strip("[]")
+        items = [item.strip().strip("'\"") for item in s.split(",") if item.strip()]
+        return items
 
+    for col in columns:
+        if col in df.columns:
+            df[col] = df[col].apply(
+                lambda x: str_to_list(x) if isinstance(x, str) else (x if isinstance(x, list) else [])
+            )
+    return df
 
 def transform_dataframe_to_branch(df):
     df = df.rename(columns={
@@ -68,6 +85,9 @@ def update_branch(df):
     df = clean_fields(df, fields_to_update)
     df = df.where(pd.notnull(df), None)
 
+    df = ensure_list_fields(df=df, columns=['services', 'organization'])
+
     prepare_df = prepare_airtable_dataframe(df=df, fields_to_update=fields_to_update, key_field='id', airtable_key='id')
+
     modified = update_if_exists_if_not_create(df=prepare_df,airtable_key='id',base_id=settings.AIRTABLE_DATA_IMPORT_BASE,table_name='BranchesTest',batch_size=50)
     return modified

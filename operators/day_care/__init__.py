@@ -11,6 +11,7 @@ def remove_unnecessary_records_dataframe(df):
 
 def fix_records(df):
     df["מספר טלפון"] = df["מספר טלפון"].astype(str).apply(lambda x: "0" + x if not x.startswith("0") else x)
+    df["ח.פ. ארגון"] = df["ח.פ. ארגון"].astype(str)
     return df
 
 def replace_name(name):
