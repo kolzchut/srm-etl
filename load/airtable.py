@@ -134,6 +134,7 @@ def update_if_exists_if_not_create(df:pd.DataFrame, table_name:str, base_id:str,
 
     # Create missing records
     if not_found:
+        df['decision'] = 'New'
         df_to_create = df[df[airtable_key].isin(not_found)]
         created_count = create_airtable_records(
             df=df_to_create,

@@ -33,20 +33,22 @@ def enrich_records(df):
 
 
 def run(*_):
-    print("Hola")
+    print(f'Fetching and transforming data...')
     df = fetch_as_df()
     df = remove_unnecessary_records_dataframe(df)
     df = fix_records(df)
     df = enrich_records(df)
-    print(df.head(5))
 
+    print(f'Updating Airtable...')
 
     modified_services=update_service()
-    print(f"Updated {modified_services} services.")
+    print(f"Effected {modified_services} services.")
+
     modified_organizations=update_organization(df=df.copy())
-    print(f"Updated {modified_organizations} organizations.")
+    print(f"Effected {modified_organizations} organizations.")
+
     modified_branches=update_branch(df=df.copy())
-    print(f"Updated {modified_branches} branches.")
+    print(f"Effected {modified_branches} branches.")
 
 
 

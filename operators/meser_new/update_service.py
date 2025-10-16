@@ -11,7 +11,6 @@ from srm_tools.logger import logger
 
 def enrich_service_fields(df: pd.DataFrame) -> pd.DataFrame:
     df['source'] = 'meser'
-    df['decision'] = "New"
     df['data_sources'] = "מידע על מסגרות רווחה התקבל ממשרד הרווחה והשירותים החברתיים"
     df['status'] = 'ACTIVE'
     return df
@@ -51,7 +50,7 @@ def update_airtable_services_from_df(df: pd.DataFrame) -> int:
 
     fields_to_update = [
         'id', 'name', 'data_sources', 'situations', 'responses',
-        'branches', 'organizations', 'meser_id', 'source', 'decision','status'
+        'branches', 'organizations', 'meser_id', 'source', 'status'
     ]
     df_prepared = prepare_airtable_dataframe(df, key_field, fields_to_update, airtable_key)
 

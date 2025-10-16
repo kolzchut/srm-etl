@@ -194,13 +194,13 @@ def run(*_):
 
     print("Updating Airtable")
     modified_organizations = update_airtable_organizations_from_df(transformed_df.copy())
-    print(f"Modified {modified_organizations} organizations")
+    print(f"Effected {modified_organizations} organizations")
 
     modified_branches = update_airtable_branches_from_df(transformed_df.copy())
-    print(f"Modified {modified_branches} branches")
+    print(f"Effected {modified_branches} branches")
 
     modified_services = update_airtable_services_from_df(transformed_df.copy())
-    print(f"Modified {modified_services} services")
+    print(f"Effected {modified_services} services")
 
     print("End Meser data update...")
 
