@@ -14,7 +14,8 @@ from .es_utils import dump_to_es_and_delete
 
 from srm_tools.logger import logger
 from srm_tools.unwind import unwind
-from .es_schemas import (URL_SCHEMA, TAXONOMY_ITEM_SCHEMA, NON_INDEXED_STRING, KEYWORD_STRING, KEYWORD_ONLY, ITEM_TYPE_STRING, NO_SCHEMA)
+from .es_schemas import (URL_SCHEMA, TAXONOMY_ITEM_SCHEMA, NON_INDEXED_STRING, KEYWORD_STRING, KEYWORD_ONLY,
+                         ITEM_TYPE_STRING, NO_SCHEMA, LAST_MODIFIED_DATE)
 
 CHECKPOINT = 'to_es'
 
@@ -77,6 +78,7 @@ def data_api_es_flow():
         DF.set_type('data_sources', **NON_INDEXED_STRING),
         DF.set_type('response_ids', **KEYWORD_STRING),
         DF.set_type('situation_ids', **KEYWORD_STRING),
+        DF.set_type('last_modified', **LAST_MODIFIED_DATE),
         dump_to_es_and_delete(indexes=dict(srm__cards=[dict(resource_name='cards')])),
         DF.checkpoint(checkpoint),
     ).process()
@@ -193,6 +195,7 @@ def load_responses_to_es_flow():
         DF.set_type('id', **KEYWORD_ONLY),
         # DF.set_type('name', **{'es:autocomplete': True}),
         DF.set_type('synonyms', **ITEM_TYPE_STRING),
+        DF.set_type('last_modified', **LAST_MODIFIED_DATE),
         DF.add_field('score', 'number', lambda r: r['count']),
         DF.set_primary_key(['id']),
         print_top,
@@ -233,6 +236,7 @@ def load_situations_to_es_flow():
         DF.select_fields(['id', 'name', 'synonyms', 'breadcrumbs', 'count']),
         DF.set_type('id', **KEYWORD_ONLY),
         DF.set_type('synonyms', **ITEM_TYPE_STRING),
+        DF.set_type('last_modified', **LAST_MODIFIED_DATE),
         DF.add_field('score', 'number', lambda r: r['count']),
         DF.set_primary_key(['id']),
         print_top,
