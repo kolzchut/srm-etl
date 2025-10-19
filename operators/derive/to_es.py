@@ -15,9 +15,10 @@ from .es_utils import dump_to_es_and_delete
 from srm_tools.logger import logger
 from srm_tools.unwind import unwind
 from .es_schemas import (URL_SCHEMA, TAXONOMY_ITEM_SCHEMA, NON_INDEXED_STRING, KEYWORD_STRING, KEYWORD_ONLY,
-                         ITEM_TYPE_STRING, NO_SCHEMA, LAST_MODIFIED_DATE)
+                         ITEM_TYPE_STRING, NO_SCHEMA)
 
 CHECKPOINT = 'to_es'
+
 
 def card_score(row):
     branch_count = row['organization_branch_count'] or 1
@@ -31,7 +32,8 @@ def card_score(row):
         score *= 10
     if national_service:
         score *= 10
-        phone_numbers = list(filter(None, (row['service_phone_numbers'] or []) + (row['organization_phone_numbers'] or [])))
+        phone_numbers = list(
+            filter(None, (row['service_phone_numbers'] or []) + (row['organization_phone_numbers'] or [])))
         if phone_numbers:
             phone_number = phone_numbers[0]
             if len(phone_number) <= 5 or phone_number.startswith('1'):
@@ -40,7 +42,7 @@ def card_score(row):
         if branch_count > 100:
             score *= branch_count / 10
         else:
-            score *= branch_count**0.5
+            score *= branch_count ** 0.5
     # response_ids = row['response_ids'] or []
     # if 'human_services:internal_emergency_services' in response_ids:
     #     score *= 10
@@ -48,12 +50,13 @@ def card_score(row):
     if organization_kind in ('משרד ממשלתי', 'רשות מקומית', 'תאגיד סטטוטורי'):
         score *= 5
 
-    score = max(score,1)
+    score = max(score, 1)
     boost = float(row['service_boost']) or 0
-    boost = 10**boost
+    boost = 10 ** boost
     score *= boost
 
     return score
+
 
 def data_api_es_flow():
     checkpoint = f'{CHECKPOINT}/data_api_es_flow'
@@ -78,7 +81,6 @@ def data_api_es_flow():
         DF.set_type('data_sources', **NON_INDEXED_STRING),
         DF.set_type('response_ids', **KEYWORD_STRING),
         DF.set_type('situation_ids', **KEYWORD_STRING),
-        DF.set_type('last_modified', **LAST_MODIFIED_DATE),
         dump_to_es_and_delete(indexes=dict(srm__cards=[dict(resource_name='cards')])),
         DF.checkpoint(checkpoint),
     ).process()
@@ -98,34 +100,41 @@ def data_api_es_flow():
         dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
     ).process()
 
-        # # TESTING FLOW
-        # DF.add_field('text', 'array', **{'es:itemType': 'string', 'es:keyword': True}, default=select_text_fields),
-        # DF.select_fields(['card_id', 'text']),
-        # dump_to_es_and_delete(
-        #     indexes=dict(testing=[dict(resource_name='cards')]),
-        # ),
+    # # TESTING FLOW
+    # DF.add_field('text', 'array', **{'es:itemType': 'string', 'es:keyword': True}, default=select_text_fields),
+    # DF.select_fields(['card_id', 'text']),
+    # dump_to_es_and_delete(
+    #     indexes=dict(testing=[dict(resource_name='cards')]),
+    # ),
+
 
 HEB = re.compile('[א-ת]+[-א-ת"״]+[א-ת]+')
+
+
 def select_text_fields(row):
     def _aux(obj):
         if not obj:
             pass
         elif isinstance(obj, dict):
             for k, v in obj.items():
-                if k not in ('data_sources', 'service_urls', 'branch_urls', 'organization_urls', 'possible_autocomplete'):
+                if k not in ('data_sources', 'service_urls', 'branch_urls', 'organization_urls',
+                             'possible_autocomplete'):
                     yield from _aux(v)
         elif isinstance(obj, list):
             for v in obj:
                 yield from _aux(v)
         elif isinstance(obj, str):
             yield from HEB.findall(obj)
+
     return list(_aux(row))
+
 
 def load_locations_to_es_flow():
     url = settings.LOCATION_BOUNDS_SOURCE_URL
     scores = dict(
         region=200, city=100, town=50, village=10, hamlet=5,
     )
+
     def calc_score(r):
         b = r['bounds']
         size = (b[2] - b[0]) * (b[3] - b[1]) * 100000
@@ -135,7 +144,6 @@ def load_locations_to_es_flow():
     # {name: 'איזור ירושלים', display: 'איזור ירושלים', bounds: [34.9, 31.7, 35.3, 31.9]},
     # {name: 'איזור הצפון', display: 'איזור הצפון', bounds: [34.5, 32.5, 35.8, 33.3]},
     # {name: 'איזור באר-שבע', display: 'איזור באר-שבע', bounds: [34.5, 30.8, 35.5, 31.5]},
-
 
     PREDEFINED = [
         dict(key='גוש_דן', name=['גוש דן'], bounds=[34.6, 31.8, 35.1, 32.181], place='region'),
@@ -166,8 +174,8 @@ def load_locations_to_es_flow():
             dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
         )
 
+
 def load_responses_to_es_flow():
-    
     def print_top(row):
         parts = row['id'].split(':')
         if len(parts) == 2:
@@ -183,7 +191,8 @@ def load_responses_to_es_flow():
             id=None,
             count=dict(aggregate='count')
         )),
-        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_RESPONSE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_RESPONSE_TABLE, settings.AIRTABLE_VIEW,
+                           settings.AIRTABLE_API_KEY),
         DF.update_package(title='Taxonomy Responses', name='responses'),
         DF.update_resource(-1, name='responses'),
         DF.join('card_data', ['id'], 'responses', ['id'], dict(
@@ -195,7 +204,6 @@ def load_responses_to_es_flow():
         DF.set_type('id', **KEYWORD_ONLY),
         # DF.set_type('name', **{'es:autocomplete': True}),
         DF.set_type('synonyms', **ITEM_TYPE_STRING),
-        DF.set_type('last_modified', **LAST_MODIFIED_DATE),
         DF.add_field('score', 'number', lambda r: r['count']),
         DF.set_primary_key(['id']),
         print_top,
@@ -208,8 +216,8 @@ def load_responses_to_es_flow():
         # DF.printer()
     )
 
+
 def load_situations_to_es_flow():
-    
     def print_top(row):
         parts = row['id'].split(':')
         if len(parts) == 2:
@@ -225,7 +233,8 @@ def load_situations_to_es_flow():
             id=None,
             count=dict(aggregate='count')
         )),
-        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_SITUATION_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
+        load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_SITUATION_TABLE, settings.AIRTABLE_VIEW,
+                           settings.AIRTABLE_API_KEY),
         DF.update_package(title='Taxonomy Situations', name='situations'),
         DF.update_resource(-1, name='situations'),
         DF.join('card_data', ['id'], 'situations', ['id'], dict(
@@ -236,7 +245,6 @@ def load_situations_to_es_flow():
         DF.select_fields(['id', 'name', 'synonyms', 'breadcrumbs', 'count']),
         DF.set_type('id', **KEYWORD_ONLY),
         DF.set_type('synonyms', **ITEM_TYPE_STRING),
-        DF.set_type('last_modified', **LAST_MODIFIED_DATE),
         DF.add_field('score', 'number', lambda r: r['count']),
         DF.set_primary_key(['id']),
         print_top,
@@ -248,6 +256,7 @@ def load_situations_to_es_flow():
         dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, format='json'),
         # DF.printer()
     )
+
 
 def load_organizations_to_es_flow():
     return DF.Flow(
@@ -271,13 +280,14 @@ def load_organizations_to_es_flow():
         # DF.set_type('name', **{'es:autocomplete': True}),
         DF.set_type('description', **NO_SCHEMA),
         DF.set_type('kind', **KEYWORD_ONLY),
-        DF.add_field('score', 'number', lambda r: 10*r['count']),
+        DF.add_field('score', 'number', lambda r: 10 * r['count']),
         DF.set_primary_key(['id']),
         dump_to_es_and_delete(
             indexes=dict(srm__orgs=[dict(resource_name='orgs')]),
         ),
         dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
     )
+
 
 def load_autocomplete_to_es_flow():
     DF.Flow(
@@ -294,6 +304,7 @@ def load_autocomplete_to_es_flow():
         DF.set_primary_key(['id']),
         dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
     ).process()
+
 
 def operator(*_):
     shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
