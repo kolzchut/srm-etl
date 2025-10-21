@@ -65,6 +65,7 @@ def data_api_es_flow():
         DF.update_package(title='Card Data', name='srm_card_data'),
         DF.update_resource('card_data', name='cards'),
         DF.add_field('score', 'number', card_score, resources=['cards']),
+        DF.add_field('last_modified', 'string', lambda card: card.get('last_modified'), resources=['cards']),
         DF.set_type('situations', **TAXONOMY_ITEM_SCHEMA),
         DF.set_type('responses', **TAXONOMY_ITEM_SCHEMA),
         DF.set_type('situations_parents', **TAXONOMY_ITEM_SCHEMA),
