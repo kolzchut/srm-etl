@@ -67,7 +67,7 @@ def data_api_es_flow():
         DF.update_resource('card_data', name='cards'),
         DF.add_field('score', 'number', card_score, resources=['cards']),
         DF.add_field(
-            'last_modified',
+            'airtable_last_modified',
             'datetime',
             lambda card: datetime.fromisoformat(card['last_modified']) if card.get('last_modified') else None,
             resources=['cards']
@@ -88,7 +88,7 @@ def data_api_es_flow():
         DF.set_type('data_sources', **NON_INDEXED_STRING),
         DF.set_type('response_ids', **KEYWORD_STRING),
         DF.set_type('situation_ids', **KEYWORD_STRING),
-        DF.set_type('last_modified', **LAST_MODIFIED_DATE),
+        DF.set_type('airtable_last_modified', **LAST_MODIFIED_DATE),
         dump_to_es_and_delete(indexes=dict(srm__cards=[dict(resource_name='cards')])),
         DF.checkpoint(checkpoint),
     ).process()
