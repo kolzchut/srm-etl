@@ -179,7 +179,7 @@ def load_locations_to_es_flow():
             dump_to_es_and_delete(
                 indexes=dict(srm__places=[dict(resource_name='places')]),
             ),
-            dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
+            # dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
         )
 
 
@@ -221,7 +221,7 @@ def load_responses_to_es_flow():
             indexes=dict(srm__responses=[dict(resource_name='responses')]),
         ),
         DF.update_resource(-1, name='responses', path='responses.json'),
-        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, format='json'),
+        # dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, format='json'),
         # DF.printer()
     )
 
@@ -263,7 +263,7 @@ def load_situations_to_es_flow():
             indexes=dict(srm__situations=[dict(resource_name='situations')]),
         ),
         DF.update_resource(-1, name='situations', path='situations.json'),
-        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, format='json'),
+        # dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG, format='json'),
         # DF.printer()
     )
 
@@ -295,7 +295,7 @@ def load_organizations_to_es_flow():
         dump_to_es_and_delete(
             indexes=dict(srm__orgs=[dict(resource_name='orgs')]),
         ),
-        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
+        # dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
     )
 
 
@@ -312,7 +312,7 @@ def load_autocomplete_to_es_flow():
         DF.load(f'{settings.DATA_DUMP_DIR}/autocomplete/datapackage.json', limit_rows=10000),
         DF.update_package(title='AutoComplete Queries', name='autocomplete'),
         DF.set_primary_key(['id']),
-        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
+        # dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
     ).process()
 
 
