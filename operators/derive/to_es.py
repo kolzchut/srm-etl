@@ -69,7 +69,14 @@ def data_api_es_flow():
         DF.add_field(
             'airtable_last_modified',
             'datetime',
-            lambda card: datetime.fromisoformat(card['last_modified']) if card.get('last_modified') else None,
+            lambda card: max(
+                filter(None, [
+                    datetime.fromisoformat(card.get('service_last_modified')) if card.get(
+                        'service_last_modified') else None,
+                    datetime.fromisoformat(card.get('branch_last_modified')) if card.get(
+                        'branch_last_modified') else None
+                ])
+            ) if card.get('service_last_modified') or card.get('branch_last_modified') else None,
             resources=['cards']
         ),
         DF.set_type('situations', **TAXONOMY_ITEM_SCHEMA),
