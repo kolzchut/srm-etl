@@ -491,17 +491,6 @@ def flat_services_flow(branch_mapping):
             },
             resources=['flat_services'],
         ),
-        DF.aggregate(
-            ['service_id', 'branch_key'],
-            aggregate={
-                'service_last_modified': 'max',
-                'branch_last_modified': 'max',
-                'service_name': 'first',
-                'branch_key': 'first',
-                # add other fields to merge as needed
-            },
-            resources=['flat_services']
-        ),
         DF.select_fields(
             [
                 'service_key',
