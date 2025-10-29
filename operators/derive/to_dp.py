@@ -517,9 +517,16 @@ def flat_services_flow(branch_mapping):
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/flat_services'),
     )
 
-
 def flat_table_flow():
     """Produce a flat table to back our Data APIs."""
+
+    seen = set()
+    def unique_service_branch(row):
+        key = (row['service_id'], row['branch_id'])
+        if key in seen:
+            return False
+        seen.add(key)
+        return True
 
     return DF.Flow(
         DF.load(
@@ -570,6 +577,7 @@ def flat_table_flow():
         DF.add_field(
             'branch_short_name', 'string', helpers.calculate_branch_short_name, resources=['flat_table']
         ),
+        DF.filter_rows(unique_service_branch, resources=['flat_table']),  # <- deduplication
         DF.set_primary_key(
             ['service_id', 'branch_id'],
             resources=['flat_table'],
