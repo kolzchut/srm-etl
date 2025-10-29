@@ -58,6 +58,22 @@ def card_score(row):
 
     return score
 
+def parse_date(d):
+    if isinstance(d, str):
+        try:
+            dt = datetime.fromisoformat(d)
+            print(f"Parsed string: {d} -> {dt}")
+            return dt
+        except Exception as e:
+            print(f"Failed to parse string '{d}': {e}")
+            return None
+    elif isinstance(d, datetime):
+        print(f"Already datetime: {d}")
+        return d
+    else:
+        print(f"Invalid type ({type(d)}): {d}")
+        return None
+
 
 def data_api_es_flow():
     checkpoint = f'{CHECKPOINT}/data_api_es_flow'
@@ -71,10 +87,8 @@ def data_api_es_flow():
             'datetime',
             lambda card: max(
                 filter(None, [
-                    datetime.fromisoformat(card.get('service_last_modified')) if card.get(
-                        'service_last_modified') else None,
-                    datetime.fromisoformat(card.get('branch_last_modified')) if card.get(
-                        'branch_last_modified') else None
+                    parse_date(card.get('service_last_modified')),
+                    parse_date(card.get('branch_last_modified'))
                 ])
             ) if card.get('service_last_modified') or card.get('branch_last_modified') else None,
             resources=['cards']
