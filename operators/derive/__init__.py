@@ -19,9 +19,10 @@ def deriveData(*_):
     logger.info('---to_es operator finished---')
     to_sql.operator()
     logger.info('---to_sql operator finished---')
-    to_mapbox.operator()
-    logger.info('---to_mapbox operator finished---')
-    to_sitemap.operator()
+    # NOT RELEVANT ANYMORE - MAP BOX IS UNUSED AND TO_SITEMAP REPLACED IN THE BE
+    # to_mapbox.operator()
+    # logger.info('---to_mapbox operator finished---')
+    # to_sitemap.operator()
 
     logger.info('Finished Derive Data Flow')
 
