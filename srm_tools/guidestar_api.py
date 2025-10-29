@@ -24,6 +24,27 @@ class GuidestarAPI():
         self.org_cache = kvfile.KVFile(location='gacache/guidestar_org_cache')
         self.branch_cache = kvfile.KVFile(location='gacache/guidestar_branch_cache')
         self.service_cache = kvfile.KVFile(location='gacache/guidestar_service_cache')
+        self.static_language_matchers = {
+            'human_situations:language:1_speaking':"human_situations:language:hebrew_speaking",
+            'human_situations:language:2_speaking':"human_situations:language:arabic_speaking",
+            'human_situations:language:3_speaking': "human_situations:language:russian_speaking",
+            'human_situations:language:4_speaking': "human_situations:language:french_speaking",
+            'human_situations:language:5_speaking': "human_situations:language:english_speaking",
+            'human_situations:language:6_speaking': "human_situations:language:amharic_speaking",
+            'human_situations:language:7_speaking': "human_situations:language:spanish_speaking",
+            'human_situations:language:8_speaking': "human_situations:language:other_speaking",
+        }
+
+    def replace_language_field_in_array_of_object(self, arr):
+        for row in arr:
+            lang = row.get("language")
+            if not lang:
+                continue
+            fixed_language = self.static_language_matchers.get(lang)
+            if fixed_language:
+                row["language"] = fixed_language
+
+
 
     def to_json(self, callable):
         resp = None
@@ -149,6 +170,7 @@ class GuidestarAPI():
             if minServiceId is not None:
                 params['filter'] = f'serviceId>{minServiceId}'
             resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizationServices', params=params))
+            replace_language_field_in_array_of_object(resp)
             for row in resp:
                 if row.get('recordType') != 'GreenInfo':
                     continue
