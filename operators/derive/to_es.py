@@ -113,21 +113,23 @@ def data_api_es_flow():
         dump_to_es_and_delete(indexes=dict(srm__cards=[dict(resource_name='cards')])),
         DF.checkpoint(checkpoint),
     ).process()
-    DF.Flow(
-        DF.checkpoint(checkpoint),
-        DF.update_resource(-1, name='full_cards'),
-        DF.delete_fields([
-            'score', 'possible_autocomplete', 'situations', 'responses', 'collapse_key', 'organization_resolved_name',
-            'responses_parents', 'situations_parents', 'situation_ids_parents', 'response_ids_parents',
-            'data_sources', 'rs_score', 'situation_scores', 'point_id', 'coords']),
-        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
-    ).process()
 
-    DF.Flow(
-        DF.checkpoint(checkpoint),
-        DF.filter_rows(lambda r: False),
-        dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
-    ).process()
+    # Not relevant dump to CKAN
+    # DF.Flow(
+    #     DF.checkpoint(checkpoint),
+    #     DF.update_resource(-1, name='full_cards'),
+    #     DF.delete_fields([
+    #         'score', 'possible_autocomplete', 'situations', 'responses', 'collapse_key', 'organization_resolved_name',
+    #         'responses_parents', 'situations_parents', 'situation_ids_parents', 'response_ids_parents',
+    #         'data_sources', 'rs_score', 'situation_scores', 'point_id', 'coords']),
+    #     dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
+    # ).process()
+    #
+    # DF.Flow(
+    #     DF.checkpoint(checkpoint),
+    #     DF.filter_rows(lambda r: False),
+    #     dump_to_ckan(settings.CKAN_HOST, settings.CKAN_API_KEY, settings.CKAN_OWNER_ORG),
+    # ).process()
 
     # # TESTING FLOW
     # DF.add_field('text', 'array', **{'es:itemType': 'string', 'es:keyword': True}, default=select_text_fields),
