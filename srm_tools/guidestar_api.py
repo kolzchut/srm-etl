@@ -170,7 +170,7 @@ class GuidestarAPI():
             if minServiceId is not None:
                 params['filter'] = f'serviceId>{minServiceId}'
             resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizationServices', params=params))
-            replace_language_field_in_array_of_object(resp)
+            self.replace_language_field_in_array_of_object(resp)
             for row in resp:
                 if row.get('recordType') != 'GreenInfo':
                     continue
