@@ -42,6 +42,7 @@ class GuidestarAPI():
                 continue
             fixed_language = self.static_language_matchers.get(lang)
             if fixed_language:
+                logger.info(f'Replacing {lang} to {fixed_language}')
                 row["language"] = fixed_language
 
 
@@ -170,9 +171,7 @@ class GuidestarAPI():
             if minServiceId is not None:
                 params['filter'] = f'serviceId>{minServiceId}'
             resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizationServices', params=params))
-            logger.info(f"response from guidestar {resp[:20]}")
             self.replace_language_field_in_array_of_object(resp)
-            logger.info(f'Fixed attempt {resp[:20]}')
             for row in resp:
                 if row.get('recordType') != 'GreenInfo':
                     continue
