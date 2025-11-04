@@ -141,6 +141,7 @@ class GuidestarAPI():
                 params['filter'] = f'branchId>{minBranchId}'
             resp = self.to_json(lambda: self.requests_get(f'{self.BASE}/organizationBranches', params=params))
             logger.info(f'Fetched {len(resp)} branches from Guidestar API, example: {resp[0] if len(resp) else None}')
+            self.replace_language_field_in_array_of_object(resp)
             for row in resp:
                 regNum = row.pop('regNum')
                 rec = self.branch_cache.get(regNum, default=None) or list()
