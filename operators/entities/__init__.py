@@ -66,7 +66,10 @@ def updateOrgFromSourceData(ga: GuidestarAPI, stats: Stats):
                     data = data['data']
                     row['name'] = data['name']
                     row['short_name'] = data.get('abbreviatedOrgName')
-                    row['kind'] = data['malkarType']
+                    kind = data.get('malkarType')
+                    if kind == "חברה":
+                        kind = "חברה פרטית"
+                    row['kind'] = kind
                     row['description'] = None
                     row['purpose'] = data.get('orgGoal')
                     urls = []
