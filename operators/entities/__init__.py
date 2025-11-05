@@ -189,7 +189,7 @@ def unwind_branches(ga: GuidestarAPI, stats: Stats):
                     if branch.get('language'):
                         data['situations'] = [
                             f"human_situations:language:{replace_language_number_with_actual_value(l.lower().strip())}_speaking"
-                            for l in branch['language'].split(';') if l != 'other'
+                            for l in branch['language'].split(';') if l != 8 and l != '8'
                         ]
 
                     ret['data'] = data
