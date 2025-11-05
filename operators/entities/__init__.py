@@ -146,6 +146,17 @@ def deduplicate_items(items):
             logger.warning(f"Skipped duplicate: {item_id}")
     return deduped
 
+def replace_language_number_with_actual_value(language_number):
+    list_of_language_ordered = ["hebrew","arabic","russian","french","english","amharic","spanish"]
+    try:
+        language_index = int(language_number) -1
+        if language_index >= len(list_of_language_ordered) or language_index < 0:
+            return "other"
+        return list_of_language_ordered[language_index]
+    except Exception as e:
+        logger.warning(f"Failed to parse language number {language_number}: {e}")
+    return "other"
+
 
 ## BRANCHES
 def unwind_branches(ga: GuidestarAPI, stats: Stats):
@@ -177,7 +188,7 @@ def unwind_branches(ga: GuidestarAPI, stats: Stats):
 
                     if branch.get('language'):
                         data['situations'] = [
-                            f"human_situations:language:{l.lower().strip()}_speaking"
+                            f"human_situations:language:{replace_language_number_with_actual_value(l.lower().strip())}_speaking"
                             for l in branch['language'].split(';') if l != 'other'
                         ]
 
