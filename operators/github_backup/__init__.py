@@ -62,7 +62,6 @@ def run(*_):
     else:
         logger.error(f"❌ Error: {r.status_code} {r.text}")
 
-
 def operator(*_):
     invoke_on(run, 'GitHub Backup Operator')
 
