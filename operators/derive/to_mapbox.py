@@ -228,24 +228,24 @@ def points_flow():
         dump_to_es_and_delete(
             indexes=dict(srm__points=[dict(resource_name='points')]),
         ),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
-            force_format=False
-        ),
+        # dump_to_ckan(
+        #     settings.CKAN_HOST,
+        #     settings.CKAN_API_KEY,
+        #     settings.CKAN_OWNER_ORG,
+        #     force_format=False
+        # ),
 
         # Generate Cluster dataset
         DF.select_fields(['branch_geometry', 'response_categories', 'point_id', 'card_id']),
         DF.update_package(name='geo_data_clusters', title='Geo Data - For Clusters'),
         DF.update_resource(['points'], path='geo_data.geojson'),
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/geo_data_clusters', force_format=False),
-        dump_to_ckan(
-            settings.CKAN_HOST,
-            settings.CKAN_API_KEY,
-            settings.CKAN_OWNER_ORG,
-            force_format=False
-        ),
+        # dump_to_ckan(
+        #     settings.CKAN_HOST,
+        #     settings.CKAN_API_KEY,
+        #     settings.CKAN_OWNER_ORG,
+        #     force_format=False
+        # ),
     )
 
 
