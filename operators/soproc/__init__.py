@@ -11,7 +11,7 @@ from srm_tools.situations import Situations
 from srm_tools.error_notifier import invoke_on
 
 from conf import settings
-from .click_scraper import scrape_click
+from operators.soproc.click_scraper import scrape_click
 from srm_tools.error_notifier import send_failure_email
 situations = Situations()
 
@@ -94,7 +94,6 @@ def soprocServices(services):
         verifyDataExistance(service, counter)
 
         data = dict(
-            operating_unit=service.get('name', ''),
             description=service.get('description', ''),
             organizations=[s['entity_id'] for s in (service['suppliers'] or []) if s['active'] == 'yes'],
             urls=None,
@@ -121,7 +120,7 @@ def fetchServiceData():
     print('COLLECTED {} relevant services'.format(len(social_service_activities)))
 
     airtable_updater(settings.AIRTABLE_SERVICE_TABLE, 'social-procurement',
-        ['operating_unit', 'description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers', 'organizations', 'data_sources', 'soproc-service-tagging'],
+        ['description', 'details', 'payment_required', 'payment_details', 'urls', 'phone_numbers', 'organizations', 'data_sources', 'soproc-service-tagging'],
         soprocServices(social_service_activities),
         updateFromSourceData(),
         airtable_base=settings.AIRTABLE_DATA_IMPORT_BASE
