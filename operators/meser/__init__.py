@@ -140,7 +140,7 @@ def run(*_):
                          lambda r: '0' + r['Telephone'] if r['Telephone'] and r['Telephone'][0] != '0' else r[
                                                                                                                 'Telephone'] or None),
 
-            DF.add_field('meser_id', 'string', lambda r: r['Misgeret_Id']),
+            DF.add_field('meser_id', 'string',  lambda r: str(r.get('Misgeret_Id', '')).strip() or None),
 
             # Combining same services
             DF.add_field('service_id', 'string',
@@ -257,7 +257,7 @@ def run(*_):
             DF.join_with_self('tagging', ['tag'], fields=dict(tag=None)),
             DF.filter_rows(lambda r: r['tag'] not in tags),
             DF.filter_rows(lambda r: bool(r['tag'])),
-            DF.add_field('meser_id', 'string', lambda r: r['Misgeret_Id']),
+            DF.add_field('meser_id', 'string', lambda r: str(r.get('Misgeret_Id', '')).strip() or None),
             dump_to_airtable({
                 (settings.AIRTABLE_DATA_IMPORT_BASE, 'meser-tagging'): {
                     'resource-name': 'tagging',
