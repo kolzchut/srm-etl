@@ -20,15 +20,11 @@ from operators.derive import manual_fixes
 from . import helpers
 from .autotagging import apply_auto_tagging
 from .es_schemas import (ADDRESS_PARTS_SCHEMA, NON_INDEXED_ADDRESS_PARTS_SCHEMA, KEYWORD_STRING, KEYWORD_ONLY, ITEM_TYPE_NUMBER, ITEM_TYPE_STRING)
-
+import sys
+sys.setrecursionlimit(5000) # Increase recursion limit for deep dataflows processing
 
 CHECKPOINT = 'to_dp'
 
-def flatten_situations(row):
-    return [{'id': s['id'], 'name': s['name']} for s in row]
-
-def flatten_responses(row):
-    return [{'id': r['id'], 'name': r['name']} for r in row]
 
 def merge_array_fields(fieldnames):
     def func(r):
@@ -166,6 +162,7 @@ def srm_data_pull_flow():
             settings.AIRTABLE_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY
         ),
         DF.update_package(name='SRM Data'),
+        DF.checkpoint('srm_raw_airtable_buffer'),
         helpers.preprocess_responses(validate=True),
         helpers.preprocess_situations(validate=True),
         helpers.preprocess_services(validate=True),
@@ -182,13 +179,6 @@ def select_address(row, address_fields):
         if helpers.validate_address(v):
             return row[f]
 
-def safe_list(val, fallback=None):
-    if val is None:
-        return fallback or []
-    if isinstance(val, list):
-        return val
-    return [val]
-
 def merge_duplicate_branches(branch_mapping):
     found = dict()
     org_count = dict()
@@ -198,7 +188,7 @@ def merge_duplicate_branches(branch_mapping):
         for row in rows:
             count += 1
 
-            geom = safe_list(row['branch_geometry'], [row['branch_id']])
+            geom = row['branch_geometry'] or [row['branch_id']]
             new_key = hasher(row['organization_id'], ';'.join(map(str, geom)))
             old_key = row['branch_key']
             branch_mapping[old_key] = new_key
@@ -784,12 +774,8 @@ def card_data_flow():
 
     return DF.Flow(
         DF.checkpoint(CHECKPOINT),
-        DF.add_field('situations', 'array',
-                     lambda r: flatten_situations([situations[s] for s in r['situation_ids'] if s in situations]),
-                     resources=['card_data']),
-        DF.add_field('responses', 'array',
-                     lambda r: flatten_responses([responses[s] for s in r['response_ids'] if s in responses]),
-                     resources=['card_data']),
+        DF.add_field('situations', 'array', lambda r: [situations[s] for s in r['situation_ids']], resources=['card_data']),
+        DF.add_field('responses', 'array', lambda r: [responses[s] for s in r['response_ids']], resources=['card_data']),
         rs_score.process('card_data'),
         DF.add_field('situation_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['situation_ids']), resources=['card_data']),
         DF.add_field('response_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_ids']), resources=['card_data']),
@@ -880,6 +866,7 @@ def operator(*_):
     logger.info('Starting Data Package Flow')
 
     shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
+    shutil.rmtree(f'.checkpoints/srm_raw_airtable_buffer', ignore_errors=True, onerror=None)
 
     branch_mapping = dict()
     srm_data_pull_flow().process()
