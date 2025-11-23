@@ -1,13 +1,9 @@
 import json
-import requests
 import codecs
 import pathlib
 
 import bleach
 import dataflows as DF
-from dataflows_airtable import load_from_airtable
-
-from conf import settings
 
 KEEP_FIELDS = ['cat', 'Name']
 DT_SUFFIXES = dict((k, i) for i, k in enumerate(['', 'i', 'ss', 't', 's', 'base64', 'f', 'is']))
@@ -16,10 +12,6 @@ SELECT_FIELDS = {
     'id': 'catalog_number',
     'data_sources': 'data_sources',
     'urls': 'urls',
-
-    # 'DisplayName': '',
-
-    # 'Administration': 'department',
     'parent_group_name': 'service_group',
     'group_name': 'unit',
     'FamilyName': 'name',
@@ -31,7 +23,6 @@ SELECT_FIELDS = {
     'Normative_Source': 'normative_source',
 
     'Domin': 'service_subject',
-    # 'Type': 'service_type',
     'Target_Population_A': 'target_populations_level_1',
     'Target_Population': 'target_populations_level_2',
 
@@ -43,13 +34,6 @@ SELECT_FIELDS = {
 
     'Deducitable': 'payment_required',
     'Deductible': 'payment_details',
-    # 'Relationship_Type', # TODO: See if useful
-    
-    # 'Service_Status': 'service_status',
-    # 'Service_Channels': 'delivery_channels',
-    # 'Right_or_Service', # TODO: See if useful
-    # 'Program_Activation_Model': 'internal_operation_model',
-    # 'location_type', # TODO: Probably not useful
     
     'Implementaion_Process': 'implementation_details',
     
@@ -134,14 +118,6 @@ def scrape_click():
         dict((k, doc.get(k)) for k in all_keys)
         for doc in docs
     )
-    # print(next(docs))
-    
-    # taxonomy = DF.Flow(
-    #     load_from_airtable(settings.AIRTABLE_BASE, settings.AIRTABLE_TAXONOMY_MAPPING_CLICK_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY),
-    # ).results()[0][0]
-    # taxonomy = dict(
-    #     (r.pop('name'), r) for r in taxonomy
-    # )
 
     records = DF.Flow(
         docs,
@@ -166,7 +142,6 @@ def scrape_click():
                 (row.get('service_subject') or [])
             )
         ),
-        # DF.set_type('delivery_channels', type='array', transform=lambda v: v.split('|') if v else []),
         DF.set_type('name', type='string', transform=lambda v: ''.join(v).strip()),
         DF.set_type('payment_required', type='string', transform=lambda v: DEDUCTIBLE_TYPE.get(v)),
         DF.add_field('links', 'array', lambda r: list(filter(None, [v for k, v in r.items() if k.startswith('link_')]))),
@@ -180,10 +155,5 @@ if __name__ == '__main__':
     sc = scrape_click()
     print(len(sc))
     import pprint
-    # pprint.pprint(sc.keys())
-    # docs = json.load(open('click-cache.json'))
-    # pprint.pprint([d for d in docs if d.get('product_id_i')==143][0])
     pprint.pprint(sc['143'])
-    # all_tags = [t for v in sc.values() for t in v['tags']]
-    # with open('tags', 'w') as t:
-    #     t.write('\n'.join(sorted(set(all_tags))))
+

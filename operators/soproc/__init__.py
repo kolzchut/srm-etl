@@ -1,7 +1,5 @@
 import datetime
 from srm_tools.budgetkey import fetch_from_budgetkey
-import dataflows as DF
-from dataflows_airtable import load_from_airtable
 from copy import deepcopy
 
 from srm_tools.logger import logger
@@ -84,12 +82,6 @@ def soprocServices(services):
         ]
         extra_data['data_sources'] = '\n'.join(data_sources)
         id = 'soproc:' + service['id']
-        # tags = (
-        #     (service['intervention'] or []) +
-        #     (service['subject'] or []) +
-        #     (service['target_age_group'] or []) +
-        #     (service['target_audience'] or [])
-        # )
 
         verifyDataExistance(service, counter)
 
@@ -107,7 +99,6 @@ def soprocServices(services):
 
         yield dict(
             id=id,
-            # tags=tags,
             data=data
         )
 
@@ -129,8 +120,12 @@ def fetchServiceData():
 
 def run(*_):
     logger.info('STARTING SoProc Scraping')
+    logger.info('Updating Organizations')
     fetchOrgData()
+    logger.info('Updating Services')
     fetchServiceData()
+    logger.info("FINISHED SoProc Scraping")
+
 
 
 def operator(*_):
