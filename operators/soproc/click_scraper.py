@@ -108,13 +108,7 @@ def scrape_click():
     try:
         docs = json.load(open('click-cache.json'))
     except:
-        try:
-            docs = requests.get(settings.CLICK_API, headers={'User-Agent': 'kz-data-reader'})
-            docs = docs.json().get('response').get('docs')
-            json.dump(docs, open('click-cache.json', 'w'))
-            print('SCRAPING CLICK', len(docs))
-        except:
-            docs = json.load(pathlib.Path(__file__).with_name('click-cache-backup.json').open())
+        docs = json.load(pathlib.Path(__file__).with_name('click-cache-backup.json').open())
     all_keys = set()
     for doc in docs:
         all_keys.update(k for k, v in doc.items() if v)
