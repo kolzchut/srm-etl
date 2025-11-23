@@ -20,7 +20,8 @@ from operators.derive import manual_fixes
 from . import helpers
 from .autotagging import apply_auto_tagging
 from .es_schemas import (ADDRESS_PARTS_SCHEMA, NON_INDEXED_ADDRESS_PARTS_SCHEMA, KEYWORD_STRING, KEYWORD_ONLY, ITEM_TYPE_NUMBER, ITEM_TYPE_STRING)
-
+import sys
+sys.setrecursionlimit(5000) # Increase recursion limit for deep dataflows processing
 
 CHECKPOINT = 'to_dp'
 
@@ -161,6 +162,7 @@ def srm_data_pull_flow():
             settings.AIRTABLE_BASE, settings.AIRTABLE_SERVICE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY
         ),
         DF.update_package(name='SRM Data'),
+        DF.checkpoint('srm_raw_airtable_buffer'),
         helpers.preprocess_responses(validate=True),
         helpers.preprocess_situations(validate=True),
         helpers.preprocess_services(validate=True),
@@ -306,6 +308,7 @@ def flat_branches_flow(branch_mapping):
                 'geometry': 'branch_geometry',
                 'location_accurate': 'branch_location_accurate',
                 'situations': 'branch_situations',
+                'last_modified': 'branch_last_modified',
             },
             resources=['flat_branches'],
         ),
@@ -326,6 +329,7 @@ def flat_branches_flow(branch_mapping):
                 'branch_geometry',
                 'branch_location_accurate',
                 'branch_situations',
+                'branch_last_modified',
                 'organization_key',
                 'organization_id',
                 'organization_name',
@@ -485,6 +489,7 @@ def flat_services_flow(branch_mapping):
                 'situation_ids': 'service_situations',
                 'response_ids': 'service_responses',
                 'boost': 'service_boost',
+                'last_modified': 'service_last_modified',
             },
             resources=['flat_services'],
         ),
@@ -506,6 +511,7 @@ def flat_services_flow(branch_mapping):
                 'data_sources',
                 'branch_key',
                 'service_boost',
+                'service_last_modified',
             ],
             resources=['flat_services'],
         ),
@@ -513,9 +519,16 @@ def flat_services_flow(branch_mapping):
         DF.dump_to_path(f'{settings.DATA_DUMP_DIR}/flat_services'),
     )
 
-
 def flat_table_flow():
     """Produce a flat table to back our Data APIs."""
+
+    seen = set()
+    def unique_service_branch(row):
+        key = (row['service_id'], row['branch_id'])
+        if key in seen:
+            return False
+        seen.add(key)
+        return True
 
     return DF.Flow(
         DF.load(
@@ -566,6 +579,7 @@ def flat_table_flow():
         DF.add_field(
             'branch_short_name', 'string', helpers.calculate_branch_short_name, resources=['flat_table']
         ),
+        DF.filter_rows(unique_service_branch, resources=['flat_table']),  # <- deduplication
         DF.set_primary_key(
             ['service_id', 'branch_id'],
             resources=['flat_table'],
@@ -618,6 +632,8 @@ def flat_table_flow():
                 'branch_geometry',
                 'branch_location_accurate',
                 'branch_situations',
+                'branch_last_modified',
+                'service_last_modified',
                 'national_service',
             ],
             resources=['flat_table'],
@@ -764,8 +780,18 @@ def card_data_flow():
         DF.add_field('situation_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['situation_ids']), resources=['card_data']),
         DF.add_field('response_ids_parents', 'array', lambda r: helpers.update_taxonomy_with_parents(r['response_ids']), resources=['card_data']),
         DF.delete_fields(['service_situations', 'branch_situations', 'organization_situations', 'service_responses', 'auto_tagged'], resources=['card_data']),
-        DF.add_field('situations_parents', 'array', lambda r: [situations[s] for s in r['situation_ids_parents']], resources=['card_data']),
-        DF.add_field('responses_parents', 'array', lambda r: [responses[s] for s in r['response_ids_parents']], resources=['card_data']),
+        DF.add_field(
+            'situations_parents',
+            'array',
+            lambda r: [situations.get(s) for s in r['situation_ids_parents'] if s in situations],
+            resources=['card_data']
+        ),
+        DF.add_field(
+            'responses_parents',
+            'array',
+            lambda r: [responses.get(s) for s in r['response_ids_parents'] if s in responses],
+            resources=['card_data']
+        ),
         DF.set_type('situation_ids', **KEYWORD_STRING, resources=['card_data']),
         DF.set_type('response_ids', **KEYWORD_STRING, resources=['card_data']),
         DF.set_type('situation_ids_parents', **KEYWORD_STRING, resources=['card_data']),
@@ -840,6 +866,7 @@ def operator(*_):
     logger.info('Starting Data Package Flow')
 
     shutil.rmtree(f'.checkpoints/{CHECKPOINT}', ignore_errors=True, onerror=None)
+    shutil.rmtree(f'.checkpoints/srm_raw_airtable_buffer', ignore_errors=True, onerror=None)
 
     branch_mapping = dict()
     srm_data_pull_flow().process()

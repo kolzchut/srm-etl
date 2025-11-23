@@ -45,3 +45,8 @@ ITEM_TYPE_STRING = {'es:itemType': 'string'}
 ITEM_TYPE_NUMBER = {'es:itemType': 'number'}
 AUTOCOMPLETE_STRING = {'es:autocomplete': True}
 NO_SCHEMA = {}
+
+LAST_MODIFIED_DATE = {
+    'es:itemType': 'date',
+    'es:format': 'strict_date_optional_time||epoch_millis'
+}
