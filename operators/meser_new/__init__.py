@@ -1,5 +1,7 @@
 from operators.meser_new.local_authorities import handle_local_authorities
 from operators.meser_new.update_service import update_airtable_services_from_df
+from operators.meser_new.utilities.get_branches_actual_id import get_branches_actual_id
+from operators.meser_new.utilities.get_services_actual_id import get_services_actual_id
 from srm_tools.hash import hasher
 from openlocationcode import openlocationcode as olc
 from extract.extract_data_from_airtable import load_airtable_as_dataframe
@@ -73,7 +75,7 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
 
     # Create full 'address' field like DataFlows
     df['address'] = df.apply(
-        lambda r: '-'.join(filter(None, [r['Adrees'], r['City_Name']])).replace(' - ', '-'),
+        lambda r: ' '.join(filter(None, [r['Adrees'], r['City_Name']])).replace(' - ', '-'),
         axis=1
     )
 
@@ -97,7 +99,8 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
     )
 
     # 4. Combine duplicates (same service_name + phone + address + organization_id + Owner_Code_Descr)
-    grouped = df.groupby(['service_name', 'phone_numbers', 'address', 'organization_id','service_id' ], dropna=False).agg({
+    grouped = df.groupby(['service_name', 'phone_numbers', 'address', 'organization_id'], dropna=False).agg({
+        'service_id': 'first',
         'branch_id': 'first',
         'branch_name': 'first',
         'meser_id': 'first',
@@ -105,6 +108,9 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
         'City_Name': 'first',
         'tagging': lambda x: flatten_and_deduplicate_list_of_lists(x)
     }).reset_index()
+
+    grouped = get_branches_actual_id(grouped)
+    grouped = get_services_actual_id(grouped)
 
     # 5. pluscode from first available GisX/GisY in the group
     grouped['pluscode'] = df.groupby(['service_name', 'phone_numbers', 'address', 'organization_id'])[['GisY','GisX']].first().apply(
