@@ -28,8 +28,8 @@ def update_airtable_branches_from_df(df: pd.DataFrame) -> int:
     # Map organization IDs to Airtable record IDs and merge with existing ones
     df = get_foreign_key_by_field(
         df=df,
-        current_table="BranchesTest",
-        source_table="OrganizationsTest",
+        current_table=settings.AIRTABLE_BRANCH_TABLE,
+        source_table=settings.AIRTABLE_ORGANIZATION_TABLE,
         base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
         base_field="organization_id",
         target_field="organization",
@@ -47,7 +47,7 @@ def update_airtable_branches_from_df(df: pd.DataFrame) -> int:
 
     # Enrich fields
     df['source'] = 'meser'
-    trigger_status_check(df=df, table_name='BranchesTest', base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
+    trigger_status_check(df=df, table_name=settings.AIRTABLE_BRANCH_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE', only_from_source='meser', df_key_field='branch_id', batch_size=50)
     df['status'] = 'ACTIVE'
 
@@ -61,7 +61,7 @@ def update_airtable_branches_from_df(df: pd.DataFrame) -> int:
     # Upsert to Airtable
     return update_if_exists_if_not_create(
         df=df_prepared,
-        table_name="BranchesTest",
+        table_name=settings.AIRTABLE_BRANCH_TABLE,
         base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
         airtable_key=airtable_key
     )

@@ -7,7 +7,7 @@ from utilities.update import prepare_airtable_dataframe
 
 def filter_records_that_exists_in_organization_table(df):
     all_organizations_from_table = load_airtable_as_dataframe(
-        table_name='OrganizationsTest',
+        table_name=settings.AIRTABLE_ORGANIZATION_TABLE,
         base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
         view=settings.AIRTABLE_VIEW,
         api_key=settings.AIRTABLE_API_KEY
@@ -32,10 +32,10 @@ def update_organization(df):
     df = rename_dataframe(df)
     df['id'] = df['id'].astype(str)
     fields_to_update = ["id", "name", "source", "status"]
-    trigger_status_check(df=df, table_name='OrganizationsTest', base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
+    trigger_status_check(df=df, table_name=settings.AIRTABLE_ORGANIZATION_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE',
                          only_from_source='mol_daycare', df_key_field='id', batch_size=50)
     # df =filter_records_that_exists_in_organization_table(df)
     prepare_df = prepare_airtable_dataframe(df=df, key_field="id",airtable_key="id",fields_to_update=fields_to_update)
-    modified = update_if_exists_if_not_create(df=prepare_df, table_name="OrganizationsTest", base_id=settings.AIRTABLE_DATA_IMPORT_BASE, airtable_key="id")
+    modified = update_if_exists_if_not_create(df=prepare_df, table_name=settings.AIRTABLE_ORGANIZATION_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE, airtable_key="id")
     return modified

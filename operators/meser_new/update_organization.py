@@ -22,7 +22,7 @@ def update_airtable_organizations_from_df(df: pd.DataFrame) -> int:
 
     df['source'] = 'meser'
     ### Setting all organizations to inactive if they are not in the current df
-    trigger_status_check(df=df, table_name='OrganizationsTest', base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
+    trigger_status_check(df=df, table_name=settings.AIRTABLE_ORGANIZATION_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE', only_from_source='meser', df_key_field='organization_id', batch_size=50)
     df['status'] = 'ACTIVE'
     df = clean_fields_for_organization_airtable(df)
@@ -39,7 +39,7 @@ def update_airtable_organizations_from_df(df: pd.DataFrame) -> int:
 
     return update_if_exists_if_not_create(
         df=df_prepared,
-        table_name="OrganizationsTest",
+        table_name=settings.AIRTABLE_ORGANIZATION_TABLE,
         base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
         airtable_key=airtable_key
     )

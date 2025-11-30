@@ -42,7 +42,7 @@ def update_service():
     df = pd.DataFrame(columns=fields_to_update)
     df = add_static_records_to_df(df)
 
-    trigger_status_check(df=df, table_name='OrganizationsTest', base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
+    trigger_status_check(df=df, table_name=settings.AIRTABLE_ORGANIZATION_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE',
                          only_from_source='mol_daycare', df_key_field='id', batch_size=50)
 
@@ -52,6 +52,6 @@ def update_service():
         print("No service records to update.")
         return 0
 
-    modified = update_if_exists_if_not_create(df=df_prepared,table_name="ServicesTest", base_id=settings.AIRTABLE_DATA_IMPORT_BASE, airtable_key='id')
+    modified = update_if_exists_if_not_create(df=df_prepared,table_name=settings.AIRTABLE_SERVICE_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE, airtable_key='id')
     return modified
 

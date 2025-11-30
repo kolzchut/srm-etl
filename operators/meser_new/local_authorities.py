@@ -16,7 +16,7 @@ def set_up_organizations(df: pd.DataFrame) -> int:
     df = df.drop(columns=['counsil_short_name'])
     airtable_key = "id"
     df = prepare_airtable_dataframe(df=df, key_field=airtable_key, airtable_key=airtable_key, fields_to_update=["id", "name", "status", "kind", "urls","phone_numbers"])
-    return update_if_exists_if_not_create(df=df, table_name="OrganizationsTest",base_id=settings.AIRTABLE_DATA_IMPORT_BASE, airtable_key=airtable_key)
+    return update_if_exists_if_not_create(df=df, table_name=settings.AIRTABLE_ORGANIZATION_TABLE,base_id=settings.AIRTABLE_DATA_IMPORT_BASE, airtable_key=airtable_key)
 
 def set_up_local_authorities() -> pd.DataFrame:
     local_authorities_csv = csv.DictReader(open('static_data/local_authorities.csv', encoding='utf-8'))

@@ -51,8 +51,8 @@ def load_foreign_keys(df):
     df['organization_id'] = df['ח.פ. ארגון']
     df = get_foreign_key_by_field(
         df=df,
-        current_table="BranchesTest",
-        source_table="OrganizationsTest",
+        current_table=settings.AIRTABLE_BRANCH_TABLE,
+        source_table=settings.AIRTABLE_ORGANIZATION_TABLE,
         base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
         base_field="organization_id",
         target_field="organization",
@@ -60,8 +60,8 @@ def load_foreign_keys(df):
     )
     df = get_foreign_key_by_field(
         df=df,
-        current_table="BranchesTest",
-        source_table="ServicesTest",
+        current_table=settings.AIRTABLE_BRANCH_TABLE,
+        source_table=settings.AIRTABLE_SERVICE_TABLE,
         base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
         base_field="service_id_matcher",
         target_field="services",
@@ -78,7 +78,7 @@ def clean_fields(df, fields_to_update):
 def update_branch(df):
     df = transform_dataframe_to_branch(df)
     fields_to_update = ["source","location","address","phone_numbers","description","status","id", "organization", "services"]
-    trigger_status_check(df=df, table_name='BranchesTest', base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
+    trigger_status_check(df=df, table_name=settings.AIRTABLE_BRANCH_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE',
                          only_from_source='mol_daycare', df_key_field='id', batch_size=50)
     df = load_foreign_keys(df)
@@ -89,5 +89,5 @@ def update_branch(df):
 
     prepare_df = prepare_airtable_dataframe(df=df, fields_to_update=fields_to_update, key_field='id', airtable_key='id')
 
-    modified = update_if_exists_if_not_create(df=prepare_df,airtable_key='id',base_id=settings.AIRTABLE_DATA_IMPORT_BASE,table_name='BranchesTest',batch_size=50)
+    modified = update_if_exists_if_not_create(df=prepare_df,airtable_key='id',base_id=settings.AIRTABLE_DATA_IMPORT_BASE,table_name=settings.AIRTABLE_BRANCH_TABLE,batch_size=50)
     return modified

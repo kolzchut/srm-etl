@@ -23,15 +23,15 @@ def update_airtable_services_from_df(df: pd.DataFrame) -> int:
 
     df.rename(columns={'service_id': 'id', 'service_name': 'name'}, inplace=True)
     df = enrich_service_fields(df)
-    trigger_status_check(df=df, table_name='ServicesTest', base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
+    trigger_status_check(df=df, table_name=settings.AIRTABLE_SERVICE_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE', only_from_source='meser', df_key_field='id', batch_size=50)
 
 
     # Link branches and organizations
     df = get_foreign_key_by_field(
         df=df,
-        current_table="ServicesTest",
-        source_table="BranchesTest",
+        current_table=settings.AIRTABLE_SERVICE_TABLE,
+        source_table=settings.AIRTABLE_BRANCH_TABLE,
         base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
         base_field="branch_id",
         target_field="branches",
@@ -40,8 +40,8 @@ def update_airtable_services_from_df(df: pd.DataFrame) -> int:
 
     df = get_foreign_key_by_field(
         df=df,
-        current_table="ServicesTest",
-        source_table="OrganizationsTest",
+        current_table=settings.AIRTABLE_SERVICE_TABLE,
+        source_table=settings.AIRTABLE_ORGANIZATION_TABLE,
         base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
         base_field="organization_id",
         target_field="organizations",
@@ -60,7 +60,7 @@ def update_airtable_services_from_df(df: pd.DataFrame) -> int:
 
     return update_if_exists_if_not_create(
         df=df_prepared,
-        table_name="ServicesTest",
+        table_name=settings.AIRTABLE_SERVICE_TABLE,
         base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
         airtable_key=airtable_key
     )

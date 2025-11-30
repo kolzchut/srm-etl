@@ -15,7 +15,7 @@ def get_services_actual_id(df: pd.DataFrame) -> pd.DataFrame:
        we use the *existing* ID instead of the newly calculated one.
 
        The process involves:
-       1. **Service Lookup Map**: Loads the 'ServicesTest' table and builds a dictionary mapping
+       1. **Service Lookup Map**: Loads the settings.AIRTABLE_SERVICE_TABLE table and builds a dictionary mapping
           `(Service_Name, Address)` -> `Existing_Service_ID`.
           - Only considers IDs starting with 'meser'.
        2. **Reconciliation**: Iterates through the input DataFrame. If a row's Service Name and Address
@@ -33,11 +33,11 @@ def get_services_actual_id(df: pd.DataFrame) -> pd.DataFrame:
 
     try:
         services_df = load_airtable_as_dataframe(
-            table_name="ServicesTest",
+            table_name=settings.AIRTABLE_SERVICE_TABLE,
             base_id=settings.AIRTABLE_DATA_IMPORT_BASE
         )
     except Exception as e:
-        logger.error(f"Failed to load ServicesTest table for reconciliation: {e}")
+        logger.error(f"Failed to load settings.AIRTABLE_SERVICE_TABLE table for reconciliation: {e}")
         return df
 
     existing_services_map = {}

@@ -36,7 +36,7 @@ def get_branches_actual_id(df: pd.DataFrame) -> pd.DataFrame:
 
     try:
         orgs_df = load_airtable_as_dataframe(
-            table_name="OrganizationsTest",
+            table_name=settings.AIRTABLE_ORGANIZATION_TABLE,
             base_id=settings.AIRTABLE_DATA_IMPORT_BASE
         )
         id_resolver = pd.Series(
@@ -50,7 +50,7 @@ def get_branches_actual_id(df: pd.DataFrame) -> pd.DataFrame:
 
     try:
         branches_df = load_airtable_as_dataframe(
-            table_name="BranchesTest",
+            table_name=settings.AIRTABLE_BRANCH_TABLE,
             base_id=settings.AIRTABLE_DATA_IMPORT_BASE
         )
     except Exception as e:
