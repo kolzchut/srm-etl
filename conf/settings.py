@@ -29,7 +29,7 @@ GOVMAP_GEOCODE_API = 'https://ags.govmap.gov.il/Api/Controllers/GovmapApi/Geocod
 AIRTABLE_BASE = get_env('ETL_AIRTABLE_BASE')
 AIRTABLE_ALTERNATE_BASE = get_env('ETL_AIRTABLE_ALTERNATE_BASE')
 AIRTABLE_DATAENTRY_BASE = get_env('ETL_AIRTABLE_DATAENTRY_BASE')
-AIRTABLE_DATA_IMPORT_BASE = "app9mirupJu8LnLHo" #get_env('ETL_AIRTABLE_DATA_IMPORT_BASE') ## TODO: change to env var
+AIRTABLE_DATA_IMPORT_BASE = get_env('ETL_AIRTABLE_DATA_IMPORT_BASE')
 
 AIRTABLE_VIEW = 'Grid view'
 AIRTABLE_LOCATION_TABLE = 'Locations'
@@ -87,6 +87,3 @@ EMAIL_NOTIFIER_PASSWORD = get_env('EMAIL_NOTIFIER_PASSWORD')
 EMAIL_NOTIFIER_RECIPIENT_LIST = get_env('EMAIL_NOTIFIER_RECIPIENT_LIST',[],strategy=s.ARRAY)
 SMTP_SERVER = 'smtp.gmail.com'
 SMTP_PORT = 587
-
-CHILDCARE_API_URL = "https://parents.education.gov.il/prhnet/Api/MeonotController/GetExcel?0=%%CURRENT_YEAR%%&1=0&2=0&3=0&4=0&5=0&csrt=6690085414305040436"
-DAYCARE_API_URL = "https://data.gov.il/api/3/action/datastore_search?resource_id=0f67a263-d9f4-44d4-9816-c96e9dfbc7e5"

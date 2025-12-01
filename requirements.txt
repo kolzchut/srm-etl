@@ -1,5 +1,3 @@
-chardet==5.1.0
-pandas==2.3.0
 dataflows==0.5.5
 dataflows-airtable==0.2.5
 dataflows-elasticsearch==0.1.1
@@ -17,5 +15,3 @@ python-Levenshtein==0.26.1
 psycopg2-binary==2.9.9
 elasticsearch==7.13.4
 pyairtable==3.1.1
-lxml==4.9.3
-
