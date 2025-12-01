@@ -54,4 +54,3 @@ def update_service():
 
     modified = update_if_exists_if_not_create(df=df_prepared,table_name=settings.AIRTABLE_SERVICE_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE, airtable_key='id')
     return modified
-

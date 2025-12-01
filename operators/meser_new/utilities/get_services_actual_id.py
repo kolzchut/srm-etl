@@ -80,4 +80,3 @@ def get_services_actual_id(df: pd.DataFrame) -> pd.DataFrame:
 
     logger.info(f"Service ID Reconciliation: Updated {updated_count} service IDs to match existing Airtable records.")
     return df
-

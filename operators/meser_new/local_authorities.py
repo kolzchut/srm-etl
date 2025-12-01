@@ -58,6 +58,4 @@ def handle_local_authorities(df_from_meser: pd.DataFrame) -> pd.DataFrame:
 
     except Exception as e:
         logger.error(f"Error setting up local authorities: {e}")
-        raise
-
-
+        raise e

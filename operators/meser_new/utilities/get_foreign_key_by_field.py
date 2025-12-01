@@ -109,4 +109,3 @@ def get_foreign_key_by_field (
     df = merge_foreign_key(df=df, existing_map=existing_branches_map, airtable_key=airtable_key,
                            field_name=target_field)
     return df
-

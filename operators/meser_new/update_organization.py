@@ -43,6 +43,3 @@ def update_airtable_organizations_from_df(df: pd.DataFrame) -> int:
         base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
         airtable_key=airtable_key
     )
-
-
-
