@@ -38,19 +38,10 @@ def update_airtable_services_from_df(df: pd.DataFrame) -> int:
         airtable_key=airtable_key
     )
 
-    df = get_foreign_key_by_field(
-        df=df,
-        current_table=settings.AIRTABLE_SERVICE_TABLE,
-        source_table=settings.AIRTABLE_ORGANIZATION_TABLE,
-        base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
-        base_field="organization_id",
-        target_field="organizations",
-        airtable_key=airtable_key
-    )
 
     fields_to_update = [
         'id', 'name', 'data_sources', 'situations', 'responses',
-        'branches', 'organizations', 'meser_id', 'source', 'status'
+        'branches', 'meser_id', 'source', 'status'
     ]
     df_prepared = prepare_airtable_dataframe(df, key_field, fields_to_update, airtable_key)
 

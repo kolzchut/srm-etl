@@ -81,9 +81,10 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
 
     # phone_numbers
     df['phone_numbers'] = df['Telephone'].apply(
-        lambda x: None if pd.isna(x) or str(x).strip() == '' else ('0' + str(x) if str(x)[0] != '0' else str(x))
+        lambda x: ""
+        if pd.isna(x) or str(x).strip() in ['', '0']
+        else ('0' + str(x) if str(x)[0] != '0' else str(x))
     )
-
     # tagging array
     df['tagging'] = df[['Type_Descr', 'Target_Population_Descr', 'Second_Classific', 'Gender_Descr', 'Head_Department']].apply(
         lambda row: [v for v in row if v not in [None, 'None', '']], axis=1
