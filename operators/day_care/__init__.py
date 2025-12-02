@@ -6,7 +6,13 @@ from srm_tools.error_notifier import invoke_on
 
 def remove_unnecessary_records_dataframe(df):
     df = df[df["תיאור סוג מעון"].isin(["משפחתון", "צהרון"])]
-    df = df[df["מספר טלפון"].astype(str).str.len().between(8, 11)]
+    df.loc[:, "מספר טלפון"] = (
+        df["מספר טלפון"]
+        .astype(str)
+        .str.replace(r"\D", "", regex=True)
+    )
+    df = df[df["מספר טלפון"].str.len().between(8, 11)]
+    df = df.drop(columns=['תפוסת בוגרים', 'תפוסת פעוטות', 'תפוסת תינוקות'])
     return df
 
 def fix_records(df):
@@ -20,9 +26,10 @@ def replace_name(name):
         return name.replace("מ. אזורית", "מועצה אזורית") \
                    .replace("מ.א.", "מועצה אזורית") \
                    .replace("מ.א", "מועצה אזורית")
-    elif name.startswith(("מ. מקומית", "מ.מקומית")):
+    elif name.startswith(("מ. מקומית", "מ.מקומית", "מ.מ.")):
         return name.replace("מ. מקומית", "מועצה מקומית") \
-                   .replace("מ.מקומית", "מועצה מקומית")
+                   .replace("מ.מקומית", "מועצה מקומית") \
+                   .replace("מ.מ.", "מועצה מקומית")
     return name
 
 def enrich_records(df):

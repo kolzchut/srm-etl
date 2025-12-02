@@ -32,18 +32,25 @@ def transform_dataframe_to_branch(df):
     })
     df['id'] = df.apply(lambda row: 'mol_daycare-' + hasher(str(row['סמל מעון']) + str(row['ח.פ. ארגון'])),axis=1)
     df['source'] = 'mol_daycare'
-    make_address = lambda x: f'{x.get("שם עיר", "")}, {x.get("שם רחוב", "")} {x.get("מספר בית", "")}'.strip(", ")
+    make_address = lambda x: ' '.join(str(x.get(field, '')).strip() for field in ["שם עיר", "שם רחוב", "מספר בית"] if x.get(field))
     df['location'] = df.apply(make_address, axis=1)
     df['address'] = df.apply(make_address, axis=1)
-    df['description'] = df.apply(lambda x: f'{x.get("שם מנהל", "")} \n {x.get("סמל מעון", "")}')
+    df['description'] = df.apply(lambda row: f"{str(row.get('שם מנהל', '') or '')} \n {str(row.get('סמל מעון', '') or '')}",axis=1)
     df['status'] = 'ACTIVE'
-
     df['service_id_matcher'] = df.apply(
         lambda x: "mol_daycare-1" if x['תיאור סוג מעון'] == 'משפחתון' else
         "mol_daycare-2" if x['תיאור סוג מעון'] == 'צהרון' else
         "mol_daycare-0",
         axis=1
     )
+
+    if 'שם ארגון' in df.columns:
+        council_mask = (df['שם ארגון'].astype(str).str.contains("מועצה מקומית|מועצה אזורית", na=False))
+        df['kind'] = 'רשות מקומית'
+        df.loc[~council_mask, 'kind'] = 'חברה פרטית'
+    else:
+        df['kind'] = 'חברה פרטית'
+
 
     return df
 
@@ -77,7 +84,7 @@ def clean_fields(df, fields_to_update):
 
 def update_branch(df):
     df = transform_dataframe_to_branch(df)
-    fields_to_update = ["source","location","address","phone_numbers","description","status","id", "organization", "services"]
+    fields_to_update = ["source","location","address","phone_numbers","description","status","id", "organization", "services", "name", "kind"]
     trigger_status_check(df=df, table_name=settings.AIRTABLE_BRANCH_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE',
                          only_from_source='mol_daycare', df_key_field='id', batch_size=50)

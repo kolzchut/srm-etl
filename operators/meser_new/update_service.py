@@ -21,7 +21,7 @@ def update_airtable_services_from_df(df: pd.DataFrame) -> int:
     key_field = 'id'
     airtable_key = 'id'
 
-    df.rename(columns={'service_id': 'id', 'service_name': 'name'}, inplace=True)
+    df.rename(columns={'service_id': 'id', 'service_name': 'name', "meser_id": "id_in_source"}, inplace=True)
     df = enrich_service_fields(df)
     trigger_status_check(df=df, table_name=settings.AIRTABLE_SERVICE_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE', only_from_source='meser', df_key_field='id', batch_size=50)
@@ -41,7 +41,7 @@ def update_airtable_services_from_df(df: pd.DataFrame) -> int:
 
     fields_to_update = [
         'id', 'name', 'data_sources', 'situations', 'responses',
-        'branches', 'meser_id', 'source', 'status'
+        'branches', 'id_in_source', 'source', 'status'
     ]
     df_prepared = prepare_airtable_dataframe(df, key_field, fields_to_update, airtable_key)
 
