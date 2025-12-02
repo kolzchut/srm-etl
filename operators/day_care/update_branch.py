@@ -43,15 +43,6 @@ def transform_dataframe_to_branch(df):
         "mol_daycare-0",
         axis=1
     )
-
-    if 'שם ארגון' in df.columns:
-        council_mask = (df['שם ארגון'].astype(str).str.contains("מועצה מקומית|מועצה אזורית", na=False))
-        df['kind'] = 'רשות מקומית'
-        df.loc[~council_mask, 'kind'] = 'חברה פרטית'
-    else:
-        df['kind'] = 'חברה פרטית'
-
-
     return df
 
 def load_foreign_keys(df):
