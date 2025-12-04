@@ -77,7 +77,7 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
     df['address'] = df.apply(
         lambda r: ' '.join(filter(None, [r['Adrees'], r['City_Name']])).replace(' - ', '-'),
         axis=1
-    )
+    ).str.strip()
 
     # phone_numbers
     df['phone_numbers'] = df['Telephone'].apply(
@@ -110,8 +110,6 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
         'tagging': lambda x: flatten_and_deduplicate_list_of_lists(x)
     }).reset_index()
 
-    grouped = get_branches_actual_id(grouped)
-    grouped = get_services_actual_id(grouped)
 
     # 5. pluscode from first available GisX/GisY in the group
     grouped['pluscode'] = df.groupby(['service_name', 'phone_numbers', 'address', 'organization_id'])[['GisY','GisX']].first().apply(
@@ -131,6 +129,9 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
             safe_list(tags.get(t.strip(), {}).get('situation_ids')) for t in tags_list
         )
     )
+
+    grouped = get_branches_actual_id(grouped)
+    grouped = get_services_actual_id(grouped)
 
     return grouped
 
@@ -192,12 +193,17 @@ def run(*_):
     print("Transforming Meser data...")
     # 5. Transform the sanitized dataframe
     transformed_df = transform_meser_dataframe(df, tags)
-    transformed_df_local, transformed_df_non_local = split_by_local_authority(transformed_df)
+    ### COMMENTED TO DISABLE LOCAL AUTHORITY SPECIAL HANDLING - DIFFERENT ISSUE - ACTUALLY SHOULD BE IN PRODUCTION ###
+    # transformed_df_local, transformed_df_non_local = split_by_local_authority(transformed_df)
+    #
+    # print("Handling local authorities...")
+    # # 6. Handle local authorities separately
+    # transformed_df_local = handle_local_authorities(transformed_df_local)
+    # transformed_df = pd.concat([transformed_df_local, transformed_df_non_local], ignore_index=True)
 
-    print("Handling local authorities...")
-    # 6. Handle local authorities separately
-    transformed_df_local = handle_local_authorities(transformed_df_local)
-    transformed_df = pd.concat([transformed_df_local, transformed_df_non_local], ignore_index=True)
+    ## Remove that Line after fixing local authorities issue ##
+    transformed_df = transformed_df[transformed_df["organization_id"].str.len().between(5, 15)]
+    ### END COMMENTED TO DISABLE LOCAL AUTHORITY SPECIAL HANDLING - DIFFERENT ISSUE - ACTUALLY SHOULD BE IN PRODUCTION ###
 
     print("Updating Airtable")
     modified_organizations = update_airtable_organizations_from_df(transformed_df.copy())

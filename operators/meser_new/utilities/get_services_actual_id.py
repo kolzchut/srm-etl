@@ -11,20 +11,20 @@ def get_services_actual_id(df: pd.DataFrame) -> pd.DataFrame:
 
        Since `service_id` is a hash generated from multiple fields, slight changes
        in data formatting can result in a new hash for the same service.
-       This function ensures that if a service already exists in Airtable (matching Service Name + Address),
+       This function ensures that if a service already exists in Airtable (matching Service Name + situations),
        we use the *existing* ID instead of the newly calculated one.
 
        The process involves:
        1. **Service Lookup Map**: Loads the settings.AIRTABLE_SERVICE_TABLE table and builds a dictionary mapping
-          `(Service_Name, Address)` -> `Existing_Service_ID`.
+          `(Service_Name, situations)` -> `Existing_Service_ID`.
           - Only considers IDs starting with 'meser'.
-       2. **Reconciliation**: Iterates through the input DataFrame. If a row's Service Name and Address
+       2. **Reconciliation**: Iterates through the input DataFrame. If a row's Service Name and situations
           match an entry in the lookup map, the local `service_id` is overwritten with the
           existing Airtable ID.
 
        Args:
            df (pd.DataFrame): The local DataFrame containing calculated 'service_id',
-                              'service_name', and 'address'.
+                              'service_name', and 'situations'.
 
        Returns:
            pd.DataFrame: The DataFrame with 'service_id' updated to match Airtable where applicable.
@@ -48,12 +48,18 @@ def get_services_actual_id(df: pd.DataFrame) -> pd.DataFrame:
             continue
 
         service_name = str(row.get('name', '')).strip()
-        address = str(row.get('address', '')).strip()
+        situations_raw = row.get('situations', [])
 
-        if not service_name or not address:
+        # Handle situations as array, normalize to sorted tuple for consistent matching
+        if isinstance(situations_raw, list):
+            situations = tuple(sorted([str(s).strip() for s in situations_raw if s]))
+        else:
+            situations = tuple()
+
+        if not service_name or not situations:
             continue
 
-        key = (service_name, address)
+        key = (service_name, situations)
         existing_services_map[key] = airtable_hash
 
     logger.info(f"Built lookup map with {len(existing_services_map)} valid 'meser' services.")
@@ -65,9 +71,15 @@ def get_services_actual_id(df: pd.DataFrame) -> pd.DataFrame:
         current_id = row['service_id']
 
         df_service_name = str(row['service_name']).strip() if pd.notna(row['service_name']) else ''
-        df_addr = str(row['address']).strip() if pd.notna(row['address']) else ''
 
-        found_id = existing_services_map.get((df_service_name, df_addr))
+        # Handle situations as array, normalize to sorted tuple for consistent matching
+        situations_raw = row['situations']
+        if isinstance(situations_raw, list):
+            df_situations = tuple(sorted([str(s).strip() for s in situations_raw if s]))
+        else:
+            df_situations = tuple()
+
+        found_id = existing_services_map.get((df_service_name, df_situations))
 
         if found_id and found_id != current_id:
             updated_count += 1
