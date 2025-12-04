@@ -48,6 +48,19 @@ def safe_list(lst):
     return []
 
 
+def create_address_clean(adrees, city_name):
+    def clean(val):
+        s = str(val).strip()
+        return s if pd.notna(val) and s.lower() not in ['none', 'nan', ''] else None
+
+    addr, city = clean(adrees), clean(city_name)
+
+    if addr and city and addr.lower() == city.lower():
+        addr = None
+
+    return ' '.join(filter(None, [addr, city]))
+
+
 
 def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
     """
@@ -73,9 +86,9 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
     df['Adrees'] = df['Adrees'].astype(str).str.replace('999', '', regex=False).str.strip()
     df.loc[df['Adrees'] == df['City_Name'], 'Adrees'] = None
 
-    # Create full 'address' field like DataFlows
+    # Create full 'address' field, avoiding duplicates when adrees equals city_name
     df['address'] = df.apply(
-        lambda r: ' '.join(filter(None, [r['Adrees'], r['City_Name']])).replace(' - ', '-'),
+        lambda r: create_address_clean(r['Adrees'], r['City_Name']),
         axis=1
     ).str.strip()
 

@@ -11,16 +11,16 @@ def get_services_actual_id(df: pd.DataFrame) -> pd.DataFrame:
 
        Since `service_id` is a hash generated from multiple fields, slight changes
        in data formatting can result in a new hash for the same service.
-       This function ensures that if a service already exists in Airtable (matching Service Name + situations),
+       This function ensures that if a service already exists in Airtable (matching Service Name + at least one situation),
        we use the *existing* ID instead of the newly calculated one.
 
        The process involves:
        1. **Service Lookup Map**: Loads the settings.AIRTABLE_SERVICE_TABLE table and builds a dictionary mapping
-          `(Service_Name, situations)` -> `Existing_Service_ID`.
+          `Service_Name` -> list of `(situations_set, Existing_Service_ID)`.
           - Only considers IDs starting with 'meser'.
-       2. **Reconciliation**: Iterates through the input DataFrame. If a row's Service Name and situations
-          match an entry in the lookup map, the local `service_id` is overwritten with the
-          existing Airtable ID.
+       2. **Reconciliation**: Iterates through the input DataFrame. If a row's Service Name matches
+          and at least one situation overlaps with an entry in the lookup map, the local `service_id`
+          is overwritten with the existing Airtable ID.
 
        Args:
            df (pd.DataFrame): The local DataFrame containing calculated 'service_id',
@@ -40,6 +40,7 @@ def get_services_actual_id(df: pd.DataFrame) -> pd.DataFrame:
         logger.error(f"Failed to load settings.AIRTABLE_SERVICE_TABLE table for reconciliation: {e}")
         return df
 
+    # Map: service_name -> list of (situations_set, service_id)
     existing_services_map = {}
 
     for _, row in services_df.iterrows():
@@ -50,19 +51,21 @@ def get_services_actual_id(df: pd.DataFrame) -> pd.DataFrame:
         service_name = str(row.get('name', '')).strip()
         situations_raw = row.get('situations', [])
 
-        # Handle situations as array, normalize to sorted tuple for consistent matching
+        # Handle situations as array, normalize to set for intersection checking
         if isinstance(situations_raw, list):
-            situations = tuple(sorted([str(s).strip() for s in situations_raw if s]))
+            situations = set([str(s).strip() for s in situations_raw if s])
         else:
-            situations = tuple()
+            situations = set()
 
         if not service_name or not situations:
             continue
 
-        key = (service_name, situations)
-        existing_services_map[key] = airtable_hash
+        if service_name not in existing_services_map:
+            existing_services_map[service_name] = []
 
-    logger.info(f"Built lookup map with {len(existing_services_map)} valid 'meser' services.")
+        existing_services_map[service_name].append((situations, airtable_hash))
+
+    logger.info(f"Built lookup map with {sum(len(v) for v in existing_services_map.values())} valid 'meser' services.")
 
     updated_count = 0
 
@@ -72,18 +75,19 @@ def get_services_actual_id(df: pd.DataFrame) -> pd.DataFrame:
 
         df_service_name = str(row['service_name']).strip() if pd.notna(row['service_name']) else ''
 
-        # Handle situations as array, normalize to sorted tuple for consistent matching
         situations_raw = row['situations']
         if isinstance(situations_raw, list):
-            df_situations = tuple(sorted([str(s).strip() for s in situations_raw if s]))
+            df_situations = set([str(s).strip() for s in situations_raw if s])
         else:
-            df_situations = tuple()
+            df_situations = set()
 
-        found_id = existing_services_map.get((df_service_name, df_situations))
-
-        if found_id and found_id != current_id:
-            updated_count += 1
-            return found_id
+        if df_service_name in existing_services_map:
+            for existing_situations, existing_id in existing_services_map[df_service_name]:
+                if df_situations & existing_situations:
+                    if existing_id != current_id:
+                        updated_count += 1
+                        return existing_id
+                    break
 
         return current_id
 

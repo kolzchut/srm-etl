@@ -71,11 +71,13 @@ def loading_and_filtering_airtable_tables(original_base: str, test_base: str, ta
 
 def compare_and_export_differences(dict_of_matching_tables: dict):
     """
-    Compares tables based on the 'id' column and exports differences to CSV.
+    1. Identifies records that do not match (exist in one but not the other) and exports them to *_unmatching_records.csv
+    2. For records that DO match (exist in both), compares fields and exports differences to *_differences.csv
     """
     print("\nStarting analysis of differences...")
 
     for table_name, data in dict_of_matching_tables.items():
+        print(f"\nProcessing {table_name}...")
         df_orig = data["original"]
         df_test = data["test"]
 
@@ -89,58 +91,82 @@ def compare_and_export_differences(dict_of_matching_tables: dict):
         df_orig = df_orig.drop_duplicates(subset=['id']).set_index('id')
         df_test = df_test.drop_duplicates(subset=['id']).set_index('id')
 
-        all_ids = set(df_orig.index).union(set(df_test.index))
-        differences = []
+        ids_orig = set(df_orig.index)
+        ids_test = set(df_test.index)
 
-        for uid in all_ids:
-            in_orig = uid in df_orig.index
-            in_test = uid in df_test.index
+        # --- STEP 1: Handle Unmatching Records ---
+        only_in_orig = ids_orig - ids_test
+        only_in_test = ids_test - ids_orig
 
-            if in_orig and not in_test:
-                # Record is only in Original - list all its values
-                row = df_orig.loc[uid]
-                for col in df_orig.columns:
-                    differences.append({
-                        "id": uid,
-                        "type": "Only in Original",
-                        "field": col,
-                        "original_value": row[col],
-                        "test_value": "Missing"
-                    })
-            elif not in_orig and in_test:
-                # Record is only in Test - list all its values
-                row = df_test.loc[uid]
-                for col in df_test.columns:
-                    differences.append({
-                        "id": uid,
-                        "type": "Only in Test",
-                        "field": col,
-                        "original_value": "Missing",
-                        "test_value": row[col]
-                    })
-            else:
-                # Exists in both, check fields
-                row_orig = df_orig.loc[uid]
-                row_test = df_test.loc[uid]
+        unmatching_records = []
 
-                # Only compare columns present in both filtered views
-                common_columns = set(df_orig.columns).intersection(set(df_test.columns))
+        # Process records Only in Original
+        if only_in_orig:
+            # Select rows, reset index to get 'id' back as column
+            df_unmatch_orig = df_orig.loc[list(only_in_orig)].reset_index()
+            df_unmatch_orig['mismatch_type'] = 'Only in Original'
+            unmatching_records.append(df_unmatch_orig)
+
+        # Process records Only in Test
+        if only_in_test:
+            df_unmatch_test = df_test.loc[list(only_in_test)].reset_index()
+            df_unmatch_test['mismatch_type'] = 'Only in Test'
+            unmatching_records.append(df_unmatch_test)
+
+        # Export Unmatching CSV
+        if unmatching_records:
+            df_unmatching = pd.concat(unmatching_records, ignore_index=True)
+
+            # Reorder columns to put 'id' and 'mismatch_type' at the start
+            cols = ['id', 'mismatch_type'] + [c for c in df_unmatching.columns if c not in ['id', 'mismatch_type']]
+            df_unmatching = df_unmatching[cols]
+
+            unmatch_filename = f"{table_name.replace(' ', '_')}_unmatching_records.csv"
+            df_unmatching.to_csv(unmatch_filename, index=False, encoding='utf-8-sig')
+            print(f"-> Found {len(df_unmatching)} unmatching records. Exported to {unmatch_filename}")
+        else:
+            print(f"-> All records match by ID (no unmatching records).")
+
+        # --- STEP 2: Compare Fields for Common Records ---
+        common_ids = ids_orig.intersection(ids_test)
+        field_differences = []
+
+        if common_ids:
+            # Create subsets of only common IDs for faster iteration
+            df_orig_common = df_orig.loc[list(common_ids)]
+            df_test_common = df_test.loc[list(common_ids)]
+
+            common_columns = set(df_orig.columns).intersection(set(df_test.columns))
+
+            for uid in common_ids:
+                row_orig = df_orig_common.loc[uid]
+                row_test = df_test_common.loc[uid]
 
                 for col in common_columns:
                     val_orig = row_orig[col]
                     val_test = row_test[col]
 
-                    # Handle NaN comparison safely
                     is_diff = False
-                    if pd.isna(val_orig) and pd.isna(val_test):
-                        is_diff = False
-                    elif pd.isna(val_orig) != pd.isna(val_test):
-                        is_diff = True
-                    elif val_orig != val_test:
-                        is_diff = True
+
+                    # 1. Handle Lists (Airtable Linked Records/Multi-selects)
+                    if isinstance(val_orig, list) or isinstance(val_test, list):
+                        if type(val_orig) != type(val_test):
+                            is_diff = True
+                        else:
+                            # Both are lists. Compare directly.
+                            is_diff = val_orig != val_test
+
+                    # 2. Handle Scalars
+                    else:
+                        if pd.isna(val_orig) and pd.isna(val_test):
+                            is_diff = False
+                        elif pd.isna(val_orig) != pd.isna(val_test):
+                            is_diff = True
+                        elif val_orig != val_test:
+                            is_diff = True
 
                     if is_diff:
-                        differences.append({
+                        field_differences.append({
                             "id": uid,
                             "type": "Field Difference",
                             "field": col,
@@ -148,20 +174,20 @@ def compare_and_export_differences(dict_of_matching_tables: dict):
                             "test_value": val_test
                         })
 
-        if differences:
-            # Clean filename
-            filename = f"{table_name.replace(' ', '_')}_differences.csv"
-            pd.DataFrame(differences).to_csv(filename, index=False, encoding='utf-8-sig')
-            print(f"Found differences in {table_name}. Exported to {filename}")
+        # Export Differences CSV
+        if field_differences:
+            diff_filename = f"{table_name.replace(' ', '_')}_differences.csv"
+            pd.DataFrame(field_differences).to_csv(diff_filename, index=False, encoding='utf-8-sig')
+            print(f"-> Found {len(field_differences)} field differences in common records. Exported to {diff_filename}")
         else:
-            print(f"{table_name}: No differences found.")
+            print(f"-> No field differences found in common records.")
 
 
 def run(*_):
     print("Starting Meser data comparison test...")
 
     original_base = "appcmkagy4VbfIIC6"
-    test_base = "appOSY50gHa5M8Oex"
+    test_base = "appTjuGD3nw6VO1Km"
 
     tables_name_and_fields_to_compare = {
         settings.AIRTABLE_ORGANIZATION_TABLE: ['id', 'situations', 'phone_numbers'],
