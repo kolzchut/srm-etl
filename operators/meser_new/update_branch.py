@@ -17,12 +17,11 @@ def update_airtable_branches_from_df(df: pd.DataFrame) -> int:
     key_field = 'branch_id'
     airtable_key = 'id'
     fields_to_update = [
-        'branch_id', 'name', 'organization', 'address',
+        'branch_id', 'organization', 'address',
         'phone_numbers', 'source','status'
     ]
 
     # Prepare branch data
-    df['name'] = df['branch_name']
     df['organization'] = df['organization_id']
 
     # Map organization IDs to Airtable record IDs and merge with existing ones
@@ -39,7 +38,6 @@ def update_airtable_branches_from_df(df: pd.DataFrame) -> int:
     # Aggregate branches
     df = df.groupby('branch_id').agg({
         'organization': lambda x: list({oid for sublist in x for oid in sublist if oid}),
-        'name': 'first',
         'address': 'first',
         'phone_numbers': lambda x: ', '.join(
             [str(v) for v in x if pd.notna(v) and str(v).strip() not in ('', '0')])

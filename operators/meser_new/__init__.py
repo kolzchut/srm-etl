@@ -142,9 +142,9 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
             safe_list(tags.get(t.strip(), {}).get('situation_ids')) for t in tags_list
         )
     )
-
-    grouped = get_branches_actual_id(grouped)
-    grouped = get_services_actual_id(grouped)
+    # No need in them
+    # grouped = get_branches_actual_id(grouped)
+    # grouped = get_services_actual_id(grouped)
 
     return grouped
 
