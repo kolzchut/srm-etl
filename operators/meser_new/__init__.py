@@ -1,7 +1,7 @@
 from operators.meser_new.local_authorities import handle_local_authorities
 from operators.meser_new.update_service import update_airtable_services_from_df
-from operators.meser_new.utilities.get_branches_actual_id import get_branches_actual_id
-from operators.meser_new.utilities.get_services_actual_id import get_services_actual_id
+from operators.meser_new.utilities.set_branch_id import set_branch_id
+from operators.meser_new.utilities.set_service_id import set_service_id
 from srm_tools.hash import hasher
 from openlocationcode import openlocationcode as olc
 from extract.extract_data_from_airtable import load_airtable_as_dataframe
@@ -103,14 +103,8 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
         lambda row: [v for v in row if v not in [None, 'None', '']], axis=1
     )
 
-    # 2. branch_id = hash(address + organization_id)
-    df['branch_id'] = df.apply(lambda r: 'meser-' + hasher(r['address'], r['organization_id']), axis=1)
-
-    # 3. service_id = hash(service_name + phone + address + org_id + branch_id)
-    df['service_id'] = df.apply(
-        lambda r: 'meser-' + hasher(r['service_name'], r['phone_numbers'], r['address'], r['organization_id'], r['branch_id']),
-        axis=1
-    )
+    df = set_branch_id(df)
+    df = set_service_id(df)
 
     # 4. Combine duplicates (same service_name + phone + address + organization_id + Owner_Code_Descr)
     grouped = df.groupby(['service_name', 'phone_numbers', 'address', 'organization_id'], dropna=False).agg({
@@ -142,9 +136,6 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
             safe_list(tags.get(t.strip(), {}).get('situation_ids')) for t in tags_list
         )
     )
-    # No need in them
-    # grouped = get_branches_actual_id(grouped)
-    # grouped = get_services_actual_id(grouped)
 
     return grouped
 
