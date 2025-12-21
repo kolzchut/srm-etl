@@ -53,7 +53,11 @@ def update_airtable_records(
 
         airtable_rec_id = record_map.get(str(key_val).strip())
         if airtable_rec_id:
-            fields: Dict[str, Any] = {col: row[col] for col in df.columns if row.get(col) not in (None, '', 0, 'None')}
+            fields: Dict[str, Any] = {
+                col: row[col]
+                for col in df.columns
+                if col != key_field and row.get(col) not in (None, '', 0, 'None')
+            }
             updates.append({"id": airtable_rec_id, "fields": fields})
         else:
             not_found.add(str(key_val))

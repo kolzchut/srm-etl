@@ -187,7 +187,7 @@ def run(*_):
     print("Starting Meser data comparison test...")
 
     original_base = "appcmkagy4VbfIIC6"
-    test_base = "appdGUt9ruwdyU4tk"
+    test_base = "appzWKXxevP60JCFI"
 
     tables_name_and_fields_to_compare = {
         settings.AIRTABLE_ORGANIZATION_TABLE: ['id', 'situations', 'phone_numbers'],

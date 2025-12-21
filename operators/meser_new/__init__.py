@@ -1,5 +1,6 @@
 from operators.meser_new.local_authorities import handle_local_authorities
 from operators.meser_new.update_service import update_airtable_services_from_df
+from operators.meser_new.utilities.get_old_ids_to_csv import get_old_ids_to_csv
 from operators.meser_new.utilities.set_branch_id import set_branch_id
 from operators.meser_new.utilities.set_service_id import set_service_id
 from srm_tools.hash import hasher
@@ -102,9 +103,15 @@ def transform_meser_dataframe(df: pd.DataFrame, tags: dict) -> pd.DataFrame:
     df['tagging'] = df[['Type_Descr', 'Target_Population_Descr', 'Second_Classific', 'Gender_Descr', 'Head_Department']].apply(
         lambda row: [v for v in row if v not in [None, 'None', '']], axis=1
     )
+    df['branch_id'] = df.apply(
+        lambda r: 'meser-b-' + r['meser_id'],
+        axis=1
+    )
+    df['service_id'] = df.apply(
+        lambda r: 'meser-s-' + r['meser_id'],
+        axis=1
+    )
 
-    df = set_branch_id(df)
-    df = set_service_id(df)
 
     # 4. Combine duplicates (same service_name + phone + address + organization_id + Owner_Code_Descr)
     grouped = df.groupby(['service_name', 'phone_numbers', 'address', 'organization_id'], dropna=False).agg({
