@@ -61,7 +61,7 @@ def fix_services_data(services_df: pd.DataFrame):
         base_id=settings.AIRTABLE_DATA_IMPORT_BASE
     )
     services_airtable_df['isChanged'] = False
-    fields_to_copy = ['decision','reason','# boost', 'עבר בדיקה - מצבים','עבר כתיבת טקסט', 'עבר בדיקה - מענים','עבר טיוב גיל רך', 'עבר בדיקה - לינקים','עבר טיוב - שם השירות','להעברה לתיקוף רווחה']
+    fields_to_copy = ['decision','reason','# boost', 'עבר בדיקה - מצבים','עבר כתיבת טקסט', 'עבר בדיקה - מענים','עבר טיוב גיל רך', 'עבר בדיקה - לינקים','עבר טיוב - שם השירות','להעברה לתיקוף רווחה', 'cards']
     def copy_values(row):
         if row['id'] in services_df['new_service_id'].values:
             airtable_new_id = services_df.loc[services_df['new_service_id'] == row['id'], 'old_service_id'].values[0]
