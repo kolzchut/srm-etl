@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from conf import settings
 from load.airtable import update_if_exists_if_not_create
-from operators.meser_new.utilities.trigger_status_check import trigger_status_check
+from operators.meser.utilities.trigger_status_check import trigger_status_check
 from utilities.update import prepare_airtable_dataframe
 from srm_tools.hash import hasher
 

@@ -1,7 +1,7 @@
 import pandas as pd
 
 from utilities.update import prepare_airtable_dataframe
-from operators.meser_new.utilities.trigger_status_check import trigger_status_check
+from operators.meser.utilities.trigger_status_check import trigger_status_check
 from srm_tools.logger import logger
 from conf import settings
 from load.airtable import update_if_exists_if_not_create

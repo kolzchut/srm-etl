@@ -1,5 +1,4 @@
 import hashlib
-import itertools
 
 # --- The Target IDs we want to crack ---
 TARGET_BRANCH_HASH = 'dbdfa158'  # extracted from 'meser-dbdfa158'

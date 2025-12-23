@@ -1,12 +1,12 @@
 {
     "siteTitle": "מפת המענים החברתיים",
     "kinds": [
-      {
-        "name": "github_backup",
-        "display": "Triggers the backup of the airtable in Github",
-        "dgp": false,
-        "admin": true
-      },
+        {
+          "name": "github_backup",
+          "display": "Triggers the backup of the airtable in Github",
+          "dgp": false,
+          "admin": true
+        },
         {
             "name": "entities",
             "display": "Enrich Entity Data and Branches using Guidestar and BudgetKey",

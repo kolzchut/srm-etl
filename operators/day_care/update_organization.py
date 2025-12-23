@@ -1,7 +1,7 @@
 from conf import settings
 from extract.extract_data_from_airtable import load_airtable_as_dataframe
 from load.airtable import update_if_exists_if_not_create
-from operators.meser_new.utilities.trigger_status_check import trigger_status_check
+from operators.meser.utilities.trigger_status_check import trigger_status_check
 from utilities.update import prepare_airtable_dataframe
 
 
