@@ -2,6 +2,7 @@ import pandas as pd
 from conf import settings
 from extract.extract_data_from_airtable import load_airtable_as_dataframe
 from srm_tools.hash import hasher
+from srm_tools.logger import logger
 
 
 def set_service_id(df: pd.DataFrame) -> pd.DataFrame:
@@ -38,5 +39,5 @@ def set_service_id(df: pd.DataFrame) -> pd.DataFrame:
 
     df.drop(columns=['old_service_id', 'new_service_id'], inplace=True)
 
-    print(f"Services assigned old IDs: {counter_old}, new IDs: {counter_new}")
+    logger.info(f"Services assigned old IDs: {counter_old}, new IDs: {counter_new}")
     return df

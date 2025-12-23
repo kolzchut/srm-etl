@@ -1,4 +1,5 @@
 from typing import Tuple
+from srm_tools.logger import logger
 
 from extract.extract_data_from_airtable import load_airtable_as_dataframe
 from conf import settings
@@ -112,7 +113,7 @@ def get_matching_dataframes() ->Tuple[pd.DataFrame, pd.DataFrame]:
 
 
 def run(*_):
-    print("This operator is one time run to transform old IDs to new IDs. Working on Manual Fixes, Branches and Services Tables")
+    logger.info("This operator is one time run to transform old IDs to new IDs. Working on Manual Fixes, Branches and Services Tables")
     branches_df, services_df = get_matching_dataframes()
     fix_manual_data(branches_df=branches_df, services_df=services_df)
     fix_services_data(services_df=services_df)

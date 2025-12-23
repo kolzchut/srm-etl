@@ -2,6 +2,7 @@ import pandas as pd
 from conf import settings
 from extract.extract_data_from_airtable import load_airtable_as_dataframe
 from srm_tools.hash import hasher
+from srm_tools.logger import logger
 
 
 def get_old_ids_to_csv(df: pd.DataFrame):
@@ -41,7 +42,7 @@ def get_old_ids_to_csv(df: pd.DataFrame):
     # Rename for clarity if needed (optional, based on your preference)
     clean_matched_branches.rename(columns={'branch_id': 'new_branch_id'}, inplace=True)
 
-    print(f"Found {len(clean_matched_branches)} matching branches.")
+    logger.info(f"Found {len(clean_matched_branches)} matching branches.")
     clean_matched_branches.to_csv('clean_matched_branches.csv', index=False)
 
     # --- Services ---
@@ -53,6 +54,6 @@ def get_old_ids_to_csv(df: pd.DataFrame):
     # Rename for clarity if needed
     clean_matched_services.rename(columns={'service_id': 'new_service_id'}, inplace=True)
 
-    print(f"Found {len(clean_matched_services)} matching services.")
+    logger.info(f"Found {len(clean_matched_services)} matching services.")
     # Fixed filename here (was overwriting branches.csv)
     clean_matched_services.to_csv('clean_matched_services.csv', index=False)

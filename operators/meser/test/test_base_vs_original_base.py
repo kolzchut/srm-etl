@@ -1,6 +1,7 @@
 import pandas as pd
 from conf import settings
 from load.airtable import get_airtable_table
+from srm_tools.logger import logger
 
 
 def keep_needed_columns(df: pd.DataFrame, columns_to_keep: list) -> pd.DataFrame:
@@ -12,7 +13,7 @@ def keep_needed_columns(df: pd.DataFrame, columns_to_keep: list) -> pd.DataFrame
 
     missing_columns = set(columns_to_keep) - set(df.columns)
     if missing_columns:
-        print(f"   Warning: The following requested columns were missing and skipped: {missing_columns}")
+        logger.warn(f"   Warning: The following requested columns were missing and skipped: {missing_columns}")
 
     return df[valid_columns].copy()
 
@@ -22,7 +23,7 @@ def loading_and_filtering_airtable_tables(original_base: str, test_base: str, ta
 
     # CRITICAL FIX: Added .items() to iterate over key and value
     for table_name, columns_to_keep in tables.items():
-        print(f"Comparing table: {table_name}")
+        logger.info(f"Comparing table: {table_name}")
 
         try:
             table_conn_original = get_airtable_table(table_name=table_name, base_id=original_base)
@@ -39,19 +40,19 @@ def loading_and_filtering_airtable_tables(original_base: str, test_base: str, ta
 
             df_test = pd.DataFrame(records_test)
         except Exception as e:
-            print(f"Error loading {table_name}: {e}")
+            logger.error(f"Error loading {table_name}: {e}")
             continue
 
         if df_original.empty:
-            print(f"Skipping {table_name}: 'original' DataFrame is empty.")
+            logger.info(f"Skipping {table_name}: 'original' DataFrame is empty.")
             continue
         if df_test.empty:
-            print(f"Skipping {table_name}: 'test' DataFrame is empty.")
+            logger.info(f"Skipping {table_name}: 'test' DataFrame is empty.")
             continue
 
         required_cols = ["status", "source"]
         if not all(col in df_original.columns for col in required_cols):
-            print(f"Skipping {table_name}: Missing required columns in original data.")
+            logger.info(f"Skipping {table_name}: Missing required columns in original data.")
             continue
 
         for col in required_cols:
@@ -74,16 +75,16 @@ def compare_and_export_differences(dict_of_matching_tables: dict):
     1. Identifies records that do not match (exist in one but not the other) and exports them to *_unmatching_records.csv
     2. For records that DO match (exist in both), compares fields and exports differences to *_differences.csv
     """
-    print("\nStarting analysis of differences...")
+    logger.info("\nStarting analysis of differences...")
 
     for table_name, data in dict_of_matching_tables.items():
-        print(f"\nProcessing {table_name}...")
+        logger.info(f"\nProcessing {table_name}...")
         df_orig = data["original"]
         df_test = data["test"]
 
         # Ensure 'id' exists for comparison
         if 'id' not in df_orig.columns or 'id' not in df_test.columns:
-            print(f"Skipping comparison for {table_name}: 'id' column missing.")
+            logger.info(f"Skipping comparison for {table_name}: 'id' column missing.")
             continue
 
         # Set index to 'id' for easy lookup
@@ -123,9 +124,9 @@ def compare_and_export_differences(dict_of_matching_tables: dict):
 
             unmatch_filename = f"{table_name.replace(' ', '_')}_unmatching_records.csv"
             df_unmatching.to_csv(unmatch_filename, index=False, encoding='utf-8-sig')
-            print(f"-> Found {len(df_unmatching)} unmatching records. Exported to {unmatch_filename}")
+            logger.info(f"-> Found {len(df_unmatching)} unmatching records. Exported to {unmatch_filename}")
         else:
-            print(f"-> All records match by ID (no unmatching records).")
+            logger.info(f"-> All records match by ID (no unmatching records).")
 
         # --- STEP 2: Compare Fields for Common Records ---
         common_ids = ids_orig.intersection(ids_test)
@@ -178,13 +179,13 @@ def compare_and_export_differences(dict_of_matching_tables: dict):
         if field_differences:
             diff_filename = f"{table_name.replace(' ', '_')}_differences.csv"
             pd.DataFrame(field_differences).to_csv(diff_filename, index=False, encoding='utf-8-sig')
-            print(f"-> Found {len(field_differences)} field differences in common records. Exported to {diff_filename}")
+            logger.info(f"-> Found {len(field_differences)} field differences in common records. Exported to {diff_filename}")
         else:
-            print(f"-> No field differences found in common records.")
+            logger.info(f"-> No field differences found in common records.")
 
 
 def run(*_):
-    print("Starting Meser data comparison test...")
+    logger.info("Starting Meser data comparison test...")
 
     original_base = "appcmkagy4VbfIIC6"
     test_base = "appzWKXxevP60JCFI"
@@ -203,7 +204,7 @@ def run(*_):
 
     compare_and_export_differences(dict_of_matching_tables)
 
-    print("Completed Meser data comparison test.")
+    logger.info("Completed Meser data comparison test.")
 
 
 if __name__ == '__main__':

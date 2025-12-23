@@ -2,6 +2,7 @@ import pandas as pd
 from conf import settings
 from extract.extract_data_from_airtable import load_airtable_as_dataframe
 from srm_tools.hash import hasher
+from srm_tools.logger import logger
 
 
 def set_branch_id(df: pd.DataFrame) -> pd.DataFrame:
@@ -34,6 +35,6 @@ def set_branch_id(df: pd.DataFrame) -> pd.DataFrame:
     df['branch_id'] = df.apply(determine_id, axis=1)
 
     df.drop(columns=['old_branch_id', 'new_branch_id'], inplace=True)
-    print(f"Branches assigned old IDs: {counter_old}, new IDs: {counter_new}")
+    logger.info(f"Branches assigned old IDs: {counter_old}, new IDs: {counter_new}")
 
     return df

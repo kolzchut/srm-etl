@@ -1,4 +1,5 @@
 import hashlib
+from srm_tools.logger import logger
 
 # --- The Target IDs we want to crack ---
 TARGET_BRANCH_HASH = 'dbdfa158'  # extracted from 'meser-dbdfa158'
@@ -43,7 +44,7 @@ def hasher(*args):
 
 
 def run_bruteforce():
-    print("--- Starting Brute Force ---")
+    logger.info("--- Starting Brute Force ---")
 
     # ---------------------------------------------------------
     # STEP 1: Crack the Branch ID
@@ -52,7 +53,7 @@ def run_bruteforce():
     found_branch_id = None
     successful_branch_inputs = {}
 
-    print(f"\n[1] Attempting to crack Branch ID (Target: {TARGET_BRANCH_HASH})...")
+    logger.info(f"\n[1] Attempting to crack Branch ID (Target: {TARGET_BRANCH_HASH})...")
 
     for addr in candidates['address']:
         for org in candidates['organization_id']:
@@ -60,9 +61,9 @@ def run_bruteforce():
             current_hash = hasher(addr, org)
 
             if current_hash == TARGET_BRANCH_HASH:
-                print(f"✅ MATCH FOUND for Branch!")
-                print(f"   Address used: '{addr}'")
-                print(f"   Org ID used:  '{org}'")
+                logger.info(f"✅ MATCH FOUND for Branch!")
+                logger.info(f"   Address used: '{addr}'")
+                logger.info(f"   Org ID used:  '{org}'")
 
                 found_branch_id = 'meser-' + current_hash
                 successful_branch_inputs = {'address': addr, 'org': org}
@@ -70,14 +71,14 @@ def run_bruteforce():
         if found_branch_id: break
 
     if not found_branch_id:
-        print("❌ Could not find a match for Branch ID with provided values.")
+        logger.warn("❌ Could not find a match for Branch ID with provided values.")
         return
 
     # ---------------------------------------------------------
     # STEP 2: Crack the Service ID
     # Logic: service_id = 'meser-' + hasher(service_name, phone_numbers, address, organization_id, branch_id)
     # ---------------------------------------------------------
-    print(f"\n[2] Attempting to crack Service ID (Target: {TARGET_SERVICE_HASH})...")
+    logger.info(f"\n[2] Attempting to crack Service ID (Target: {TARGET_SERVICE_HASH})...")
 
     found_service = False
 
@@ -91,19 +92,19 @@ def run_bruteforce():
             current_hash = hasher(name, phone, addr, org, found_branch_id)
 
             if current_hash == TARGET_SERVICE_HASH:
-                print(f"✅ MATCH FOUND for Service!")
-                print(f"   Service Name: '{name}'")
-                print(f"   Phone used:   '{phone}' (Note: None/Empty means it was skipped)")
-                print(f"   Address:      '{addr}'")
-                print(f"   Org ID:       '{org}'")
-                print(f"   Branch ID:    '{found_branch_id}'")
+                logger.info(f"✅ MATCH FOUND for Service!")
+                logger.info(f"   Service Name: '{name}'")
+                logger.info(f"   Phone used:   '{phone}' (Note: None/Empty means it was skipped)")
+                logger.info(f"   Address:      '{addr}'")
+                logger.info(f"   Org ID:       '{org}'")
+                logger.info(f"   Branch ID:    '{found_branch_id}'")
                 found_service = True
                 break
         if found_service: break
 
     if not found_service:
-        print("❌ Could not find a match for Service ID.")
-        print("   Did you forget to provide the 'Telephone' value? The hash depends on it.")
+        logger.warn("❌ Could not find a match for Service ID.")
+        logger.warn("   Did you forget to provide the 'Telephone' value? The hash depends on it.")
 
 
 if __name__ == '__main__':

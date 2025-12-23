@@ -12,6 +12,7 @@ from operators.meser.update_branch import update_airtable_branches_from_df
 from srm_tools.error_notifier import invoke_on
 import pandas as pd
 from conf import settings
+from srm_tools.logger import logger
 
 
 # Helper functions
@@ -175,15 +176,15 @@ def split_by_local_authority(df):
     return df[mask], df[~mask]
 
 def run(*_):
-    print("Starting Meser data update...")
+    logger.info("Starting Meser data update...")
 
 
-    print("Fetching and sanitizing source data...")
+    logger.info("Fetching and sanitizing source data...")
     # 1. Fetch source data from DataGovIL and sanitize
     df = datagovil_fetch_and_transform_to_dataframe()
     df = sanitize_for_airtable(df)
 
-    print("Loading tagging data...")
+    logger.info("Loading tagging data...")
     # 2. Load tagging data from Airtable as DataFrame
     tags_df = load_airtable_as_dataframe(
         table_name='meser-tagging',
@@ -192,7 +193,7 @@ def run(*_):
         api_key=settings.AIRTABLE_API_KEY
     )
 
-    print("Processing tagging data...")
+    logger.info("Processing tagging data...")
     # 3. Filter out invalid tags
     tags_df = tags_df[~tags_df['tag'].isin([None, 'dummy'])]
     tags_df = tags_df[['tag', 'response_ids', 'situation_ids']]
@@ -201,13 +202,13 @@ def run(*_):
     tags = {row['tag']: {'response_ids': row['response_ids'], 'situation_ids': row['situation_ids']}
             for _, row in tags_df.iterrows()}
 
-    print("Transforming Meser data...")
+    logger.info("Transforming Meser data...")
     # 5. Transform the sanitized dataframe
     transformed_df = transform_meser_dataframe(df, tags)
     ### COMMENTED TO DISABLE LOCAL AUTHORITY SPECIAL HANDLING - DIFFERENT ISSUE - ACTUALLY SHOULD BE IN PRODUCTION ###
     # transformed_df_local, transformed_df_non_local = split_by_local_authority(transformed_df)
     #
-    # print("Handling local authorities...")
+    # logger.info("Handling local authorities...")
     # # 6. Handle local authorities separately
     # transformed_df_local = handle_local_authorities(transformed_df_local)
     # transformed_df = pd.concat([transformed_df_local, transformed_df_non_local], ignore_index=True)
@@ -216,17 +217,17 @@ def run(*_):
     transformed_df = transformed_df[transformed_df["organization_id"].str.len().between(5, 15)]
     ### END COMMENTED TO DISABLE LOCAL AUTHORITY SPECIAL HANDLING - DIFFERENT ISSUE - ACTUALLY SHOULD BE IN PRODUCTION ###
 
-    print("Updating Airtable")
+    logger.info("Updating Airtable")
     modified_organizations = update_airtable_organizations_from_df(transformed_df.copy())
-    print(f"Effected {modified_organizations} organizations")
+    logger.info(f"Effected {modified_organizations} organizations")
 
     modified_branches = update_airtable_branches_from_df(transformed_df.copy())
-    print(f"Effected {modified_branches} branches")
+    logger.info(f"Effected {modified_branches} branches")
 
     modified_services = update_airtable_services_from_df(transformed_df.copy())
-    print(f"Effected {modified_services} services")
+    logger.info(f"Effected {modified_services} services")
 
-    print("End Meser data update...")
+    logger.info("End Meser data update...")
 
 
 
