@@ -142,6 +142,23 @@ def possible_autocomplete(row):
 def srm_data_pull_flow():
     """Pull curated data from the data staging area."""
 
+    def count_meser_records(resource_name, prefix):
+        def step(package):
+            yield package.pkg
+            for resource in package:
+                if resource.res.name == resource_name:
+                    def func(rows):
+                        count = 0
+                        for row in rows:
+                            if isinstance(row.get('id'), str) and row['id'].startswith(prefix):
+                                count += 1
+                            yield row
+                        logger.info(f"SRM Data Pull: Found {count} records starting with '{prefix}' in {resource_name}")
+                    yield func(resource)
+                else:
+                    yield resource
+        return step
+
     return DF.Flow(
         load_from_airtable(
             settings.AIRTABLE_BASE, settings.AIRTABLE_RESPONSE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY
@@ -163,6 +180,8 @@ def srm_data_pull_flow():
         ),
         DF.update_package(name='SRM Data'),
         DF.checkpoint('srm_raw_airtable_buffer'),
+        count_meser_records('branches', 'meser-b-'),
+        count_meser_records('services', 'meser-s-'),
         helpers.preprocess_responses(validate=True),
         helpers.preprocess_situations(validate=True),
         helpers.preprocess_services(validate=True),
