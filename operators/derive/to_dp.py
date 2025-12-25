@@ -729,6 +729,14 @@ def card_data_flow():
             return list(set(map(lambda x: taxonomy[x]['id'], filter(lambda y: y in taxonomy, ids))))
         return func
 
+    def filter_and_log(reason, predicate):
+        def func(row):
+            res = predicate(row)
+            if not res:
+                logger.info(f"Card Filtered: {reason} | Branch: {row.get('branch_id')} | Service: {row.get('service_id')}")
+            return res
+        return func
+
     no_responses_report = Report(
         'Processing: Cards: No Responses Report',
         'cards-no-responses',
@@ -756,7 +764,7 @@ def card_data_flow():
         apply_auto_tagging(),
         helpers.get_stats().filter_with_stat(
             'Processing: Cards: No Responses',
-            lambda r: bool(r['response_ids']),
+            filter_and_log('No Responses', lambda r: bool(r['response_ids'])),
             resources=['card_data'],
             report=no_responses_report
         ),
@@ -805,11 +813,11 @@ def card_data_flow():
             resources=['card_data'],
         ),
         DF.add_field('response_category','string',helpers.most_common_category,resources=['card_data'],**KEYWORD_ONLY),
-        helpers.get_stats().filter_with_stat('Processing: Cards: No Response Category', lambda r: r['response_category'], resources=['card_data']),
+        helpers.get_stats().filter_with_stat('Processing: Cards: No Response Category', filter_and_log('No Response Category', lambda r: r['response_category']), resources=['card_data']),
         DF.set_type('responses', transform=lambda v, row: helpers.reorder_responses_by_category(v, row['response_category'])),
         helpers.get_stats().filter_with_stat(
             'Processing: Cards: Invalid Location',
-            lambda r: helpers.validate_geometry(r['branch_geometry']) or r['national_service'],
+            filter_and_log('Invalid Location', lambda r: helpers.validate_geometry(r['branch_geometry']) or r['national_service']),
             resources=['card_data'],
             report=invalid_location_report
         ),
