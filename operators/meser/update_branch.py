@@ -16,9 +16,10 @@ def update_airtable_branches_from_df(df: pd.DataFrame) -> int:
     key_field = 'branch_id'
     airtable_key = 'id'
     fields_to_update = [
-        'branch_id', 'organization', 'address',
+        'branch_id', 'organization', 'address', 'location',
         'phone_numbers', 'source','status'
     ]
+    df['location'] = df['address'] # Copying address to location field
 
     # Prepare branch data
     df['organization'] = df['organization_id']
