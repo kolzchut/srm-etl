@@ -140,7 +140,7 @@ SERVICE_MAP = {
                 'human_services:place:welfare_bureau',
                 'human_services:legal:advocacy_legal_aid:understand_government_programs',
                 'human_services:money:financial_assistance',
-                'human_services:money:financial_education',
+                'human_services:education:more_education:financial_education',
                 'human_services:care:guidance',
             ],
             'situations': [
