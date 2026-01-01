@@ -26,11 +26,11 @@ GOVMAP_AUTH = 'https://ags.govmap.gov.il/Api/Controllers/GovmapApi/Auth'
 GOVMAP_REQUEST_ORIGIN = 'https://www.kolzchut.org.il'
 GOVMAP_GEOCODE_API = 'https://ags.govmap.gov.il/Api/Controllers/GovmapApi/Geocode'
 
-AIRTABLE_BASE ="appyO8DJUskSHUfaH" #  Replaced for testing purposes only get_env('ETL_AIRTABLE_BASE')
+AIRTABLE_BASE ="appQQlnVLJ9RE1v5Y" #  Replaced for testing purposes only get_env('ETL_AIRTABLE_BASE')
 AIRTABLE_ALTERNATE_BASE = get_env('ETL_AIRTABLE_ALTERNATE_BASE')
 AIRTABLE_DATAENTRY_BASE = get_env('ETL_AIRTABLE_DATAENTRY_BASE')
 AIRTABLE_DATA_IMPORT_BASE = get_env('ETL_AIRTABLE_DATA_IMPORT_BASE')
-AIRTABLE_STAGING_BASE = "appyO8DJUskSHUfaH" # Replaced for testing purposes only "appxUxbrRRoUiSB4P"
+AIRTABLE_STAGING_BASE = "appQQlnVLJ9RE1v5Y" # Replaced for testing purposes only "appxUxbrRRoUiSB4P"
 
 AIRTABLE_VIEW = 'Grid view'
 AIRTABLE_LOCATION_TABLE = 'Locations'
