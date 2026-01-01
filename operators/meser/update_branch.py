@@ -19,7 +19,6 @@ def update_airtable_branches_from_df(df: pd.DataFrame) -> int:
         'branch_id', 'organization', 'address', 'location',
         'phone_numbers', 'source','status'
     ]
-    df['location'] = df['address'] # Copying address to location field
 
     # Prepare branch data
     df['organization'] = df['organization_id']
@@ -48,6 +47,7 @@ def update_airtable_branches_from_df(df: pd.DataFrame) -> int:
     trigger_status_check(df=df, table_name=settings.AIRTABLE_BRANCH_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE', only_from_source='meser', df_key_field='branch_id', batch_size=50)
     df['status'] = 'ACTIVE'
+    df['location'] = df['address'] # Copying address to location field
 
     # Prepare DataFrame for Airtable
     df_prepared = prepare_airtable_dataframe(df, key_field, fields_to_update, airtable_key)
