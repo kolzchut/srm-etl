@@ -49,7 +49,7 @@ AIRTABLE_TAXONOMY_MAPPING_GUIDESTAR_TABLE = 'Guidestar Service Taxonomy Mapping'
 AIRTABLE_TAXONOMY_MAPPING_SOPROC_TABLE = 'soproc-service-tagging'
 AIRTABLE_TAXONOMY_MAPPING_CLICK_TABLE = 'Click Service Taxonomy Mapping'
 
-AIRTABLE_API_KEY = get_env('DATAFLOWS_AIRTABLE_APIKEY')
+AIRTABLE_API_KEY = "patopQtRoYnWWIVnw.9a62347b8e075ac8990708abdaa966afcb6e167615d76c1616e2b9c90348bf00" #Replaced for testing purposes only get_env('DATAFLOWS_AIRTABLE_APIKEY')
 
 MAPBOX_ACCESS_TOKEN = get_env('ETL_MAPBOX_ACCESS_TOKEN')
 MAPBOX_LIST_TILESETS = 'https://api.mapbox.com/tilesets/v1/srm-kolzchut'
