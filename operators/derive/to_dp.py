@@ -27,6 +27,26 @@ sys.setrecursionlimit(5000) # Increase recursion limit for deep dataflows proces
 CHECKPOINT = 'to_dp'
 
 
+def count_meser_records():
+    """
+    Counts records with 'meser-s-' in service_id without changing data.
+    """
+
+    def func(rows):
+        count = 0
+        for row in rows:
+            sid = str(row.get('service_id', ''))
+            if 'meser-s-' in sid:
+                count += 1
+            yield row  # Pass the row through exactly as is
+
+        # This prints after all rows are processed
+        msg = f"--- STATS: Found {count} records with 'meser-s-' in service_id ---"
+        logger.info(msg)
+        print(msg)
+
+    return func
+
 def safe_reorder_responses_by_category(responses, category):
     if not responses:
         return []
@@ -892,6 +912,7 @@ def card_data_flow():
         DF.set_type('organization_id', **KEYWORD_ONLY),
         DF.set_type('organization_resolved_name', **KEYWORD_ONLY),
         DF.set_type('response_categories', **KEYWORD_STRING),
+        count_meser_records(),
         DF.set_primary_key(['card_id'], resources=['card_data']),
         DF.update_resource(['card_data'], path='card_data.csv'),
         DF.validate(),
