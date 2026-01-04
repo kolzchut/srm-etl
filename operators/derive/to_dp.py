@@ -27,6 +27,21 @@ sys.setrecursionlimit(5000) # Increase recursion limit for deep dataflows proces
 CHECKPOINT = 'to_dp'
 
 
+def safe_get_response_categories(row):
+    categories = []
+    for rr in row.get('responses', []):
+        if not rr or 'id' not in rr:
+            continue
+
+        parts = rr['id'].split(':')
+        if len(parts) > 1:
+            categories.append(parts[1])
+        else:
+            # Log the bad data so you can fix it in the source (AirTable)
+            logger.warning(f"WARNING: Malformed response ID '{rr['id']}' found in Service ID: {row.get('service_id')}")
+            # Fallback: Use the whole ID or skip. Here we skip to prevent crashes.
+    return categories
+
 def merge_array_fields(fieldnames):
     def func(r):
         # get rid of null fields (could be None or [])
@@ -801,7 +816,7 @@ def card_data_flow():
         DF.add_field(
             'response_categories',
             'array',
-            lambda r: [rr['id'].split(':')[1] for rr in r['responses']],
+            safe_get_response_categories,
             **KEYWORD_STRING,
             resources=['card_data'],
         ),
