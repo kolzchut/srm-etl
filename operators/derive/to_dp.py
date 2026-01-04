@@ -1,3 +1,4 @@
+
 import math
 from itertools import chain
 import shutil
@@ -142,23 +143,6 @@ def possible_autocomplete(row):
 def srm_data_pull_flow():
     """Pull curated data from the data staging area."""
 
-    def count_meser_records(resource_name, prefix):
-        def step(package):
-            yield package.pkg
-            for resource in package:
-                if resource.res.name == resource_name:
-                    def func(rows):
-                        count = 0
-                        for row in rows:
-                            if isinstance(row.get('id'), str) and row['id'].startswith(prefix):
-                                count += 1
-                            yield row
-                        logger.info(f"SRM Data Pull: Found {count} records starting with '{prefix}' in {resource_name}")
-                    yield func(resource)
-                else:
-                    yield resource
-        return step
-
     return DF.Flow(
         load_from_airtable(
             settings.AIRTABLE_BASE, settings.AIRTABLE_RESPONSE_TABLE, settings.AIRTABLE_VIEW, settings.AIRTABLE_API_KEY
@@ -180,8 +164,6 @@ def srm_data_pull_flow():
         ),
         DF.update_package(name='SRM Data'),
         DF.checkpoint('srm_raw_airtable_buffer'),
-        count_meser_records('branches', 'meser-b-'),
-        count_meser_records('services', 'meser-s-'),
         helpers.preprocess_responses(validate=True),
         helpers.preprocess_situations(validate=True),
         helpers.preprocess_services(validate=True),
@@ -748,14 +730,6 @@ def card_data_flow():
             return list(set(map(lambda x: taxonomy[x]['id'], filter(lambda y: y in taxonomy, ids))))
         return func
 
-    def filter_and_log(reason, predicate):
-        def func(row):
-            res = predicate(row)
-            if not res:
-                logger.info(f"Card Filtered: {reason} | Branch: {row.get('branch_id')} | Service: {row.get('service_id')}")
-            return res
-        return func
-
     no_responses_report = Report(
         'Processing: Cards: No Responses Report',
         'cards-no-responses',
@@ -783,7 +757,7 @@ def card_data_flow():
         apply_auto_tagging(),
         helpers.get_stats().filter_with_stat(
             'Processing: Cards: No Responses',
-            filter_and_log('No Responses', lambda r: bool(r['response_ids'])),
+            lambda r: bool(r['response_ids']),
             resources=['card_data'],
             report=no_responses_report
         ),
@@ -832,11 +806,11 @@ def card_data_flow():
             resources=['card_data'],
         ),
         DF.add_field('response_category','string',helpers.most_common_category,resources=['card_data'],**KEYWORD_ONLY),
-        helpers.get_stats().filter_with_stat('Processing: Cards: No Response Category', filter_and_log('No Response Category', lambda r: r['response_category']), resources=['card_data']),
+        helpers.get_stats().filter_with_stat('Processing: Cards: No Response Category', lambda r: r['response_category'], resources=['card_data']),
         DF.set_type('responses', transform=lambda v, row: helpers.reorder_responses_by_category(v, row['response_category'])),
         helpers.get_stats().filter_with_stat(
             'Processing: Cards: Invalid Location',
-            filter_and_log('Invalid Location', lambda r: helpers.validate_geometry(r['branch_geometry']) or r['national_service']),
+            lambda r: helpers.validate_geometry(r['branch_geometry']) or r['national_service'],
             resources=['card_data'],
             report=invalid_location_report
         ),
