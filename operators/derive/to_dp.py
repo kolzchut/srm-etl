@@ -38,7 +38,7 @@ def safe_get_response_categories(row):
             categories.append(parts[1])
         else:
             # Log the bad data so you can fix it in the source (AirTable)
-            logger.warning(f"WARNING: Malformed response ID '{rr['id']}' found in Service ID: {row.get('service_id')}")
+            logger.warning(f"WARNING: Malformed response ID '{rr['id']}' found in Service ID: {row.get('service_id')}, row details : {row}")
             # Fallback: Use the whole ID or skip. Here we skip to prevent crashes.
     return categories
 
