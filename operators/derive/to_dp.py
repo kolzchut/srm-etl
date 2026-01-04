@@ -27,6 +27,25 @@ sys.setrecursionlimit(5000) # Increase recursion limit for deep dataflows proces
 CHECKPOINT = 'to_dp'
 
 
+def safe_reorder_responses_by_category(responses, category):
+    if not responses:
+        return []
+
+    matches = []
+    others = []
+
+    for r in responses:
+        # Safely split. If ID is None or doesn't have a colon, it goes to 'others'
+        parts = r.get('id', '').split(':')
+
+        # Check if we have enough parts AND if the category matches
+        if len(parts) > 1 and parts[1] == category:
+            matches.append(r)
+        else:
+            others.append(r)
+
+    return matches + others
+
 def safe_get_response_categories(row):
     categories = []
     for rr in row.get('responses', []):
@@ -822,7 +841,8 @@ def card_data_flow():
         ),
         DF.add_field('response_category','string',helpers.most_common_category,resources=['card_data'],**KEYWORD_ONLY),
         helpers.get_stats().filter_with_stat('Processing: Cards: No Response Category', lambda r: r['response_category'], resources=['card_data']),
-        DF.set_type('responses', transform=lambda v, row: helpers.reorder_responses_by_category(v, row['response_category'])),
+        DF.set_type('responses',
+                    transform=lambda v, row: safe_reorder_responses_by_category(v, row['response_category'])),
         helpers.get_stats().filter_with_stat(
             'Processing: Cards: Invalid Location',
             lambda r: helpers.validate_geometry(r['branch_geometry']) or r['national_service'],
