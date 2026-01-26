@@ -58,7 +58,6 @@ def run(*_):
     print(f"Effected {modified_branches} branches.")
 
 
-
 def operator(*_):
     invoke_on(run, 'day_care')
 
