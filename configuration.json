@@ -1,6 +1,12 @@
 {
     "siteTitle": "מפת המענים החברתיים",
     "kinds": [
+      {
+        "name": "day_care",
+        "display": "Scrape Day Care Centers",
+        "dgp": false,
+        "admin": true
+      },
         {
           "name": "github_backup",
           "display": "Triggers the backup of the airtable in Github",

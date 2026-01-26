@@ -60,7 +60,7 @@ def run(*_):
 
 
 def operator(*_):
-    invoke_on(run, 'Day-Care')
+    invoke_on(run, 'day_care')
 
 if __name__ == '__main__':
     run(None, None, None)
