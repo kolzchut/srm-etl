@@ -25,7 +25,7 @@ def add_static_records_to_df(df: pd.DataFrame) -> pd.DataFrame:
         'data_sources': 'מידע נוסף אפשר למצוא ב<a target="_blank" href="https://daycareclasssearch.labor.gov.il/">אתר משרד העבודה, פורטל איתור מסגרות מוכרות</a>',
         'name': 'צהרון לילדי גן',
         'description': 'מסגרת הפועלת במהלך בשעות אחר הצהריים, בהמשך ליום הלימודים בגני הילדים. במסגרת הצהרון מקבלים הילדים ארוחה חמה ומתקיימת פעילות העשרה. הצהרונים פועלים באישור משרד החינוך, וניתן לקבל סבסוד ממשרד העבודה',
-        'details': 'Extra details',  ## TODO: EFRAT SHOULD GIVE US WHAT TO WRITE HERE
+        'details': '',
         'situations': ['human_situations:age_group:children'],
         'responses': ['human_services:education:afterschool_care'],
         'payment_required': 'yes',
