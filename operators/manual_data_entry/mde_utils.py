@@ -95,7 +95,7 @@ def mde_organization_flow():
 
     print('COLLECTED {} relevant organizations'.format(len(orgs)))
 
-    airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'entities',
+    airtable_updater(settings.AIRTABLE_ORGANIZATION_TABLE, 'manual-data-entry',
         ['urls', 'phone_numbers', 'last_tag_date'],
         orgs,
         org_updater(), 
@@ -280,4 +280,3 @@ def load_manual_data(source_flow, data_sources, source_id='manual-data-entry'):
     branch_ids = {}
     mde_branch_flow(source_id, branch_ids)
     mde_service_flow(data_sources, source_id, branch_ids)
-

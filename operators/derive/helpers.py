@@ -87,8 +87,11 @@ def filter_dummy_data():
 
 
 def filter_active_data(resource, statName):
-    return get_stats().filter_with_stat(statName, lambda r: r.get('status') != 'INACTIVE', resources=resource)
-
+    return get_stats().filter_with_stat(
+        statName,
+        lambda r: str(r.get('status') or '').strip().upper() == 'ACTIVE',
+        resources=resource
+    )
 
 def set_staging_pkey(resource_name):
     return DF.rename_fields({AIRTABLE_ID_FIELD: 'key'}, resources=[resource_name])

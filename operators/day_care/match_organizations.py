@@ -86,7 +86,7 @@ def match_organizations(fetched_df, fetched_field, airtable_df, airtable_field):
 
     # Take values from 'matched_ids' first. If NaN, keep existing 'organization_id'.
     fetched_df['organization_id'] = matched_ids.combine_first(fetched_df['organization_id'])
-
+    fetched_df['ח.פ. ארגון'] = fetched_df['organization_id']
     # Statistics
     match_count = matched_ids.notna().sum()
     print(f"Matched/Overridden {match_count} organizations based on prefix/hyphen logic.")

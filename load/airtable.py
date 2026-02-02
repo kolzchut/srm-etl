@@ -12,6 +12,32 @@ def get_airtable_table(table_name: str, base_id: str) -> Table:
     return api.table(base_id, table_name)
 
 
+def should_update_record(new_fields: Dict[str, Any], old_fields: Dict[str, Any]) -> bool:
+    """
+    Check if the record should be updated.
+    If the only field that changed is 'source', do not update.
+    """
+    changes = []
+    for key, new_val in new_fields.items():
+        old_val = old_fields.get(key)
+
+        if new_val == old_val:
+            continue
+
+        if str(new_val) == str(old_val):
+            continue
+
+        changes.append(key)
+
+    if not changes:
+        return False
+
+    if len(changes) == 1 and changes[0] == 'source':
+        return False
+
+    return True
+
+
 def update_airtable_records(
     df: pd.DataFrame,
     table_name: str,
@@ -32,8 +58,8 @@ def update_airtable_records(
     :return: Number of modified records
     """
     table = get_airtable_table(table_name, base_id)
-    # Build map: key_field -> record ID
-    record_map: Dict[str, str] = {}
+    # Build map: key_field -> record
+    record_map: Dict[str, Any] = {}
     for record in table.all():
         val = record.get("fields", {}).get(key_field)
         if isinstance(val, list) and val:
@@ -41,7 +67,7 @@ def update_airtable_records(
         if isinstance(val, str):
             val = val.strip()
             if val:
-                record_map[val] = record["id"]
+                record_map[val] = record
 
     updates: List[UpdateRecordDict] = []
     not_found = set()
@@ -51,14 +77,19 @@ def update_airtable_records(
         if not key_val:
             continue
 
-        airtable_rec_id = record_map.get(str(key_val).strip())
-        if airtable_rec_id:
+        airtable_record = record_map.get(str(key_val).strip())
+        if airtable_record:
+            airtable_rec_id = airtable_record["id"]
+            existing_fields = airtable_record.get("fields", {})
+
             fields: Dict[str, Any] = {
                 col: row[col]
                 for col in df.columns
                 if col != key_field and row.get(col) not in (None, '', 0, 'None')
             }
-            updates.append({"id": airtable_rec_id, "fields": fields})
+
+            if should_update_record(fields, existing_fields):
+                updates.append({"id": airtable_rec_id, "fields": fields})
         else:
             not_found.add(str(key_val))
 
