@@ -230,7 +230,7 @@ def run(*_):
 
 
 def operator(*_):
-    invoke_on(run, 'Meser')
+    invoke_on(run, 'meser')
 
 
 if __name__ == '__main__':
