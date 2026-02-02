@@ -44,7 +44,7 @@
             "admin": true
         },
         {
-            "name": "meser",
+            "name": "Meser",
             "display": "Scrape Meser Data from Misrad HaRevaha",
             "dgp": false,
             "admin": true

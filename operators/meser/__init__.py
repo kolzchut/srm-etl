@@ -11,7 +11,7 @@ from conf import settings
 from srm_tools.logger import logger
 
 
-DATA_SOURCE_ID = 'meser'
+DATA_SOURCE_ID = 'Meser'
 
 # Helper functions
 
@@ -230,7 +230,7 @@ def run(*_):
 
 
 def operator(*_):
-    invoke_on(run, 'meser')
+    invoke_on(run, 'Meser')
 
 
 if __name__ == '__main__':
