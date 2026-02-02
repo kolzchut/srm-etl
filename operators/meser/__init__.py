@@ -1,8 +1,3 @@
-# Unused imports commented out to prevent module loading issues with NumPy compatibility:
-# from operators.meser.local_authorities import handle_local_authorities
-# from operators.meser.utilities.get_old_ids_to_csv import get_old_ids_to_csv
-# from operators.meser.utilities.set_branch_id import set_branch_id
-# from operators.meser.utilities.set_service_id import set_service_id
 from operators.meser.update_service import update_airtable_services_from_df
 from srm_tools.hash import hasher
 from openlocationcode import openlocationcode as olc
@@ -15,6 +10,8 @@ import pandas as pd
 from conf import settings
 from srm_tools.logger import logger
 
+
+DATA_SOURCE_ID = 'meser'
 
 # Helper functions
 
