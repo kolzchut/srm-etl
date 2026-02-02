@@ -11,7 +11,7 @@ from conf import settings
 from srm_tools.logger import logger
 
 
-DATA_SOURCE_ID = 'Meser'
+DATA_SOURCE_ID = 'meser'
 
 # Helper functions
 
