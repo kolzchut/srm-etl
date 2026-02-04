@@ -10,6 +10,7 @@ from srm_tools.error_notifier import invoke_on
 
 from openlocationcode import openlocationcode as olc
 from pyproj import Transformer
+import time
 
 transformer = Transformer.from_crs('EPSG:2039', 'EPSG:4326', always_xy=True)
 
@@ -138,6 +139,8 @@ def get_shil_data():
 
     while len(results) < total:
         skip += len(batch)
+        # Add a 1-2 second delay to avoid triggering rate limits
+        time.sleep(2)
         _, batch = get_gov_api(settings.SHIL_API, skip)
         results.extend(batch)
     return results
