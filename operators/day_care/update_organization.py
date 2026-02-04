@@ -31,5 +31,5 @@ def update_organization(df):
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE',
                          only_from_source='mol_daycare', df_key_field='id', batch_size=50)
     prepare_df = prepare_airtable_dataframe(df=df, key_field="id",airtable_key="id",fields_to_prepare=fields_to_prepare)
-    modified = update_if_exists_if_not_create(df=prepare_df, table_name=settings.AIRTABLE_ORGANIZATION_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE, airtable_key="id", fields_to_update= ["id", "name", "source", "status"])
+    modified = update_if_exists_if_not_create(df=prepare_df, table_name=settings.AIRTABLE_ORGANIZATION_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE, airtable_key="id", fields_to_update= ["id", "source", "status"])
     return modified
