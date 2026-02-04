@@ -26,10 +26,10 @@ def update_organization(df):
     df = setup_kind(df)
     df['id'] = df['id'].astype(str)
     df = df[df['id'].str.len() >= 5]
-    fields_to_update = ["id", "name", "source", "status", "kind"]
+    fields_to_prepare = ["id", "name", "source", "status", "kind"]
     trigger_status_check(df=df, table_name=settings.AIRTABLE_ORGANIZATION_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE',
                          only_from_source='mol_daycare', df_key_field='id', batch_size=50)
-    prepare_df = prepare_airtable_dataframe(df=df, key_field="id",airtable_key="id",fields_to_update=fields_to_update)
-    modified = update_if_exists_if_not_create(df=prepare_df, table_name=settings.AIRTABLE_ORGANIZATION_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE, airtable_key="id")
+    prepare_df = prepare_airtable_dataframe(df=df, key_field="id",airtable_key="id",fields_to_prepare=fields_to_prepare)
+    modified = update_if_exists_if_not_create(df=prepare_df, table_name=settings.AIRTABLE_ORGANIZATION_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE, airtable_key="id", fields_to_update= ["id", "name", "source", "status"])
     return modified

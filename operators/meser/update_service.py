@@ -39,11 +39,11 @@ def update_airtable_services_from_df(df: pd.DataFrame) -> int:
     )
 
 
-    fields_to_update = [
+    fields_to_prepare = [
         'id', 'name', 'data_sources', 'situations', 'responses',
         'branches', 'id_in_source', 'source', 'status'
     ]
-    df_prepared = prepare_airtable_dataframe(df, key_field, fields_to_update, airtable_key)
+    df_prepared = prepare_airtable_dataframe(df, key_field, fields_to_prepare, airtable_key)
 
     if df_prepared.empty:
         logger.info("No service records to update.")

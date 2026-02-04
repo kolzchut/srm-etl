@@ -116,7 +116,7 @@ def trigger_status_check(
 
 
 
-    update_df = prepare_airtable_dataframe(df=update_df, key_field=df_key_field, fields_to_update=["status"],
+    update_df = prepare_airtable_dataframe(df=update_df, key_field=df_key_field, fields_to_prepare=["status"],
                                            airtable_key=airtable_key_field)
 
     modified_count = update_airtable_records(

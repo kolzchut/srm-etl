@@ -15,7 +15,7 @@ def update_airtable_branches_from_df(df: pd.DataFrame) -> int:
     """
     key_field = 'branch_id'
     airtable_key = 'id'
-    fields_to_update = [
+    fields_to_prepare = [
         'branch_id', 'organization', 'address', 'location',
         'phone_numbers', 'source','status'
     ]
@@ -50,7 +50,7 @@ def update_airtable_branches_from_df(df: pd.DataFrame) -> int:
     df['location'] = df['address'] # Copying address to location field
 
     # Prepare DataFrame for Airtable
-    df_prepared = prepare_airtable_dataframe(df, key_field, fields_to_update, airtable_key)
+    df_prepared = prepare_airtable_dataframe(df, key_field, fields_to_prepare, airtable_key)
 
     if df_prepared.empty:
         logger.info("No branch records to update.")

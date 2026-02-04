@@ -51,12 +51,12 @@ def transform_dataframe_to_service(df) -> pd.DataFrame:
 
 def update_service(df):
     df = transform_dataframe_to_service(df)
-    fields_to_update = ["id",'status',"source","data_sources","name", "description","details", "situations" ,"responses",'payment_required', 'payment_details']
+    fields_to_prepare = ["id",'status',"source","data_sources","name", "description","details", "situations" ,"responses",'payment_required', 'payment_details']
     trigger_status_check(df=df, table_name=settings.AIRTABLE_SERVICE_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE',
                          only_from_source='meonot', df_key_field='id', batch_size=50)
 
-    prepare_df = prepare_airtable_dataframe(df=df, fields_to_update=fields_to_update, key_field='id', airtable_key='id')
+    prepare_df = prepare_airtable_dataframe(df=df, fields_to_prepare=fields_to_prepare, key_field='id', airtable_key='id')
 
     modified = update_if_exists_if_not_create(df=prepare_df, airtable_key='id',
                                               base_id=settings.AIRTABLE_DATA_IMPORT_BASE,

@@ -26,7 +26,7 @@ def fix_services_data(services_df: pd.DataFrame):
         return row
     services_airtable_df = services_airtable_df.apply(copy_values, axis=1)
     services_airtable_df = services_airtable_df[services_airtable_df['isChanged']]
-    prepared_services_df = prepare_airtable_dataframe(df=services_airtable_df, key_field="id", airtable_key="id", fields_to_update=fields_to_copy)
+    prepared_services_df = prepare_airtable_dataframe(df=services_airtable_df, key_field="id", airtable_key="id", fields_to_prepare=fields_to_copy)
     prepared_services_df = prepared_services_df.where(pd.notnull(prepared_services_df), None)
     if prepared_services_df.empty:
         return 0
@@ -55,7 +55,7 @@ def fix_branches_data(branches_df: pd.DataFrame):
         return row
     branches_airtable_df = branches_airtable_df.apply(copy_values, axis=1)
     branches_airtable_df = branches_airtable_df[branches_airtable_df['isChanged']]
-    prepared_branches_df = prepare_airtable_dataframe(df=branches_airtable_df, key_field="id", airtable_key="id", fields_to_update=fields_to_copy)
+    prepared_branches_df = prepare_airtable_dataframe(df=branches_airtable_df, key_field="id", airtable_key="id", fields_to_prepare=fields_to_copy)
     prepared_branches_df = prepared_branches_df.where(pd.notnull(prepared_branches_df), None)
     if prepared_branches_df.empty:
         return 0

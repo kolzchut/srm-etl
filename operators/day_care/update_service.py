@@ -38,15 +38,15 @@ def add_static_records_to_df(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def update_service():
-    fields_to_update = ['source', 'data_sources','name', 'description', 'details','situations','responses', 'payment_required','id','status']
-    df = pd.DataFrame(columns=fields_to_update)
+    fields_to_prepare = ['source', 'data_sources','name', 'description', 'details','situations','responses', 'payment_required','id','status']
+    df = pd.DataFrame(columns=fields_to_prepare)
     df = add_static_records_to_df(df)
 
     trigger_status_check(df=df, table_name=settings.AIRTABLE_ORGANIZATION_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE',
                          only_from_source='mol_daycare', df_key_field='id', batch_size=50)
 
-    df_prepared = prepare_airtable_dataframe(df=df, key_field='id', fields_to_update=fields_to_update, airtable_key='id')
+    df_prepared = prepare_airtable_dataframe(df=df, key_field='id', fields_to_prepare=fields_to_prepare, airtable_key='id')
 
     if df_prepared.empty:
         print("No service records to update.")

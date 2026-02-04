@@ -15,7 +15,7 @@ def clean_city_name(city_series: pd.Series) -> pd.Series:
 def set_up_organizations(df: pd.DataFrame):
     df = df.drop(columns=['counsil_short_name'])
     airtable_key = "id"
-    df = prepare_airtable_dataframe(df=df, key_field=airtable_key, airtable_key=airtable_key, fields_to_update=["id", "name", "status", "kind", "urls","phone_numbers"])
+    df = prepare_airtable_dataframe(df=df, key_field=airtable_key, airtable_key=airtable_key, fields_to_prepare=["id", "name", "status", "kind", "urls","phone_numbers"])
     update_if_exists_if_not_create(df=df, table_name=settings.AIRTABLE_ORGANIZATION_TABLE,base_id=settings.AIRTABLE_DATA_IMPORT_BASE, airtable_key=airtable_key)
 
 def set_up_local_authorities():

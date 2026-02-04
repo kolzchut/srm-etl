@@ -17,10 +17,10 @@ def filter_valid_rows(df: pd.DataFrame, fields: list) -> pd.DataFrame:
     return df[df.apply(is_valid_row, axis=1)]
 
 
-def prepare_airtable_dataframe(df: pd.DataFrame, key_field: str, fields_to_update: list, airtable_key: str):
+def prepare_airtable_dataframe(df: pd.DataFrame, key_field: str, fields_to_prepare: list, airtable_key: str):
     """Filter existing columns, rename key, drop empty rows, and deduplicate."""
     # Only keep fields that exist in the dataframe
-    existing_fields = [f for f in fields_to_update if f in df.columns]
+    existing_fields = [f for f in fields_to_prepare if f in df.columns]
 
     # Ensure key field is first and rename for Airtable
     df_for_update = df[[key_field] + [f for f in existing_fields if f != key_field]].copy()

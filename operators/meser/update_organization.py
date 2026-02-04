@@ -18,7 +18,7 @@ def clean_fields_for_organization_airtable(df: pd.DataFrame) -> pd.DataFrame:
 def update_airtable_organizations_from_df(df: pd.DataFrame) -> int:
     key_field = 'organization_id'
     airtable_key = 'id'
-    fields_to_update = ['organization_id','source','status']
+    fields_to_prepare = ['organization_id','source','status']
 
     df['source'] = 'meser'
     ### Setting all organizations to inactive if they are not in the current df
@@ -31,7 +31,7 @@ def update_airtable_organizations_from_df(df: pd.DataFrame) -> int:
         logger.warning(f"DataFrame does not contain '{key_field}' column.")
         return 0
 
-    df_prepared = prepare_airtable_dataframe(df, key_field, fields_to_update, airtable_key)
+    df_prepared = prepare_airtable_dataframe(df, key_field, fields_to_prepare, airtable_key)
 
     if df_prepared.empty:
         logger.info("No organization records to update.")

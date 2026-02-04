@@ -75,17 +75,17 @@ def clean_fields(df, fields_to_update):
 
 def update_branch(df):
     df = transform_dataframe_to_branch(df)
-    fields_to_update = ["source","location","address","phone_numbers","description","status","id", "organization", "services", "name", "kind"]
+    fields_to_prepare = ["source","location","address","phone_numbers","description","status","id", "organization", "services", "name", "kind"]
     trigger_status_check(df=df, table_name=settings.AIRTABLE_BRANCH_TABLE, base_id=settings.AIRTABLE_DATA_IMPORT_BASE,
                          airtable_key_field='id', active_value='ACTIVE', inactive_value='INACTIVE',
                          only_from_source='mol_daycare', df_key_field='id', batch_size=50)
     df = load_foreign_keys(df)
-    df = clean_fields(df, fields_to_update)
+    df = clean_fields(df, fields_to_prepare)
     df = df.where(pd.notnull(df), None)
 
     df = ensure_list_fields(df=df, columns=['services', 'organization'])
 
-    prepare_df = prepare_airtable_dataframe(df=df, fields_to_update=fields_to_update, key_field='id', airtable_key='id')
+    prepare_df = prepare_airtable_dataframe(df=df, fields_to_prepare=fields_to_prepare, key_field='id', airtable_key='id')
 
     modified = update_if_exists_if_not_create(df=prepare_df,airtable_key='id',base_id=settings.AIRTABLE_DATA_IMPORT_BASE,table_name=settings.AIRTABLE_BRANCH_TABLE,batch_size=50)
     return modified

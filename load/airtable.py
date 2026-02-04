@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, cast
+from typing import List, Dict, Any, cast, Optional
 import pandas as pd
 from pyairtable import Api
 from pyairtable.api.table import Table, UpdateRecordDict
@@ -147,18 +147,35 @@ def create_airtable_records(
     return created_count
 
 
-def update_if_exists_if_not_create(df:pd.DataFrame, table_name:str, base_id:str, airtable_key:str, batch_size:int=50) -> int:
+def update_if_exists_if_not_create(
+        df: pd.DataFrame,
+        table_name: str,
+        base_id: str,
+        airtable_key: str,
+        batch_size: int = 50,
+        fields_to_update: Optional[List[str]] = None,
+        fields_to_create: Optional[List[str]] = None
+) -> int:
     """
     Update existing Airtable records or create new ones if they don't exist.
+
     :param df: DataFrame with data to update or create
     :param table_name: Airtable table name
     :param base_id: Airtable base ID
     :param airtable_key: Airtable field used to match records
     :param batch_size: Number of records to process per batch
+    :param fields_to_update: Specific list of columns to update. If None, all columns are updated.
+    :param fields_to_create: Specific list of columns to create. If None, all columns are used for creation.
     :return: Total number of modified or created records
     """
+    df_for_update = df.copy()
+    if fields_to_update is not None:
+        update_cols = list(set(fields_to_update) | {airtable_key})
+        valid_update_cols = [c for c in update_cols if c in df.columns]
+        df_for_update = df[valid_update_cols].copy()
+
     modified_count, not_found = update_airtable_records(
-        df=df,
+        df=df_for_update,
         table_name=table_name,
         base_id=base_id,
         key_field=airtable_key,
@@ -167,16 +184,21 @@ def update_if_exists_if_not_create(df:pd.DataFrame, table_name:str, base_id:str,
     )
     logger.info(f"Updated {modified_count} branch records in Airtable")
 
-    # Create missing records
     if not_found:
-        df['decision'] = 'New'
-        df_to_create = df[df[airtable_key].isin(not_found)]
+        df_for_create = df[df[airtable_key].isin(not_found)].copy()
+
+        if fields_to_create is not None:
+            create_cols = list(set(fields_to_create) | {airtable_key})
+            valid_create_cols = [c for c in create_cols if c in df_for_create.columns]
+            df_for_create = df_for_create[valid_create_cols]
+
         created_count = create_airtable_records(
-            df=df_to_create,
+            df=df_for_create,
             table_name=table_name,
             base_id=base_id,
             batch_size=batch_size
         )
         logger.info(f"Created {created_count} new branch records in Airtable")
         modified_count += created_count
+
     return modified_count
