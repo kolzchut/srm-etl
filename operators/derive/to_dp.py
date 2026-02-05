@@ -244,7 +244,7 @@ def merge_duplicate_branches(branch_mapping):
             count += 1
 
             geom = row['branch_geometry'] or [row['branch_id']]
-            new_key = hasher(row['organization_id'], ';'.join(map(str, geom)))
+            new_key = hasher(row['organization_id'], ';'.join(map(str, geom)), row['branch_name'])
             old_key = row['branch_key']
             branch_mapping[old_key] = new_key
 
