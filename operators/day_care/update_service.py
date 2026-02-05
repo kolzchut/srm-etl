@@ -10,7 +10,7 @@ def add_static_records_to_df(df: pd.DataFrame) -> pd.DataFrame:
     df.loc[len(df)] = {
         'source': 'mol_daycare',
         'data_sources': 'מידע נוסף אפשר למצוא ב<a target="_blank" href="https://daycareclasssearch.labor.gov.il/">אתר משרד העבודה, פורטל איתור מסגרות מוכרות</a>',
-        'name': 'משפחתון בפיקוח משרד הרווחה',
+        'name': 'משפחתון בפיקוח משרד העבודה',
         'description': 'מסגרת חינוכית-טיפולית לקבוצה של עד 5 פעוטות מגיל לידה ועד שלוש שנים. המשפחתונים מנוהלים בבית פרטי על-ידי מטפלות עצמאיות, ומפוקחים על-ידי משרד העבודה. ניתן לקבל סבסוד של שכר הלימוד ממשרד העבודה.',
         'details': 'שכר הלימוד במשפחתונים נמצא תחת פיקוח. מידע נוסף ועדכני לגבי גובה שכר הלימוד ניתן למצוא ב<a target="_blank" href="https://www.gov.il/he/pages/tuition-daycare-and-supervised-nurseries>אתר משרד העבודה</a>',
         'situations': ['human_situations:age_group:infants'],
